@@ -1,37 +1,34 @@
-/********************************************************************************
- * Project Name:    Adventure Designer Studio
- * Filename:        translations.h
- * Description:     Manage the translations to be used in game
+/*
+ * Adventure Designer Studio
+ * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * Crafted with passion and love in Canary Islands.
+ * This file is licensed under the GNU General Public License version 3 (GPLv3).
+ * See LICENSE.md and COPYING for full license details.
  *
- * Copyright (C) 2024 El Estado Web Research & Development. All rights reserved.
- *
- * This document and its contents, including but not limited to code, schemas,
- * images and diagrams are protected by copyright law in Spain and other countries.
- * Unauthorized use, reproduction, distribution, modification, public display, or
- * public performance of any portion of this material is strictly prohibited.
- *
- * Contact Information
- *
- * For permission to use any portion of this material, please contact at
- * El Estado Web Research & Development, S.L. <info@elestadoweb.com>
- ********************************************************************************/
+ * This software includes an additional requirement for visible attribution:
+ * The original author's name must be displayed in any user interface or
+ * promotional material.
+ */
 #ifndef TRANSLATIONS_H
 #define TRANSLATIONS_H
-#include <string>
+#include <map>
 
-#include <i18n_keyval/i18n.hpp>
-#include <i18n_keyval/translators/basic.hpp>
-
-#include "../../constants/languages.h"
 
 namespace ADS::Classes::Translations {
-    using std::string;
-    using namespace i18n::literals;
-    using ADS::Constants::Languages::languages;
 
     class Translations {
+
+        using translations = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
+
+
+        enum class Key { One, Two };
+
+        int main() {
+
+            const std::map<Key, const char *> englishLan{{Key::One, "one"},
+                                                         {Key::Two, "two"}};
+            std::map<Key, const char *> lan = englishLan;
+
         /**
          * language and country identifier
          */
@@ -43,16 +40,6 @@ namespace ADS::Classes::Translations {
         string fallback;
 
         /**
-         * Base folder for all Translations
-         */
-        string basePath;
-
-        /**
-         * Translations strings
-         */
-        i18n::translations translations;
-
-        /**
          * Extract the lang and country from locale
          *
          * @param localeInputString
@@ -61,10 +48,8 @@ namespace ADS::Classes::Translations {
         std::string extractLangFromLocale(const std::optional<std::string> &localeInputString) const;
 
     public:
-        explicit Translations(const string &baseFolder, const string &fallback = SPANISH_SPAIN);
+        explicit Translations(const string &fallback = SPANISH_SPAIN);
         ~Translations();
-
-        // loadTranslationsFromFile()
 
         string getLanguageFromLocale(const std::string &locale);
 
@@ -78,6 +63,9 @@ namespace ADS::Classes::Translations {
 
         i18n::translations getTranslations() const;
         void setTranslations(const i18n::translations& translations);
+
+        Translations* loadFromFile();
+
     };
 };
 

@@ -1,22 +1,14 @@
-/********************************************************************************
- * Project Name:    Adventure Designer Studio
- * Filename:        translations.cpp
- * Description:     Implementation for the translations management
+/*
+ * Adventure Designer Studio
+ * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * Crafted with passion and love in Canary Islands.
+ * This file is licensed under the GNU General Public License version 3 (GPLv3).
+ * See LICENSE.md and COPYING for full license details.
  *
- * Copyright (C) 2024 El Estado Web Research & Development. All rights reserved.
- *
- * This document and its contents, including but not limited to code, schemas,
- * images and diagrams are protected by copyright law in Spain and other countries.
- * Unauthorized use, reproduction, distribution, modification, public display, or
- * public performance of any portion of this material is strictly prohibited.
- *
- * Contact Information
- *
- * For permission to use any portion of this material, please contact at
- * El Estado Web Research & Development, S.L. <info@elestadoweb.com>
- ********************************************************************************/
+ * This software includes an additional requirement for visible attribution:
+ * The original author's name must be displayed in any user interface or
+ * promotional material.
+ */
 #include "translations.h"
 
 #include <fstream>
@@ -25,7 +17,7 @@
 
 #include <i18n_keyval/translators/nlohmann_json.hpp>
 
-#include "PathNotExistException.h"
+#include "path_not_exist_exception.h"
 
 namespace ADS::Classes::Translations {
     using namespace i18n::literals;
@@ -46,8 +38,7 @@ namespace ADS::Classes::Translations {
             i18n::initialize_translator<i18n::translators::nlohmann_json>(this->basePath);
         }
 
-        this->fallback = "es-ES";
-        // this->fallback = fallback;
+        this->fallback = fallback;
         string tempLocale = this->extractLangFromLocale(optional<string>());
         if (!Languages::languages.contains(tempLocale)) {
             this->locale = this->fallback;
@@ -216,6 +207,14 @@ namespace ADS::Classes::Translations {
         if (!locale.empty() && this->exists(locale)) {
             this->fallback = locale;
         }
+
+        return this;
+    }
+
+    Translations* Translations::loadFromFile() {
+        std::ifstream ifs((string) "../translations/ads/" + this->locale + ".json", std::ifstream::in);
+        nlohmann::json jf = nlohmann::json::parse(ifs);
+        this->setTranslations(jf);
 
         return this;
     }
