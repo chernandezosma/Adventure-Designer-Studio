@@ -1,22 +1,14 @@
-/********************************************************************************
- * Project Name:    Adventure Designer Studio
- * Filename:        path_not_exist_exception.h
- * Description:     
+/*
+ * Adventure Designer Studio
+ * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * Crafted with passion and love in Canary Islands.
+ * This file is licensed under the GNU General Public License version 3 (GPLv3).
+ * See LICENSE.md and COPYING for full license details.
  *
- * Copyright (C) 2024 El Estado Web Research & Development. All rights reserved.
- *
- * This document and its contents, including but not limited to code, schemas,
- * images and diagrams are protected by copyright law in Spain and other countries.
- * Unauthorized use, reproduction, distribution, modification, public display, or
- * public performance of any portion of this material is strictly prohibited.
- *
- * Contact Information
- *
- * For permission to use any portion of this material, please contact at
- * El Estado Web Research & Development, S.L. <info@elestadoweb.com>
- ********************************************************************************/
+ * This software includes an additional requirement for visible attribution:
+ * The original author's name must be displayed in any user interface or
+ * promotional material.
+ */
 #ifndef BASE_EXCEPTION_H
 #define BASE_EXCEPTION_H
 #include <format>
