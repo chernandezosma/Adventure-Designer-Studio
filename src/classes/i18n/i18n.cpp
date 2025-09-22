@@ -87,7 +87,7 @@ namespace ADS::i18n {
             this->rawLocaleString = std::locale("").name();
 
             // Handle "C" or "POSIX" locale
-            if (rawLocaleString == "C" || rawLocaleString == "POSIX") {
+            if (this->rawLocaleString == "C" || this->rawLocaleString == "POSIX") {
                 this->systemLocale = createLocaleInfo(fallbackLanguage);
                 return;
             }

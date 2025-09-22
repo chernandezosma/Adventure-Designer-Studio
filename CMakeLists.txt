@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14...3.31)
 
 set (ADSProject Adventure_Designer_Studio)
 
-project(${ADSProject}} CXX)
+project(${ADSProject} CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
