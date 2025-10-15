@@ -1,4 +1,4 @@
-<p align="center"><img src="./doc/assets/logo.png" width="564" alt="Adventure Studio Designer Logo"></p>
+<p align="center"><img src="public/assets/logo.png" width="564" alt="Adventure Studio Designer Logo"></p>
 
 # Adventure Studio Designer
 

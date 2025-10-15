@@ -15,9 +15,9 @@
 #include "base_exception.h"
 
 namespace ADS::Exceptions {
-    class not_found_exception final : public BaseException {
+    class file_not_found_exception final : public BaseException {
     public:
-        explicit not_found_exception(const std::string &msg, std::string file = __FILE__, const int line = __LINE__):
+        explicit file_not_found_exception(const std::string &msg, std::string file = __FILE__, const int line = __LINE__):
             BaseException(msg, std::move(file), line) {}
     };
 } // ADS::Exceptions
