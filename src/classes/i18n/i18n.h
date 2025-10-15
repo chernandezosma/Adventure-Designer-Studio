@@ -9,14 +9,13 @@
  * The original author's name must be displayed in any user interface or
  * promotional material.
  */
-#ifndef I18N_H
-#define I18N_H
+#ifndef ADS_I18N_H
+#define ADS_I18N_H
 
 #include <filesystem>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 #include "base_exception.h"
 #include "languages.h"
@@ -27,6 +26,8 @@ namespace ADS::i18n {
     /**
      * @struct LocaleInfo
      * @brief Contains locale information in POSIX format with language details
+     *
+     * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Stores locale data including POSIX format string (e.g., "es_ES") and
@@ -39,6 +40,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Extract the language code from locale string
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Extracts the language portion from a POSIX locale string by finding
@@ -47,13 +50,16 @@ namespace ADS::i18n {
          * @return Language code (e.g., "es" from "es_ES")
          * @note Returns the entire locale string if no underscore is found
          */
-        [[nodiscard]] string getLanguageCode() const {
+        [[nodiscard]] string getLanguageCode() const
+        {
             size_t underscorePos = locale.find('_');
             return (underscorePos != string::npos) ? locale.substr(0, underscorePos) : locale;
         }
 
         /**
          * @brief Extract the language code from locale string
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Extracts the language portion from a POSIX locale string by finding
@@ -62,7 +68,8 @@ namespace ADS::i18n {
          * @return Language code (e.g., "es" from "es_ES")
          * @note Returns the entire locale string if no underscore is found
          */
-        [[nodiscard]] string getCountryCode() const {
+        [[nodiscard]] string getCountryCode() const
+        {
             size_t underscorePos = locale.find('_');
             if (underscorePos != string::npos && underscorePos + 1 < locale.length()) {
                 return locale.substr(underscorePos + 1);
@@ -73,6 +80,9 @@ namespace ADS::i18n {
         /**
          * @brief Validate the locale information
          *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jul 2025
+         *
          * Checks if the locale data is valid by verifying that both locale
          * and language strings are non-empty and the locale is supported
          * by the system.
@@ -80,7 +90,8 @@ namespace ADS::i18n {
          * @return true if locale is valid and supported, false otherwise
          * @see Constants::Languages::isLanguageSupported()
          */
-        [[nodiscard]] bool isValid() const {
+        [[nodiscard]] bool isValid() const
+        {
             return !locale.empty() &&
                    !language.empty() &&
                    Constants::Languages::isLanguageSupported(locale);
@@ -90,6 +101,8 @@ namespace ADS::i18n {
     /**
      * @class i18n
      * @brief Main internationalization class for translation management
+     *
+     * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Provides comprehensive internationalization functionality including:
@@ -140,6 +153,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Initialize the internationalization system
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Performs initial setup of the i18n system including locale detection,
@@ -153,6 +168,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Extract and normalize system locale information
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Detects the current system locale using environment variables (LANG, LC_ALL)
@@ -160,12 +177,14 @@ namespace ADS::i18n {
          * member variables with the detected information.
          *
          * @note Falls back to fallback language if system locale cannot be detected
-         * @see normalizePlatformLocale()
+         * @see languages::normalizePlatformLocale()
          */
         void extractSystemLocale();
 
         /**
          * @brief Load translation file for a specific language
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Attempts to load translation data from various file formats in priority order.
@@ -178,113 +197,35 @@ namespace ADS::i18n {
          * @note Updates the translations member variable with loaded data
          * @see parseJsonContent(), parsePropertiesContent(), parsePoContent()
          */
-        bool loadTranslationFile(const string &language);
+        bool loadTranslationFile(const string& language);
 
         /**
          * @brief Parse JSON format translation file content
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Parses JSON content containing translation key-value pairs. Supports
          * nested objects using dot notation (e.g., "menu.file.open"). Handles
          * both flat and hierarchical JSON structures.
          *
+         * @param key Key to add to the translations
          * @param content JSON file content as string
          * @param translations Output map to store parsed key-value pairs
+         *
          * @return true if parsing was successful, false on error
          *
          * @note Requires nlohmann/json library for JSON parsing
          * @see parseNestedJson() for nested object handling
          */
-        bool parseJsonContent(const string &content,
-                              unordered_map<string, string> &translations);
-
-        /**
-         * @brief Parse Java Properties format file content
-         * @version Jul 2025
-         *
-         * Parses standard Java Properties format with key=value pairs.
-         * Handles comments (lines starting with # or !), escape sequences,
-         * and multi-line values. Ignores empty lines and whitespace.
-         *
-         * @param content Properties file content as string
-         * @param translations Output map to store parsed key-value pairs
-         * @return true if parsing was successful, false on error
-         *
-         * @note Also used for .txt files with same format
-         * @see unescapeString() for escape sequence handling
-         */
-        bool parsePropertiesContent(const string &content,
-                                    unordered_map<string, string> &translations);
-
-        /**
-         * @brief Parse GNU gettext PO (Portable Object) format file content
-         * @version 2025
-         *
-         * Parses standard PO file format used by GNU gettext. Extracts msgid
-         * and msgstr pairs, handles multi-line strings, and processes escape
-         * sequences. Skips header entries and comments.
-         *
-         * @param content PO file content as string
-         * @param translations Output map to store parsed msgid-msgstr pairs
-         * @return true if parsing was successful, false on error
-         *
-         * @see extractQuotedString(), unescapeString()
-         */
-        bool parsePoContent(const string &content,
-                            unordered_map<string, string> &translations);
-
-#ifdef NLOHMANN_JSON_VERSION_MAJOR
-        /**
-         * @brief Parse nested JSON objects recursively with dot notation
-         * @version Jul 2025
-         *
-         * Recursively traverses nested JSON objects and converts them to flat
-         * key-value pairs using dot notation. For example, {"menu": {"file": "File"}}
-         * becomes "menu.file" -> "File".
-         *
-         * @param prefix Current key prefix for nested objects
-         * @param obj JSON object to parse recursively
-         * @param translations Output map to store flattened key-value pairs
-         *
-         * @note Only available when nlohmann/json library is present
-         * @see parseJsonContent()
-         */
-        void parseNestedJson(const string& prefix, const nlohmann::json& obj,
-                           unordered_map<string, string>& translations);
-#endif
-
-        /**
-         * @brief Extract and clean quoted strings from PO file format
-         * @version Jul 2025
-         *
-         * Removes surrounding quotes from PO file string values and handles
-         * concatenated multi-line strings. Processes both single and double
-         * quoted strings according to PO file specifications.
-         *
-         * @param str String potentially containing quotes and whitespace
-         * @return Cleaned string with quotes removed
-         *
-         * @note Used internally by parsePoContent()
-         */
-        string extractQuotedString(const string &str);
-
-        /**
-         * @brief Unescape common string escape sequences
-         * @version Jul 2025
-         *
-         * Converts escape sequences like \n, \t, \r, \\, \" back to their
-         * literal characters. Handles standard C-style escape sequences
-         * commonly used in translation files.
-         *
-         * @param str String containing escape sequences
-         * @return String with escape sequences converted to literal characters
-         *
-         * @note Used by parsePropertiesContent() and parsePoContent()
-         */
-        string unescapeString(const string &str);
+        bool parseJsonContent(const string& key,
+                              const string& content,
+                              unordered_map<string, string>& translations);
 
         /**
          * @brief Create LocaleInfo structure from language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Constructs a LocaleInfo object from a given locale code by looking up
@@ -296,105 +237,13 @@ namespace ADS::i18n {
          * @throws locale_exception if locale code is invalid or unsupported
          * @see LocaleInfo::isValid()
          */
-        LocaleInfo createLocaleInfo(const string &localeCode) const;
-
-        /**
-         * @brief Serialize translation data to Java Properties file format
-         * @version Jul 2025
-         * Writes translations to an output stream in the standard Java Properties format
-         * (key=value pairs). Keys are sorted alphabetically and a header comment is included
-         * with language information and generation metadata.
-         *
-         * @param trans The translation map containing key-value pairs to serialize
-         * @param language The language code for the translations (used in header comment)
-         * @param file Output file stream to write the serialized data to
-         * @return true if serialization was successful, false on error
-         *
-         * @note The file stream should be opened and ready for writing before calling
-         * @see loadTranslationFile() for the corresponding parser
-         */
-        bool serializePropertiesContent(const unordered_map<string, string> &trans,
-                                        const string &language, ofstream &file) const;
-
-        /**
-         * @brief Serialize translation data to JSON file format
-         * @version Jul 2025
-         *
-         * Writes translations to an output stream as a JSON object with metadata.
-         * The JSON structure includes a _metadata section with language and generation
-         * information, followed by sorted key-value translation pairs. Special characters
-         * are properly escaped according to JSON standards.
-         *
-         * @param trans The translation map containing key-value pairs to serialize
-         * @param language The language code for the translations (included in metadata)
-         * @param file Output file stream to write the serialized JSON data to
-         * @return true if serialization was successful, false on error
-         *
-         * @note The file stream should be opened and ready for writing before calling
-         * @see parseJsonContent() for the corresponding parser
-         * @see escapeJsonString() for string escaping implementation
-         */
-        bool serializeJsonContent(const unordered_map<string, string> &trans,
-                                    const string &language, ofstream &file) const;
-
-        /**
-         * @brief Serialize translation data to GNU gettext PO file format
-         * @version Jul 2025
-         *
-         * Writes translations to an output stream in the standard GNU gettext PO format.
-         * Includes proper PO file headers with language and encoding information,
-         * followed by msgid/msgstr pairs for each translation. Keys are sorted
-         * alphabetically and strings are properly escaped for PO format.
-         *
-         * @param trans The translation map containing key-value pairs to serialize
-         * @param language The language code for the translations (used in PO headers)
-         * @param file Output file stream to write the serialized PO data to
-         * @return true if serialization was successful, false on error
-         *
-         * @note The file stream should be opened and ready for writing before calling
-         * @see parsePoContent() for the corresponding parser
-         * @see escapePoString() for string escaping implementation
-         */
-        bool serializePoContent(const unordered_map<string, string> &trans,
-                                          const string &language, ofstream &file) const;
-
-        /**
-         * @brief Escape special characters in a string for JSON format
-         * @version Jul 2025
-         *
-         * Converts special characters to their JSON-escaped equivalents to ensure
-         * the string can be safely included in a JSON document. Handles common
-         * escape sequences like quotes, backslashes, newlines, carriage returns,
-         * and tabs.
-         *
-         * @param str The input string to escape
-         * @return A new string with JSON-escaped special characters
-         *
-         * @note Escaped characters: " → \", \ → \\, \n → \\n, \r → \\r, \t → \\t
-         * @see serializeJsonContent() for usage context
-         */
-        string escapeJsonString(const string &str) const;
-
-        /**
-         * @brief Escape special characters in a string for PO file format
-         * @version Jul 2025
-         *
-         * Converts special characters to their PO-escaped equivalents to ensure
-         * the string conforms to GNU gettext PO file standards. Handles the same
-         * escape sequences as JSON format since PO files use similar escaping rules
-         * for msgid and msgstr values.
-         *
-         * @param str The input string to escape
-         * @return A new string with PO-escaped special characters
-         *
-         * @note Escaped characters: " → \", \ → \\, \n → \\n, \r → \\r, \t → \\t
-         * @see serializePoContent() for usage context
-         */
-        string escapePoString(const string &str) const;
+        LocaleInfo createLocaleInfo(const string& localeCode) const;
 
     public:
         /**
          * @brief Construct i18n system with base folder and fallback language
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Initializes the internationalization system with the specified base directory
@@ -410,11 +259,13 @@ namespace ADS::i18n {
          * @note The base folder path is resolved relative to current working directory
          * @see init(), extractSystemLocale()
          */
-        explicit i18n(const string &baseFolder,
-                      const string &fallback = string(Constants::Languages::DEFAULT_FALLBACK));
+        explicit i18n(const string& baseFolder,
+                      const string& fallback = string(Constants::Languages::DEFAULT_FALLBACK));
 
         /**
          * @brief Destructor - cleanup resources
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Default destructor that automatically cleans up translation data
@@ -423,46 +274,18 @@ namespace ADS::i18n {
         ~i18n() = default;
 
         // Copy/Move constructors and assignment operators
-        i18n(const i18n &) = delete;
-        i18n &operator=(const i18n &) = delete;
-        i18n(i18n &&) = default;
-        i18n &operator=(i18n &&) = default;
+        i18n(const i18n&) = delete;
 
-        /**
-         * @brief Get the configured fallback language code
-         * @version Jul 2025
-         *
-         * Returns the language code used as fallback when requested translations
-         * are not found in the current or specified language.
-         *
-         * @return Fallback language code string
-         */
-        [[nodiscard]] string getFallbackLanguage() const;
+        i18n& operator=(const i18n&) = delete;
 
-        /**
-         * @brief Get the configured default language code
-         * @version Jul 2025
-         *
-         * Returns the default language code used for new translations when
-         * no specific language is specified.
-         *
-         * @return Default language code string
-         */
-        [[nodiscard]] string getDefaultLanguage() const;
+        i18n(i18n&&) = default;
 
-        /**
-         * @brief Get the base folder path for translation files
-         * @version Jul 2025
-         *
-         * Returns the absolute path to the directory where translation files
-         * are stored and loaded from.
-         *
-         * @return Base folder path as string
-         */
-        [[nodiscard]] string getBaseFolder() const;
+        i18n& operator=(i18n&&) = default;
 
         /**
          * @brief Set the current active locale using LocaleInfo
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Changes the current active locale to the specified LocaleInfo object.
@@ -473,10 +296,12 @@ namespace ADS::i18n {
          * @throws std::invalid_argument if locale is invalid or not supported
          * @see LocaleInfo::isValid(), addLanguage()
          */
-        void setLocale(const LocaleInfo &locale);
+        void setLocale(const LocaleInfo& locale);
 
         /**
          * @brief Set the current active locale using language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Changes the current active locale to the specified language code.
@@ -488,10 +313,12 @@ namespace ADS::i18n {
          * @throws std::invalid_argument if locale code is invalid or not supported
          * @see createLocaleInfo(), addLanguage()
          */
-        void setLocale(const string &localeCode);
+        void setLocale(const string& localeCode);
 
         /**
          * @brief Get the currently active locale information
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns the LocaleInfo object representing the currently active locale
@@ -502,19 +329,9 @@ namespace ADS::i18n {
         [[nodiscard]] LocaleInfo getCurrentLocale() const;
 
         /**
-         * @brief Get the detected system locale information
-         * @version Jul 2025
-         *
-         * Returns the LocaleInfo object representing the system's default locale
-         * as detected during initialization from environment variables.
-         *
-         * @return System LocaleInfo object
-         * @see extractSystemLocale()
-         */
-        [[nodiscard]] LocaleInfo getSystemLocale() const;
-
-        /**
          * @brief Get all translation key-value pairs for a language
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Retrieves the complete translation map for the specified language.
@@ -525,10 +342,12 @@ namespace ADS::i18n {
          *
          * @note Returns empty map if language is not loaded
          */
-        [[nodiscard]] unordered_map<string, string> getTranslations(const string &language = "") const;
+        [[nodiscard]] unordered_map<string, string> getTranslations(const string& language = "") const;
 
         /**
          * @brief Get pointer to fallback language translation data
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a pointer to the fallback language's translation entry in the
@@ -538,11 +357,12 @@ namespace ADS::i18n {
          *
          * @note The returned pointer is valid until translations are modified
          */
-        [[nodiscard]] const pair<const string, unordered_map<string, string> > *
-        getFallbackLanguageTranslations() const;
+        [[nodiscard]] const pair<const string, unordered_map<string, string> >* getFallbackLanguageTranslations() const;
 
         /**
          * @brief Get pointer to specific language translation data
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a pointer to the specified language's translation entry in the
@@ -553,11 +373,12 @@ namespace ADS::i18n {
          *
          * @note The returned pointer is valid until translations are modified
          */
-        [[nodiscard]] const pair<const string, unordered_map<string, string> > *
-        getLanguage(const string &language) const;
+        [[nodiscard]] const pair<const string, unordered_map<string, string> >* getLanguage(const string& language) const;
 
         /**
          * @brief Check if a language is currently loaded
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Determines whether translation data for the specified language
@@ -566,10 +387,12 @@ namespace ADS::i18n {
          * @param language The language code to check
          * @return true if language is loaded, false otherwise
          */
-        [[nodiscard]] bool hasLanguage(const string &language) const;
+        [[nodiscard]] bool hasLanguage(const string& language) const;
 
         /**
          * @brief Add or load a language into the translation system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Loads translation data for the specified language from files or creates
@@ -584,10 +407,12 @@ namespace ADS::i18n {
          *
          * @see loadTranslationFile(), Constants::Languages::isLanguageSupported()
          */
-        pair<const string, unordered_map<string, string> > *addLanguage(const string &language);
+        pair<const string, unordered_map<string, string> >* addLanguage(const string& language);
 
         /**
          * @brief Add a translation key-value pair to the system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Adds a new translation entry or updates an existing one. If no language
@@ -601,13 +426,15 @@ namespace ADS::i18n {
          *
          * @note Automatically loads the target language if not already loaded
          */
-        void addTranslation(const string &key,
-                            const string &translation,
-                            const string &language = "",
-                            const string &fallbackTranslation = "");
+        void addTranslation(const string& key,
+                            const string& translation,
+                            const string& language = "",
+                            const string& fallbackTranslation = "");
 
         /**
          * @brief Get translation for a specific key
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Retrieves the translation for the given key in the specified language.
@@ -620,11 +447,13 @@ namespace ADS::i18n {
          *
          * @note Implements automatic fallback chain: specified language → fallback language → key
          */
-        [[nodiscard]] string translate(const string &translationKey,
-                                       const string &language = "") const;
+        [[nodiscard]] string translate(const string& translationKey,
+                                       const string& language = "") const;
 
         /**
          * @brief Get translation with pluralization support
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns appropriate singular or plural translation based on the count value.
@@ -639,13 +468,15 @@ namespace ADS::i18n {
          *
          * @note Falls back through the same chain as translate() for each form
          */
-        [[nodiscard]] string translatePlural(const string &singularKey,
-                                             const string &pluralKey,
+        [[nodiscard]] string translatePlural(const string& singularKey,
+                                             const string& pluralKey,
                                              int count,
-                                             const string &language = "") const;
+                                             const string& language = "") const;
 
         /**
          * @brief Get translation with parameter substitution
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Retrieves translation for the key and performs parameter substitution
@@ -661,24 +492,14 @@ namespace ADS::i18n {
          * @note Unmatched parameters in the translation are left unchanged
          * @example translate("hello.user", {{"name", "John"}}) → "Hello, John!"
          */
-        [[nodiscard]] string translateWithParams(const string &translationKey,
-                                                 const unordered_map<string, string> &parameters,
-                                                 const string &language = "") const;
-
-        /**
-         * @brief Get the system locale's language code
-         * @version Jul 2025
-         *
-         * Convenience method that returns just the language code portion
-         * of the detected system locale (e.g., "es" from "es_ES").
-         *
-         * @return System locale language code
-         * @see getSystemLocale(), LocaleInfo::getLanguageCode()
-         */
-        [[nodiscard]] string getSystemLocaleLanguage() const;
+        [[nodiscard]] string translateWithParams(const string& translationKey,
+                                                 const unordered_map<string, string>& parameters,
+                                                 const string& language = "") const;
 
         /**
          * @brief Get all currently loaded/available language codes
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a vector containing the language codes for all translation
@@ -692,6 +513,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get all supported language codes from the system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a complete list of all language codes that are supported
@@ -704,34 +527,9 @@ namespace ADS::i18n {
         [[nodiscard]] static vector<string> getSupportedLanguages();
 
         /**
-         * @brief Check if a locale code is supported by the system
-         * @version Jul 2025
-         *
-         * Validates whether the given locale code is recognized and supported
-         * by the internationalization system for loading and translation.
-         *
-         * @param localeCode The locale code to validate
-         * @return true if the locale is supported, false otherwise
-         * @see Constants::Languages::isLanguageSupported()
-         */
-        [[nodiscard]] static bool isLocaleSupported(const string &localeCode);
-
-        /**
-         * @brief Normalize platform-specific locale to POSIX format
-         * @version Jul 2025
-         *
-         * Converts platform-specific locale strings (e.g., Windows "English_United States")
-         * to standardized POSIX format (e.g., "en_US"). Handles various platform
-         * locale formats and naming conventions.
-         *
-         * @param platformLocale Platform-specific locale string
-         * @return Normalized POSIX locale code
-         * @see Constants::Languages::normalizePlatformLocale()
-         */
-        [[nodiscard]] static string normalizePlatformLocale(const string &platformLocale);
-
-        /**
          * @brief Reload all translation files from disk
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Reloads translation data for all currently loaded languages from
@@ -745,22 +543,28 @@ namespace ADS::i18n {
 
         /**
          * @brief Save translation data to file in appropriate format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Saves the translation data for the specified language to a file.
          * Automatically detects the existing file format or defaults to
          * Properties format if no existing file is found.
          *
-         * @param language Language code to save
+         * @param language      Language code to save
+         * @param useExisting   Look for existing file with the given extension and if it exists, use it.
+         *
          * @return true if saved successfully, false on error
          *
          * @note Supports saving to JSON, Properties, PO, and TXT formats
          * @see serializeJsonContent(), serializePropertiesContent(), serializePoContent()
          */
-        bool saveTranslations(const string &language) const;
+        bool saveTranslations(const string& language, const bool& useExisting = false) const;
 
         /**
          * @brief Get translation statistics for all loaded languages
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a map containing the number of translation entries for
@@ -773,6 +577,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Find missing translation keys compared to fallback language
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Compares the specified language's translations with the fallback
@@ -784,12 +590,14 @@ namespace ADS::i18n {
          *
          * @note Useful for identifying incomplete translations during development
          */
-        [[nodiscard]] vector<string> findMissingTranslations(const string &language) const;
+         [[nodiscard]] vector<string> findMissingTranslations(const string& language) const;
     };
 
     /**
      * @class i18n_exception
      * @brief Base exception class for internationalization-related errors
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * General exception type for errors that occur within the i18n system.
@@ -803,12 +611,14 @@ namespace ADS::i18n {
          * @brief Construct i18n exception with error message
          * @param message Descriptive error message
          */
-        explicit i18n_exception(const string &message) : BaseException(message) {}
+        explicit i18n_exception(const string& message): BaseException(message) {}
     };
 
     /**
      * @class locale_exception
      * @brief Exception for locale-related errors
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Thrown when locale detection, validation, or configuration operations
@@ -820,12 +630,14 @@ namespace ADS::i18n {
          * @brief Construct locale exception with error message
          * @param message Descriptive error message (automatically prefixed)
          */
-        explicit locale_exception(const string &message) : i18n_exception("Locale error: " + message) {}
+        explicit locale_exception(const string& message): i18n_exception("Locale error: " + message) {}
     };
 
     /**
      * @class translation_file_exception
      * @brief Exception for translation file operation errors
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Thrown when translation file loading, parsing, or saving operations
@@ -836,13 +648,15 @@ namespace ADS::i18n {
     public:
         /**
          * @brief Construct translation file exception with error message
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * @param message Descriptive error message (automatically prefixed)
          */
-        explicit translation_file_exception(const string &message)
+        explicit translation_file_exception(const string& message)
             : i18n_exception("Translation file error: " + message) {}
     };
 }
 
-#endif // I18N_H
+#endif // ADS_I18N_H
