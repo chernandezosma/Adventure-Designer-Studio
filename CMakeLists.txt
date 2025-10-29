@@ -10,7 +10,14 @@ set(IMGUI_DIR "lib/imgui")
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/translations/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/translations")
 
-enable_testing()
+# --- Configurar testeo opcional ---
+include(CTest)  # define la opción estándar BUILD_TESTING
+
+if(BUILD_TESTING)
+    add_subdirectory(lib/googletest)
+endif()
+
+#enable_testing()
 
 # --- Dependencias externas ---
 find_package(OpenGL REQUIRED)
@@ -20,7 +27,7 @@ find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
 add_subdirectory(lib/nlohmann_json)
-add_subdirectory(lib/googletest)
+#add_subdirectory(lib/googletest)
 
 add_library(imgui
         lib/imgui/imgui.cpp
@@ -60,7 +67,7 @@ set(Sources
 )
 
 add_executable(${ADSProject} ${Sources} ${Headers})
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
 #target_link_libraries(${ADSProject} PRIVATE nlohmann_json::nlohmann_json imgui glfw)
 target_link_libraries(${ADSProject} PRIVATE
@@ -69,6 +76,12 @@ target_link_libraries(${ADSProject} PRIVATE
         ${SDL2_LIBRARIES}
 #        OpenGL::GL
 )
+
+# --- Tests (solo si está habilitado) ---
+if(BUILD_TESTING)
+    message(STATUS "Compilando tests...")
+    add_subdirectory(tests)
+endif()
 
 #target_link_libraries(Adventure_Designer_Studio PUBLIC GTest::gtest_main)
 #target_link_libraries(tests gtest GTest::gtest_main)
