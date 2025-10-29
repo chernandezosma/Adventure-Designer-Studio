@@ -11,28 +11,70 @@
  */
 #include <fstream>
 #include <iostream>
+#include <stdio.h>
+#include <SDL.h>
+#include <random>
 
-// #include "languages.h"
-// #include "i18n/i18n.h"
+#ifdef BUILD_TESTING_ENABLED
+    #include "lib/googletest/googletest/include/gtest/internal/gtest-string.h"
+#endif
+
+#ifdef _WIN32
+#include <windows.h>        // SetProcessDPIAware()
+#endif
 
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
-#include <stdio.h>
-#include <SDL.h>
-#ifdef _WIN32
-#include <windows.h>        // SetProcessDPIAware()
-#endif
+#include "languages.h"
+#include "i18n/i18n.h"
+
+namespace lang = ADS::Constants::Languages;
+namespace i18n = ADS::i18n;
 
 #if !SDL_VERSION_ATLEAST(2, 0, 17)
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
 #endif
 
-int main(int, char **) {
+int main(int argc, char** argv)
+{
     std::cout << "Start of Main" << std::endl;
     std::cout << "Using the C++ version: " << __cplusplus << std::endl;
+    std::cout << "Setup the languages" << std::endl;
+
+    std::string baseTranslationFolder = "translations";
+    // Create a new translations with English as fallback.
+    i18n::i18n translations = i18n::i18n(baseTranslationFolder, std::string(lang::ENGLISH_UNITED_STATES));
+    // Add Spanish as other language
+    translations.addLanguage(std::string(lang::SPANISH_SPAIN));
+
+    translations.addTranslation(
+        "WIN_TITLE",
+        "Dear ImGui SDL2+SDL_Renderer ejemplo",
+        lang::SPANISH_SPAIN.data()
+    );
+
+    translations.addTranslation(
+        "WIN_TITLE",
+        "Dear ImGui SDL2+SDL_Renderer example",
+        lang::ENGLISH_UNITED_STATES.data()
+    );
+    bool result = translations.saveTranslations(std::string (lang::ENGLISH_UNITED_STATES));
+    if (!result) {
+        std::cout << "Failed to save translations" << std::endl;
+        return 1;
+    }
+
+    std::cout << "Saving the translations to a file..." << std::endl;
+    if (!translations.saveTranslations(std::string(lang::ENGLISH_UNITED_STATES))) {
+        std::cout << "Translations cannot be saved. There was an error." << std::endl;
+    }
+
+    std::cout << "Translations saved successfully" << std::endl;
+
     std::cout << "Using im GUI Library " << std::endl;
 
+    // Windows - DPI Awareness
 #ifdef _WIN32
     ::SetProcessDPIAware();
 #endif
@@ -41,6 +83,11 @@ int main(int, char **) {
         return 1;
     }
 
+    // macOS - High resolution configuration
+#ifdef __APPLE__
+    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
+#endif
+
     // From 2.0.18: Enable native IME.
 #ifdef SDL_HINT_IME_SHOW_UI
     SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
@@ -48,15 +95,22 @@ int main(int, char **) {
 
     // Create window with SDL_Renderer graphics context
     float main_scale = ImGui_ImplSDL2_GetContentScaleForDisplay(0);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags) (SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    SDL_Window *window = SDL_CreateWindow("Dear ImGui SDL2+SDL_Renderer example", SDL_WINDOWPOS_CENTERED,
-                                          SDL_WINDOWPOS_CENTERED, (int) (1280 * main_scale), (int) (800 * main_scale),
-                                          window_flags);
+    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    // "Dear ImGui SDL2+SDL_Renderer example"
+    SDL_Window* window = SDL_CreateWindow(
+        translations.translate("WIN_TITLE", lang::ENGLISH_UNITED_STATES.data()).data(),
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, (int)(1280 * main_scale),
+        (int)(800 * main_scale),
+        window_flags
+    );
+
     if (window == nullptr) {
         printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
         return 1;
     }
-    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
     if (renderer == nullptr) {
         SDL_Log("Error creating SDL_Renderer!");
         return 1;
@@ -68,8 +122,8 @@ int main(int, char **) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void) io;
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
@@ -78,11 +132,11 @@ int main(int, char **) {
     //ImGui::StyleColorsLight();
 
     // Setup scaling
-    ImGuiStyle &style = ImGui::GetStyle();
-    style.ScaleAllSizes(main_scale);
+    ImGuiStyle& style = ImGui::GetStyle();
     // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-    style.FontScaleDpi = main_scale;
+    style.ScaleAllSizes(main_scale);
     // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
+    style.FontScaleDpi = main_scale;
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
@@ -104,9 +158,9 @@ int main(int, char **) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT)
-                done = true;
-            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID ==
+            if (event.type == SDL_QUIT) done = true;
+            if (event.type == SDL_WINDOWEVENT && event.window.event ==
+                SDL_WINDOWEVENT_CLOSE && event.window.windowID ==
                 SDL_GetWindowID(window))
                 done = true;
         }
@@ -129,14 +183,19 @@ int main(int, char **) {
             static float f = 0.0f;
             static int counter = 0;
 
-            ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+            ImGui::Begin("Hello, world!");
+            // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text."); // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
+            ImGui::Text("This is some useful text.");
+            // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);
+            // Edit bools storing our window open/close state
             ImGui::Checkbox("Another Window", &show_another_window);
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float *) &clear_color); // Edit 3 floats representing a color
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color);
+            // Edit 3 floats representing a color
 
             if (ImGui::Button("Button"))
                 // Buttons return true when clicked (most widgets return true when edited/activated)
@@ -153,16 +212,17 @@ int main(int, char **) {
             ImGui::Begin("Another Window", &show_another_window);
             // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
             ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+            if (ImGui::Button("Close Me")) show_another_window = false;
             ImGui::End();
         }
 
         // Rendering
         ImGui::Render();
         SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
-        SDL_SetRenderDrawColor(renderer, (Uint8) (clear_color.x * 255), (Uint8) (clear_color.y * 255),
-                               (Uint8) (clear_color.z * 255), (Uint8) (clear_color.w * 255));
+        SDL_SetRenderDrawColor(renderer, (Uint8)(clear_color.x * 255),
+                               (Uint8)(clear_color.y * 255),
+                               (Uint8)(clear_color.z * 255),
+                               (Uint8)(clear_color.w * 255));
         SDL_RenderClear(renderer);
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
         SDL_RenderPresent(renderer);
@@ -177,34 +237,34 @@ int main(int, char **) {
     SDL_DestroyWindow(window);
     SDL_Quit();
 
-    // ADS::i18n::i18n translations = ADS::i18n::i18n(
+    // i18n::i18n translations = i18n::i18n(
     //     "translations",
-    //     ADS::Constants::Languages::SPANISH_SPAIN.data()
+    //     Languages::SPANISH_SPAIN.data()
     // );
     //
     // std::string language = translations.getLocaleLanguage();
-    // translations.addLanguage(ADS::Constants::Languages::ENGLISH_UNITED_KINGDOM.data());
+    // translations.addLanguage(Languages::ENGLISH_UNITED_KINGDOM.data());
     //
-    // auto uk = translations.getLanguage(ADS::Constants::Languages::ENGLISH_UNITED_KINGDOM.data());
+    // auto uk = translations.getLanguage(Languages::ENGLISH_UNITED_KINGDOM.data());
     // auto es = translations.getLanguage(translations.getFallbackLanguage());
     //
     // translations.addTranslation("HELLO", "Hi!", "Hola");
     // translations.addTranslation("BYE", "see you", "Adios");
 
     // translations.addTranslation(
-    //     ADS::Constants::Languages::SPANISH_SPAIN.data(),
+    //     Languages::SPANISH_SPAIN.data(),
     //     "BYE",
     //     "Adios"
     // );
 
     // translations.addTranslation(
-    //     ADS::Constants::Languages::SPANISH_SPAIN.data(),
+    //     Languages::SPANISH_SPAIN.data(),
     //     "BYE",
     //     "Chao!"
     // );
 
     // translations.addTranslation(
-    //     ADS::Constants::Languages::ENGLISH_AUSTRALIA.data(),
+    //     Languages::ENGLISH_AUSTRALIA.data(),
     //     "HOUSE",
     //     "Jouse"
     // );
