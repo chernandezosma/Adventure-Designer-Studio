@@ -16,7 +16,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 #include "base_exception.h"
 #include "languages.h"
@@ -27,6 +26,8 @@ namespace ADS::i18n {
     /**
      * @struct LocaleInfo
      * @brief Contains locale information in POSIX format with language details
+     *
+     * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Stores locale data including POSIX format string (e.g., "es_ES") and
@@ -39,6 +40,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Extract the language code from locale string
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Extracts the language portion from a POSIX locale string by finding
@@ -54,6 +57,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Extract the language code from locale string
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Extracts the language portion from a POSIX locale string by finding
@@ -73,6 +78,9 @@ namespace ADS::i18n {
         /**
          * @brief Validate the locale information
          *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jul 2025
+         *
          * Checks if the locale data is valid by verifying that both locale
          * and language strings are non-empty and the locale is supported
          * by the system.
@@ -90,6 +98,8 @@ namespace ADS::i18n {
     /**
      * @class i18n
      * @brief Main internationalization class for translation management
+     *
+     * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Provides comprehensive internationalization functionality including:
@@ -140,6 +150,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Initialize the internationalization system
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Performs initial setup of the i18n system including locale detection,
@@ -153,6 +165,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Extract and normalize system locale information
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Detects the current system locale using environment variables (LANG, LC_ALL)
@@ -166,6 +180,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Load translation file for a specific language
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Attempts to load translation data from various file formats in priority order.
@@ -182,6 +198,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Parse JSON format translation file content
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Parses JSON content containing translation key-value pairs. Supports
@@ -200,6 +218,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Parse Java Properties format file content
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Parses standard Java Properties format with key=value pairs.
@@ -218,6 +238,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Parse GNU gettext PO (Portable Object) format file content
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version 2025
          *
          * Parses standard PO file format used by GNU gettext. Extracts msgid
@@ -236,6 +258,8 @@ namespace ADS::i18n {
 #ifdef NLOHMANN_JSON_VERSION_MAJOR
         /**
          * @brief Parse nested JSON objects recursively with dot notation
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Recursively traverses nested JSON objects and converts them to flat
@@ -255,6 +279,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Extract and clean quoted strings from PO file format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Removes surrounding quotes from PO file string values and handles
@@ -270,6 +296,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Unescape common string escape sequences
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Converts escape sequences like \n, \t, \r, \\, \" back to their
@@ -281,10 +309,12 @@ namespace ADS::i18n {
          *
          * @note Used by parsePropertiesContent() and parsePoContent()
          */
-        string unescapeString(const string &str);
+        static string unescapeString(const string &str);
 
         /**
          * @brief Create LocaleInfo structure from language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Constructs a LocaleInfo object from a given locale code by looking up
@@ -300,7 +330,10 @@ namespace ADS::i18n {
 
         /**
          * @brief Serialize translation data to Java Properties file format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
+         *
          * Writes translations to an output stream in the standard Java Properties format
          * (key=value pairs). Keys are sorted alphabetically and a header comment is included
          * with language information and generation metadata.
@@ -313,11 +346,13 @@ namespace ADS::i18n {
          * @note The file stream should be opened and ready for writing before calling
          * @see loadTranslationFile() for the corresponding parser
          */
-        bool serializePropertiesContent(const unordered_map<string, string> &trans,
-                                        const string &language, ofstream &file) const;
+        static bool serializePropertiesContent(const unordered_map<string, string> &trans,
+                                        const string &language, ofstream &file) ;
 
         /**
          * @brief Serialize translation data to JSON file format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Writes translations to an output stream as a JSON object with metadata.
@@ -339,6 +374,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Serialize translation data to GNU gettext PO file format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Writes translations to an output stream in the standard GNU gettext PO format.
@@ -360,6 +397,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Escape special characters in a string for JSON format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Converts special characters to their JSON-escaped equivalents to ensure
@@ -377,6 +416,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Escape special characters in a string for PO file format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Converts special characters to their PO-escaped equivalents to ensure
@@ -395,6 +436,8 @@ namespace ADS::i18n {
     public:
         /**
          * @brief Construct i18n system with base folder and fallback language
+         *
+         * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Initializes the internationalization system with the specified base directory
@@ -415,6 +458,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Destructor - cleanup resources
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Default destructor that automatically cleans up translation data
@@ -430,6 +475,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get the configured fallback language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns the language code used as fallback when requested translations
@@ -441,6 +488,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get the configured default language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns the default language code used for new translations when
@@ -452,6 +501,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get the base folder path for translation files
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns the absolute path to the directory where translation files
@@ -463,6 +514,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Set the current active locale using LocaleInfo
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Changes the current active locale to the specified LocaleInfo object.
@@ -477,6 +530,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Set the current active locale using language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Changes the current active locale to the specified language code.
@@ -492,6 +547,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get the currently active locale information
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns the LocaleInfo object representing the currently active locale
@@ -503,6 +560,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get the detected system locale information
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns the LocaleInfo object representing the system's default locale
@@ -515,6 +574,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get all translation key-value pairs for a language
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Retrieves the complete translation map for the specified language.
@@ -529,6 +590,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get pointer to fallback language translation data
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a pointer to the fallback language's translation entry in the
@@ -543,6 +606,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get pointer to specific language translation data
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a pointer to the specified language's translation entry in the
@@ -558,6 +623,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Check if a language is currently loaded
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Determines whether translation data for the specified language
@@ -570,6 +637,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Add or load a language into the translation system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Loads translation data for the specified language from files or creates
@@ -588,6 +657,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Add a translation key-value pair to the system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Adds a new translation entry or updates an existing one. If no language
@@ -608,6 +679,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get translation for a specific key
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Retrieves the translation for the given key in the specified language.
@@ -625,6 +698,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get translation with pluralization support
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns appropriate singular or plural translation based on the count value.
@@ -646,6 +721,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get translation with parameter substitution
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Retrieves translation for the key and performs parameter substitution
@@ -667,6 +744,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get the system locale's language code
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Convenience method that returns just the language code portion
@@ -679,6 +758,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get all currently loaded/available language codes
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a vector containing the language codes for all translation
@@ -692,6 +773,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Get all supported language codes from the system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a complete list of all language codes that are supported
@@ -705,6 +788,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Check if a locale code is supported by the system
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Validates whether the given locale code is recognized and supported
@@ -718,6 +803,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Normalize platform-specific locale to POSIX format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Converts platform-specific locale strings (e.g., Windows "English_United States")
@@ -732,6 +819,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Reload all translation files from disk
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Reloads translation data for all currently loaded languages from
@@ -745,22 +834,28 @@ namespace ADS::i18n {
 
         /**
          * @brief Save translation data to file in appropriate format
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Saves the translation data for the specified language to a file.
          * Automatically detects the existing file format or defaults to
          * Properties format if no existing file is found.
          *
-         * @param language Language code to save
+         * @param language      Language code to save
+         * @param fileFormat    Format to save the file. By default the format is JSON
+         *
          * @return true if saved successfully, false on error
          *
          * @note Supports saving to JSON, Properties, PO, and TXT formats
          * @see serializeJsonContent(), serializePropertiesContent(), serializePoContent()
          */
-        bool saveTranslations(const string &language) const;
+        bool saveTranslations(const string& language, const string& fileFormat = ".json") const;
 
         /**
          * @brief Get translation statistics for all loaded languages
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Returns a map containing the number of translation entries for
@@ -773,6 +868,8 @@ namespace ADS::i18n {
 
         /**
          * @brief Find missing translation keys compared to fallback language
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * Compares the specified language's translations with the fallback
@@ -790,6 +887,8 @@ namespace ADS::i18n {
     /**
      * @class i18n_exception
      * @brief Base exception class for internationalization-related errors
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * General exception type for errors that occur within the i18n system.
@@ -809,6 +908,8 @@ namespace ADS::i18n {
     /**
      * @class locale_exception
      * @brief Exception for locale-related errors
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Thrown when locale detection, validation, or configuration operations
@@ -826,6 +927,8 @@ namespace ADS::i18n {
     /**
      * @class translation_file_exception
      * @brief Exception for translation file operation errors
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jul 2025
      *
      * Thrown when translation file loading, parsing, or saving operations
@@ -836,6 +939,8 @@ namespace ADS::i18n {
     public:
         /**
          * @brief Construct translation file exception with error message
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jul 2025
          *
          * @param message Descriptive error message (automatically prefixed)
