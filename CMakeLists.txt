@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14...3.31)
 
-set (ADSProject Adventure_Designer_Studio)
+set(ADSProject Adventure_Designer_Studio)
 
 project(${ADSProject} CXX)
 
@@ -8,54 +8,88 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(IMGUI_DIR "lib/imgui")
 
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/translations/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/translations")
+# ----------------------------------------------------------
+# --- Config build environments
+# ----------------------------------------------------------
+# By default CMake use only one, but we can force to use three ones
+set(AVAILABLE_BUILD_TYPES Debug Release Test)
 
-# --- Configurar testeo opcional ---
-include(CTest)  # define la opción estándar BUILD_TESTING
-
-if(BUILD_TESTING)
-    add_subdirectory(lib/googletest)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the build type." FORCE)
 endif()
 
-#enable_testing()
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${AVAILABLE_BUILD_TYPES})
 
-# --- Dependencias externas ---
+message(STATUS "Selected build type: ${CMAKE_BUILD_TYPE}")
+
+# ----------------------------------------------------------
+# --- Compilation flags configuration
+# ----------------------------------------------------------
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS_DEBUG   "-g3 -O0 -Wall -Wextra -DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_TEST    "-g3 -O0 -Wall -Wextra -DTEST_MODE")   ### NUEVO ###
+elseif(MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG   "/Zi /Od /DEBUG:FULL /DDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
+    set(CMAKE_CXX_FLAGS_TEST    "/Zi /Od /DEBUG:FULL /DTEST_MODE")     ### NUEVO ###
+endif()
+
+# ----------------------------------------------------------
+# --- Copy resources (translations)
+# ----------------------------------------------------------
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/translations")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/translations/core")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/translations/game")
+endif ()
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/translations/" DESTINATION "${CMAKE_BINARY_DIR}/translations")
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/public")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public/assets")
+endif ()
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/public/" DESTINATION "${CMAKE_BINARY_DIR}/public")
+
+# ----------------------------------------------------------
+# --- External dependencies
+# ----------------------------------------------------------
 find_package(OpenGL REQUIRED)
-# require sudo apt install libglfw3-dev
-#find_package(glfw3 3.3 REQUIRED)
-# require sudo apt install libsdl2-dev
 find_package(SDL2 REQUIRED)
-
 add_subdirectory(lib/nlohmann_json)
-#add_subdirectory(lib/googletest)
 
 add_library(imgui
-        lib/imgui/imgui.cpp
-        lib/imgui/imgui_draw.cpp
-        lib/imgui/imgui_tables.cpp
-        lib/imgui/imgui_widgets.cpp
-        lib/imgui/backends/imgui_impl_sdl2.cpp
-        lib/imgui/backends/imgui_impl_sdlrenderer2.cpp
+    lib/imgui/imgui.cpp
+    lib/imgui/imgui_draw.cpp
+    lib/imgui/imgui_tables.cpp
+    lib/imgui/imgui_widgets.cpp
+    lib/imgui/backends/imgui_impl_sdl2.cpp
+    lib/imgui/backends/imgui_impl_sdlrenderer2.cpp
 )
 
 target_include_directories(imgui PUBLIC
-        ${IMGUI_DIR}
-        ${IMGUI_DIR}/backends
-        ${SDL2_INCLUDE_DIRS}
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ${SDL2_INCLUDE_DIRS}
 )
 
+# ----------------------------------------------------------
+# --- Project directories
+# ----------------------------------------------------------
 include_directories(
-        src/classes
-        src/exceptions
-        src/constants
-        ${IMGUI_DIR}
-        ${IMGUI_DIR}/backends
-        ${SDL2_INCLUDE_DIRS}
+    src/classes
+    src/exceptions
+    src/constants
+    src/utils
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+    ${SDL2_INCLUDE_DIRS}
 )
 
-set (Headers
+# ----------------------------------------------------------
+# --- Header and source files
+# ----------------------------------------------------------
+set(Headers
     src/exceptions/path_not_exist_exception.h
-    src/exceptions/not_found_exception.h
+    src/exceptions/file_not_found_exception.h
     src/exceptions/file_not_open_exception.h
     src/constants/languages.h
     src/classes/i18n/i18n.h
@@ -64,27 +98,41 @@ set (Headers
 set(Sources
     main.cpp
     src/classes/i18n/i18n.cpp
+        src/classes/env/env.cpp
+        src/classes/env/env.h
+    include/string.h
+    include/string.cpp
+    include/i18nUtils.h
+    include/i18nUtils.cpp
+    src/constants/SystemConst.h
 )
 
+# ----------------------------------------------------------
+# --- Main executable
+# ----------------------------------------------------------
 add_executable(${ADSProject} ${Sources} ${Headers})
-#add_subdirectory(tests)
 
-#target_link_libraries(${ADSProject} PRIVATE nlohmann_json::nlohmann_json imgui glfw)
 target_link_libraries(${ADSProject} PRIVATE
-        nlohmann_json::nlohmann_json
-        imgui
-        ${SDL2_LIBRARIES}
-#        OpenGL::GL
+    nlohmann_json::nlohmann_json
+    imgui
+    ${SDL2_LIBRARIES}
 )
 
-# --- Tests (solo si está habilitado) ---
-if(BUILD_TESTING)
-    message(STATUS "Compilando tests...")
+# ----------------------------------------------------------
+# --- Test config (test mode)
+# ----------------------------------------------------------
+include(CTest)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Test")    ### NUEVO ###
+    message(STATUS "Modo TEST activado — incluyendo GoogleTest")
+    add_subdirectory(lib/googletest)
     add_subdirectory(tests)
+    enable_testing()
 endif()
 
-#target_link_libraries(Adventure_Designer_Studio PUBLIC GTest::gtest_main)
-#target_link_libraries(tests gtest GTest::gtest_main)
-#
-#include(GoogleTest)
-#gtest_discover_tests(Adventure_Designer_Studio_Test)
+# ----------------------------------------------------------
+# --- Useful information
+# ----------------------------------------------------------
+message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER_ID}")
+message(STATUS "C++ Standard: ${CMAKE_CXX_STANDARD}")
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")

@@ -20,12 +20,14 @@
 #include <fstream>
 #include <locale>
 #include <map>
-
-
-// Optional: Include nlohmann/json if available
-#ifdef NLOHMANN_JSON_VERSION_MAJOR
 #include <nlohmann/json.hpp>
-#endif
+
+#include "SystemConst.h"
+#include "file_not_found_exception.h"
+#include "../../../include/string.h"
+
+using json = nlohmann::json;
+
 
 #ifdef _WIN32
 #include <windows.h>
@@ -238,59 +240,34 @@ namespace ADS::i18n {
      */
     bool i18n::loadTranslationFile(const string& language)
     {
-        // Define file extensions with their corresponding parsers
-        struct FileFormat {
-            string extension;
-            function<bool(const string&, unordered_map<string, string>&)> parser;
-        };
+        filesystem::path filePath = baseFolder / (language + ".json");
 
-        vector<FileFormat> formats = {
-                {
-                        ".json", [this](const string& content, unordered_map<string, string>& trans) {
-                            return parseJsonContent(content, trans);
-                        }
-                },
-                {
-                        ".properties", [this](const string& content, unordered_map<string, string>& trans) {
-                            return parsePropertiesContent(content, trans);
-                        }
-                },
-                {
-                        ".po", [this](const string& content, unordered_map<string, string>& trans) {
-                            return parsePoContent(content, trans);
-                        }
-                },
-                {
-                        ".txt", [this](const string& content, unordered_map<string, string>& trans) {
-                            return parsePropertiesContent(content, trans); // Same as properties
-                        }
+        if (std::filesystem::exists(filePath)) {
+            try {
+                ifstream file(filePath);
+
+                string content((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
+                file.close();
+
+                unordered_map<string, string> languageTranslations;
+
+                if (this->parseJsonContent("", content, languageTranslations)) {
+                    this->translations[language] = std::move(languageTranslations);
+
+                    return true;
                 }
-        };
+            }
+            catch (const std::ios_base::failure& e)
+            {
+                std::cout << "Caught an ios_base::failure.\n"
+                          << "Explanatory string: " << e.what() << '\n'
+                          << "Error code: " << e.code() << '\n';
 
-        for (const auto& format: formats) {
-            filesystem::path filePath = baseFolder / (language + format.extension);
-
-            if (std::filesystem::exists(filePath)) {
-                try {
-                    ifstream file(filePath);
-                    if (!file.is_open()) continue;
-
-                    string content((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-                    file.close();
-
-                    unordered_map<string, string> languageTranslations;
-                    if (format.parser(content, languageTranslations)) {
-                        translations[language] = std::move(languageTranslations);
-                        return true;
-                    }
-                }
-                catch (const std::exception&) {
-                    continue;
-                }
+                return false;
             }
         }
 
-        return false;
+        return false;   // File not found
     }
 
     /**
@@ -303,287 +280,38 @@ namespace ADS::i18n {
      * nested objects using dot notation (e.g., "menu.file.open"). Handles
      * both flat and hierarchical JSON structures.
      *
+     * @param key Key to add to the translations. It could be empty
      * @param content JSON file content as string
      * @param translations Output map to store parsed key-value pairs
+     *
      * @return true if parsing was successful, false on error
      *
      * @note Requires nlohmann/json library for JSON parsing
      * @see parseNestedJson() for nested object handling
      */
-    bool i18n::parseJsonContent(const string& content, unordered_map<string, string>& translations)
+    bool i18n::parseJsonContent(const string& key, const string& content, unordered_map<string, string>& translations)
     {
         try {
-#ifdef NLOHMANN_JSON_VERSION_MAJOR
-            nlohmann::json jsonData = nlohmann::json::parse(content);
+            json jsonData = json::parse(content);
 
-            // Handle flat JSON object: {"key": "value", ...}
-            if (jsonData.is_object()) {
-                for (auto it = jsonData.begin(); it != jsonData.end(); ++it) {
-                    if (it.value().is_string()) {
-                        translations[it.key()] = it.value().get<string>();
-                    }
-                    else if (it.value().is_object()) {
-                        // Handle nested objects with dot notation: {"menu": {"file": "File"}} -> "menu.file": "File"
-                        parseNestedJson(it.key(), it.value(), translations);
-                    }
+            for (auto it = jsonData.begin(); it != jsonData.end(); ++it) {
+                if (it.value().is_object()) {
+                    // It's another JSON object. it Needs to be parse again
+                    this->parseJsonContent(it.key(), it.value().dump(), translations);
                 }
-                return !this->translations.empty();
+                else {
+                    // it's a string...
+                    translations[key.empty() ? it.key() : key + "." + it.key()] = it.value().get<string>();
+                }
             }
-#else
-            // Fallback to properties parser if nlohmann/json is not available
-            return parsePropertiesContent(content, translations);
-#endif
+
+            return !translations.empty();
         }
         catch (const std::exception&) {
-            // If JSON parsing fails, try properties format as fallback
-            return parsePropertiesContent(content, translations);
+            return false;
         }
 
         return false;
-    }
-
-#ifdef NLOHMANN_JSON_VERSION_MAJOR
-    /**
-     * @brief Parse nested JSON objects recursively with dot notation
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Recursively traverses nested JSON objects and converts them to flat
-     * key-value pairs using dot notation. For example, {"menu": {"file": "File"}}
-     * becomes "menu.file" -> "File".
-     *
-     * @param prefix Current key prefix for nested objects
-     * @param obj JSON object to parse recursively
-     * @param translations Output map to store flattened key-value pairs
-     *
-     * @note Only available when nlohmann/json library is present
-     * @see parseJsonContent()
-     */
-    void i18n::parseNestedJson(const string& prefix, const nlohmann::json& obj,
-                               unordered_map<string, string>& translations)
-    {
-        for (auto it = obj.begin(); it != obj.end(); ++it) {
-            string key = prefix.empty() ? it.key() : prefix + "." + it.key();
-
-            if (it.value().is_string()) {
-                translations[key] = it.value().get<string>();
-            }
-            else if (it.value().is_object()) {
-                parseNestedJson(key, it.value(), translations);
-            }
-        }
-    }
-#endif
-    /**
-     * @brief Parse Java Properties format file content
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Parses standard Java Properties format with key=value pairs.
-     * Handles comments (lines starting with # or !), escape sequences,
-     * and multi-line values. Ignores empty lines and whitespace.
-     *
-     * @param content Properties file content as string
-     * @param translations Output map to store parsed key-value pairs
-     * @return true if parsing was successful, false on error
-     *
-     * @note Also used for .txt files with same format
-     * @see unescapeString() for escape sequence handling
-     */
-    bool i18n::parsePropertiesContent(const string& content, unordered_map<string, string>& translations)
-    {
-        istringstream stream(content);
-        string line;
-
-        while (getline(stream, line)) {
-            // Skip empty lines and comments
-            if (line.empty() || line[0] == '#' || line[0] == ';') continue;
-
-            // Find key=value separator
-            size_t equalPos = line.find('=');
-            if (equalPos == string::npos) continue;
-
-            string key = line.substr(0, equalPos);
-            string value = line.substr(equalPos + 1);
-
-            // Trim whitespace
-            key.erase(0, key.find_first_not_of(" \t"));
-            key.erase(key.find_last_not_of(" \t") + 1);
-            value.erase(0, value.find_first_not_of(" \t"));
-            value.erase(value.find_last_not_of(" \t") + 1);
-
-            // Remove quotes if present
-            if (!value.empty() &&
-                ((value.front() == '"' && value.back() == '"') ||
-                 (value.front() == '\'' && value.back() == '\''))) {
-                value = value.substr(1, value.length() - 2);
-            }
-
-            // Handle escape sequences
-            value = unescapeString(value);
-
-            translations[key] = value;
-        }
-
-        return !this->translations.empty();
-    }
-
-    /**
-     * Parses PO (Portable Object) file content and extracts msgid/msgstr pairs.
-     * Handles multi-line entries, comments, and continuation lines.
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Oct-2025
-     *
-     * @param string content PO file content to parse
-     * @param unordered_map<string, string> translations Output map to store parsed translations
-     *
-     * @return bool True if parsing was successful, false otherwise
-     */
-    bool i18n::parsePoContent(const string& content, unordered_map<string, string>& translations)
-    {
-        // Basic PO file parser
-        istringstream stream(content);
-        string line;
-        string currentMsgid;
-        string currentMsgstr;
-        bool inMsgid = false;
-        bool inMsgstr = false;
-
-        while (getline(stream, line)) {
-            // Trim whitespace
-            line.erase(0, line.find_first_not_of(" \t"));
-            line.erase(line.find_last_not_of(" \t") + 1);
-
-            if (line.empty() || line[0] == '#') {
-                // Save previous entry if complete
-                if (!currentMsgid.empty() && !currentMsgstr.empty()) {
-                    translations[currentMsgid] = currentMsgstr;
-                }
-                currentMsgid.clear();
-                currentMsgstr.clear();
-                inMsgid = inMsgstr = false;
-                continue;
-            }
-
-            if (line.substr(0, 6) == "msgid ") {
-                currentMsgid = extractQuotedString(line.substr(6));
-                inMsgid = true;
-                inMsgstr = false;
-            }
-            else if (line.substr(0, 7) == "msgstr ") {
-                currentMsgstr = extractQuotedString(line.substr(7));
-                inMsgid = false;
-                inMsgstr = true;
-            }
-            else if (line[0] == '"' && (inMsgid || inMsgstr)) {
-                // Continuation line
-                string continuation = extractQuotedString(line);
-                if (inMsgid) {
-                    currentMsgid += continuation;
-                }
-                else if (inMsgstr) {
-                    currentMsgstr += continuation;
-                }
-            }
-        }
-
-        // Don't forget the last entry
-        if (!currentMsgid.empty() && !currentMsgstr.empty()) {
-            translations[currentMsgid] = currentMsgstr;
-        }
-
-        return !this->translations.empty();
-    }
-
-    /**
-     * @brief Extract and clean quoted strings from PO file format
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Removes surrounding quotes from PO file string values and handles
-     * concatenated multi-line strings. Processes both single and double
-     * quoted strings according to PO file specifications.
-     *
-     * @param str String potentially containing quotes and whitespace
-     * @return Cleaned string with quotes removed
-     *
-     * @note Used internally by parsePoContent()
-     */
-    string i18n::extractQuotedString(const string& str)
-    {
-        string trimmed = str;
-        trimmed.erase(0, trimmed.find_first_not_of(" \t"));
-        trimmed.erase(trimmed.find_last_not_of(" \t") + 1);
-
-        if (trimmed.length() >= 2 && trimmed.front() == '"' && trimmed.back() == '"') {
-            return unescapeString(trimmed.substr(1, trimmed.length() - 2));
-        }
-
-        return trimmed;
-    }
-
-    /**
-     * @brief Unescape common string escape sequences
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Converts escape sequences like \n, \t, \r, \\, \" back to their
-     * literal characters. Handles standard C-style escape sequences
-     * commonly used in translation files.
-     *
-     * @param str String containing escape sequences
-     * @return String with escape sequences converted to literal characters
-     *
-     * @note Used by parsePropertiesContent() and parsePoContent()
-     */
-    string i18n::unescapeString(const string& str)
-    {
-        string result;
-        result.reserve(str.length());
-
-        for (size_t i = 0; i < str.length(); ++i) {
-            if (str[i] == '\\' && i + 1 < str.length()) {
-                switch (str[i + 1]) {
-                case 'n':
-                    result += '\n';
-                    ++i;
-                    break;
-                case 't':
-                    result += '\t';
-                    ++i;
-                    break;
-                case 'r':
-                    result += '\r';
-                    ++i;
-                    break;
-                case '\\':
-                    result += '\\';
-                    ++i;
-                    break;
-                case '"':
-                    result += '"';
-                    ++i;
-                    break;
-                case '\'':
-                    result += '\'';
-                    ++i;
-                    break;
-                default:
-                    result += str[i];
-                    break;
-                }
-            }
-            else {
-                result += str[i];
-            }
-        }
-
-        return result;
     }
 
     /**
@@ -1006,321 +734,54 @@ namespace ADS::i18n {
      *
      * @param language      Language code to save
      * @param fileFormat    Format to save the file. By default the format is JSON
+     * @param useExisting   Look for existing file with the given extension and if it exists, use it.
      *
      * @return true if saved successfully, false on error
      *
      * @note Supports saving to JSON, Properties, PO, and TXT formats
      * @see serializeJsonContent(), serializePropertiesContent(), serializePoContent()
      */
-    bool i18n::saveTranslations(const string& language, const string& fileFormat) const
+    bool i18n::saveTranslations(const string& language, const bool& useExisting) const
     {
-        auto it = this->translations.find(language);
-        if (it == this->translations.end()) {
+        auto langIt = this->translations.find(language);
+        if (langIt == this->translations.end()) {
             return false;
         }
 
-        // Define file formats with their corresponding serializers
-        struct FileFormat {
-            string extension;
-            function<bool(const unordered_map<string, string>&, const string&, ofstream&)> serializer;
-        };
-
-        vector<FileFormat> formats = {
-                {
-                    ".json",
-                    [this](const unordered_map<string, string>& trans, const string& lang, ofstream& file) {
-                        return serializeJsonContent(trans, lang, file);
-                    }
-                },
-                {
-                    ".properties",
-                    [this](const unordered_map<string, string>& trans, const string& lang, ofstream& file) {
-                        return serializePropertiesContent(trans, lang, file);
-                    }
-                },
-                {
-                    ".po",
-                    [this](const unordered_map<string, string>& trans, const string& lang, ofstream& file) {
-                        return serializePoContent(trans, lang, file);
-                    }
-                },
-                {
-                    ".txt",
-                    [this](const unordered_map<string, string>& trans, const string& lang, ofstream& file) {
-                        return serializePropertiesContent(trans, lang, file); // Same as properties
+        if (useExisting) {
+            filesystem::path filePath = this->baseFolder / (language + ".json");
+            std::cout << "File " << filePath << " exists" << std::endl;
+            try {
+                ofstream file(filePath, std::ios::trunc);
+                std::vector<std::string> languageParts;
+                string identifier = "";
+                std::cout << "Language: " << langIt->first << std::endl << std::endl;
+                nlohmann::json data;
+                for (const auto& [lang, translations] : langIt->second) {
+                    if (lang.contains(".")) {
+                         languageParts = explode(lang, '.', true);
+                        if (identifier != languageParts[0]) {
+                            identifier = languageParts[0];
+                        };
+                        data[identifier][languageParts[1]] = translations;
+                    } else {
+                        data[lang] = translations;
                     }
                 }
-        };
+                file << data.dump(2) << std::endl;
+                // std::cout << data.dump(4) << std::endl;
+                file.close();
 
-        // Try to find existing file format first
-        for (const auto& format: formats) {
-            filesystem::path filePath = baseFolder / (language + format.extension);
-
-            if (filesystem::exists(filePath)) {
-                try {
-                    ofstream file(filePath);
-                    if (!file.is_open()) continue;
-
-                    if (format.serializer(it->second, language, file)) {
-                        file.close();
-                        return true;
-                    }
-                    file.close();
-                }
-                catch (const std::exception&) {
-                    continue;
-                }
+                return true;
+            }
+            catch (const std::ios_base::failure& e) {
+                std::cout << "Caught an ios_base::failure.\n"
+                        << "Explanatory string: " << e.what() << '\n'
+                        << "Error code: " << e.code() << '\n';
             }
         }
 
-        // If no existing file found, default to .properties format
-        try {
-            filesystem::path filePath = baseFolder / (language + fileFormat);
-            ofstream file(filePath);
-
-            if (!file.is_open()) {
-                return false;
-            }
-
-            // Use properties serializer as default
-            bool success = serializePropertiesContent(it->second, language, file);
-            file.close();
-            return success;
-        }
-        catch (const std::exception&) {
-            return false;
-        }
-    }
-
-    /**
-     * @brief Serialize translation data to Java Properties file format
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Writes translations to an output stream in the standard Java Properties format
-     * (key=value pairs). Keys are sorted alphabetically and a header comment is included
-     * with language information and generation metadata.
-     *
-     * @param trans The translation map containing key-value pairs to serialize
-     * @param language The language code for the translations (used in header comment)
-     * @param file Output file stream to write the serialized data to
-     * @return true if serialization was successful, false on error
-     *
-     * @note The file stream should be opened and ready for writing before calling
-     * @see loadTranslationFile() for the corresponding parser
-     */
-    bool i18n::serializePropertiesContent(const unordered_map<string, string>& trans,
-                                          const string& language, ofstream& file)
-    {
-        try {
-            // Write header
-            file << "# Translation file for " << language << "\n";
-            file << "# Generated by Adventure Designer Studio i18n system\n\n";
-
-            // Write translations sorted by key
-            vector<pair<string, string> > sortedTranslations(trans.begin(), trans.end());
-            sort(sortedTranslations.begin(), sortedTranslations.end());
-
-            for (const auto& translation: sortedTranslations) {
-                // Escape special characters if needed
-                file << translation.first << "=" << translation.second << "\n";
-            }
-            return true;
-        }
-        catch (const std::exception&) {
-            return false;
-        }
-    }
-
-    /**
-     * @brief Serialize translation data to JSON file format
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Writes translations to an output stream as a JSON object with metadata.
-     * The JSON structure includes a _metadata section with language and generation
-     * information, followed by sorted key-value translation pairs. Special characters
-     * are properly escaped according to JSON standards.
-     *
-     * @param trans The translation map containing key-value pairs to serialize
-     * @param language The language code for the translations (included in metadata)
-     * @param file Output file stream to write the serialized JSON data to
-     * @return true if serialization was successful, false on error
-     *
-     * @note The file stream should be opened and ready for writing before calling
-     * @see parseJsonContent() for the corresponding parser
-     * @see escapeJsonString() for string escaping implementation
-     */
-    bool i18n::serializeJsonContent(const unordered_map<string, string>& trans,
-                                    const string& language, ofstream& file) const
-    {
-        try {
-            file << "{\n";
-            file << "  \"_metadata\": {\n";
-            file << "    \"language\": \"" << language << "\",\n";
-            file << "    \"generated_by\": \"Adventure Designer Studio i18n system\"\n";
-            file << "  },\n";
-
-            // Write translations sorted by key
-            vector<pair<string, string> > sortedTranslations(trans.begin(), trans.end());
-            sort(sortedTranslations.begin(), sortedTranslations.end());
-
-            for (size_t i = 0; i < sortedTranslations.size(); ++i) {
-                const auto& translation = sortedTranslations[i];
-                file << "  \"" << escapeJsonString(translation.first) << "\": \""
-                        << escapeJsonString(translation.second) << "\"";
-
-                if (i < sortedTranslations.size() - 1) {
-                    file << ",";
-                }
-                file << "\n";
-            }
-
-            file << "}\n";
-            return true;
-        }
-        catch (const std::exception&) {
-            return false;
-        }
-    }
-
-    /**
-     * @brief Serialize translation data to GNU gettext PO file format
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Writes translations to an output stream in the standard GNU gettext PO format.
-     * Includes proper PO file headers with language and encoding information,
-     * followed by msgid/msgstr pairs for each translation. Keys are sorted
-     * alphabetically and strings are properly escaped for PO format.
-     *
-     * @param trans The translation map containing key-value pairs to serialize
-     * @param language The language code for the translations (used in PO headers)
-     * @param file Output file stream to write the serialized PO data to
-     * @return true if serialization was successful, false on error
-     *
-     * @note The file stream should be opened and ready for writing before calling
-     * @see parsePoContent() for the corresponding parser
-     * @see escapePoString() for string escaping implementation
-     */
-    bool i18n::serializePoContent(const unordered_map<string, string>& trans,
-                                  const string& language, ofstream& file) const
-    {
-        try {
-            // Write PO header
-            file << "# Translation file for " << language << "\n";
-            file << "# Generated by Adventure Designer Studio i18n system\n";
-            file << "msgid \"\"\n";
-            file << "msgstr \"\"\n";
-            file << "\"Language: " << language << "\\n\"\n";
-            file << "\"Content-Type: text/plain; charset=UTF-8\\n\"\n\n";
-
-            // Write translations sorted by key
-            vector<pair<string, string> > sortedTranslations(trans.begin(), trans.end());
-            sort(sortedTranslations.begin(), sortedTranslations.end());
-
-            for (const auto& translation: sortedTranslations) {
-                file << "msgid \"" << escapePoString(translation.first) << "\"\n";
-                file << "msgstr \"" << escapePoString(translation.second) << "\"\n\n";
-            }
-            return true;
-        }
-        catch (const std::exception&) {
-            return false;
-        }
-    }
-
-    /**
-     * @brief Escape special characters in a string for JSON format
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Converts special characters to their JSON-escaped equivalents to ensure
-     * the string can be safely included in a JSON document. Handles common
-     * escape sequences like quotes, backslashes, newlines, carriage returns,
-     * and tabs.
-     *
-     * @param str The input string to escape
-     * @return A new string with JSON-escaped special characters
-     *
-     * @note Escaped characters: " → \", \ → \\, \n → \\n, \r → \\r, \t → \\t
-     * @see serializeJsonContent() for usage context
-     */
-    string i18n::escapeJsonString(const string& str) const
-    {
-        string escaped;
-        for (char c: str) {
-            switch (c) {
-            case '"':
-                escaped += "\\\"";
-                break;
-            case '\\':
-                escaped += "\\\\";
-                break;
-            case '\n':
-                escaped += "\\n";
-                break;
-            case '\r':
-                escaped += "\\r";
-                break;
-            case '\t':
-                escaped += "\\t";
-                break;
-            default:
-                escaped += c;
-                break;
-            }
-        }
-        return escaped;
-    }
-
-    /**
-     * @brief Escape special characters in a string for PO file format
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jul 2025
-     *
-     * Converts special characters to their PO-escaped equivalents to ensure
-     * the string conforms to GNU gettext PO file standards. Handles the same
-     * escape sequences as JSON format since PO files use similar escaping rules
-     * for msgid and msgstr values.
-     *
-     * @param str The input string to escape
-     * @return A new string with PO-escaped special characters
-     *
-     * @note Escaped characters: " → \", \ → \\, \n → \\n, \r → \\r, \t → \\t
-     * @see serializePoContent() for usage context
-     */
-    string i18n::escapePoString(const string& str) const
-    {
-        string escaped;
-        for (char c: str) {
-            switch (c) {
-            case '"':
-                escaped += "\\\"";
-                break;
-            case '\\':
-                escaped += "\\\\";
-                break;
-            case '\n':
-                escaped += "\\n";
-                break;
-            case '\r':
-                escaped += "\\r";
-                break;
-            case '\t':
-                escaped += "\\t";
-                break;
-            default:
-                escaped += c;
-                break;
-            }
-        }
-        return escaped;
+        return false;
     }
 
     /**

@@ -1,0 +1,8 @@
+{
+  "LANGUAGE": "Español ES",
+  "WIN_TITLE": "Ejemplo de la librería 'Dear ImGui' usando SDL2+SDL_Renderer.",
+  "TITLES": {
+    "TITLE_1": "El Señor de los anillos",
+    "TITLE_2": "Matrix. La venganza"
+  }
+}

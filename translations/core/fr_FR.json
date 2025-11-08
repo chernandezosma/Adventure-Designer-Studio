@@ -1,0 +1,8 @@
+{
+  "LANGUAGE": "French FR",
+  "WIN_TITLE": "Exemple de la bibliothèque « Dear ImGui » utilisant SDL2 et SDL_Renderer",
+  "TITLES": {
+    "TITLE_1": "Le Seigneur des Anneaux",
+    "TITLE_2": "Matrix: La Revanche"
+  }
+}

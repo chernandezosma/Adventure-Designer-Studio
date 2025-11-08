@@ -1,0 +1,11 @@
+{
+  "LANGUAGE": "Russian RU",
+  "WIN_TITLE": "Пример библиотеки «Dear ImGui» с использованием SDL2+SDL_Renderer",
+  "TITLES": {
+    "TITLE_1": "Властелин колец",
+    "TITLE_2": "Матрица: Месть"
+  }
+}
+
+
+

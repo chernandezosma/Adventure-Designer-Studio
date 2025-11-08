@@ -1,0 +1,8 @@
+{
+  "LANGUAGE": "German DE",
+  "WIN_TITLE": "Beispiel für die Verwendung der Bibliothek 'Dear ImGui' mit SDL2+SDL_Renderer.",
+  "TITLES": {
+    "TITLE_1": "Der Herr der Ringe",
+    "TITLE_2": "Matrix Revenge"
+  }
+}

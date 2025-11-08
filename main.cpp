@@ -14,6 +14,11 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <random>
+#include <unistd.h>
+
+#include "src/classes/env/env.h"
+#include "include/i18nUtils.h"
+#include "include/string.h"
 
 #ifdef BUILD_TESTING_ENABLED
     #include "lib/googletest/googletest/include/gtest/internal/gtest-string.h"
@@ -29,9 +34,6 @@
 #include "languages.h"
 #include "i18n/i18n.h"
 
-namespace lang = ADS::Constants::Languages;
-namespace i18n = ADS::i18n;
-
 #if !SDL_VERSION_ATLEAST(2, 0, 17)
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
 #endif
@@ -40,37 +42,20 @@ int main(int argc, char** argv)
 {
     std::cout << "Start of Main" << std::endl;
     std::cout << "Using the C++ version: " << __cplusplus << std::endl;
+
     std::cout << "Setup the languages" << std::endl;
+    ADS::env::Environment environment = ADS::env::Environment();
 
-    std::string baseTranslationFolder = "translations";
-    // Create a new translations with English as fallback.
-    i18n::i18n translations = i18n::i18n(baseTranslationFolder, std::string(lang::ENGLISH_UNITED_STATES));
-    // Add Spanish as other language
-    translations.addLanguage(std::string(lang::SPANISH_SPAIN));
+    std::string* langs = environment.get("LANGUAGES");
+    std::vector<std::string> languages = explode(*langs, ',');
 
-    translations.addTranslation(
-        "WIN_TITLE",
-        "Dear ImGui SDL2+SDL_Renderer ejemplo",
-        lang::SPANISH_SPAIN.data()
-    );
+    i18n::i18n translations = loadI18n(languages);
 
-    translations.addTranslation(
-        "WIN_TITLE",
-        "Dear ImGui SDL2+SDL_Renderer example",
-        lang::ENGLISH_UNITED_STATES.data()
-    );
-    bool result = translations.saveTranslations(std::string (lang::ENGLISH_UNITED_STATES));
-    if (!result) {
-        std::cout << "Failed to save translations" << std::endl;
-        return 1;
-    }
-
-    std::cout << "Saving the translations to a file..." << std::endl;
-    if (!translations.saveTranslations(std::string(lang::ENGLISH_UNITED_STATES))) {
-        std::cout << "Translations cannot be saved. There was an error." << std::endl;
-    }
-
-    std::cout << "Translations saved successfully" << std::endl;
+    // std::cout << "Saving the translations" << std::endl;
+    // translations.saveTranslations(
+    //     std::string(ADS::Constants::Languages::ENGLISH_UNITED_STATES),
+    //     true
+    // );
 
     std::cout << "Using im GUI Library " << std::endl;
 
@@ -96,9 +81,8 @@ int main(int argc, char** argv)
     // Create window with SDL_Renderer graphics context
     float main_scale = ImGui_ImplSDL2_GetContentScaleForDisplay(0);
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    // "Dear ImGui SDL2+SDL_Renderer example"
     SDL_Window* window = SDL_CreateWindow(
-        translations.translate("WIN_TITLE", lang::ENGLISH_UNITED_STATES.data()).data(),
+        translations.translate("WIN_TITLE", std::string(lang::SPANISH_ARGENTINA)).c_str(),
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED, (int)(1280 * main_scale),
         (int)(800 * main_scale),
