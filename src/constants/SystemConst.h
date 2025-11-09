@@ -11,16 +11,17 @@
  */
 
 
-#ifndef ADVENTURE_DESIGNER_STUDIO_SYSTEMS_H
-#define ADVENTURE_DESIGNER_STUDIO_SYSTEMS_H
+#ifndef ADS_SYSTEMS_H
+#define ADS_SYSTEMS_H
 #include <string>
 
-namespace ADS_SYSTEM_CONSTANTS {
+namespace ADS_CONSTANTS_SYSTEM {
     class SystemConst {
-
-        const std::string APPLICATION_NAME = "Adventure Studio";
-
+    public:
+        static constexpr std::string APPLICATION_NAME = "Adventure Studio";
+        static constexpr int DEFAULT_X_WIN_SIZE = 1200;
+        static constexpr int DEFAULT_Y_WIN_SIZE = 800;
     };
 } // ADS_SYSTEM_CONSTANTS
 
-#endif //ADVENTURE_DESIGNER_STUDIO_SYSTEMS_H
+#endif //ADS_SYSTEMS_H

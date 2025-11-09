@@ -14,9 +14,9 @@ set(IMGUI_DIR "lib/imgui")
 # By default CMake use only one, but we can force to use three ones
 set(AVAILABLE_BUILD_TYPES Debug Release Test)
 
-if(NOT CMAKE_BUILD_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the build type." FORCE)
-endif()
+endif ()
 
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${AVAILABLE_BUILD_TYPES})
 
@@ -25,26 +25,26 @@ message(STATUS "Selected build type: ${CMAKE_BUILD_TYPE}")
 # ----------------------------------------------------------
 # --- Compilation flags configuration
 # ----------------------------------------------------------
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(CMAKE_CXX_FLAGS_DEBUG   "-g3 -O0 -Wall -Wextra -DDEBUG")
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-    set(CMAKE_CXX_FLAGS_TEST    "-g3 -O0 -Wall -Wextra -DTEST_MODE")   ### NUEVO ###
-elseif(MSVC)
-    set(CMAKE_CXX_FLAGS_DEBUG   "/Zi /Od /DEBUG:FULL /DDEBUG")
+    set(CMAKE_CXX_FLAGS_TEST "-g3 -O0 -Wall -Wextra -DTEST_MODE")   ### NUEVO ###
+elseif (MSVC)
+    set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DEBUG:FULL /DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
-    set(CMAKE_CXX_FLAGS_TEST    "/Zi /Od /DEBUG:FULL /DTEST_MODE")     ### NUEVO ###
-endif()
+    set(CMAKE_CXX_FLAGS_TEST "/Zi /Od /DEBUG:FULL /DTEST_MODE")     ### NUEVO ###
+endif ()
 
 # ----------------------------------------------------------
 # --- Copy resources (translations)
 # ----------------------------------------------------------
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/translations")
+if (NOT EXISTS "${CMAKE_BINARY_DIR}/translations")
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/translations/core")
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/translations/game")
 endif ()
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/translations/" DESTINATION "${CMAKE_BINARY_DIR}/translations")
+file(COPY "public/translations/" DESTINATION "${CMAKE_BINARY_DIR}/translations")
 
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/public")
+if (NOT EXISTS "${CMAKE_BINARY_DIR}/public")
     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public/assets")
 endif ()
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/public/" DESTINATION "${CMAKE_BINARY_DIR}/public")
@@ -57,54 +57,58 @@ find_package(SDL2 REQUIRED)
 add_subdirectory(lib/nlohmann_json)
 
 add_library(imgui
-    lib/imgui/imgui.cpp
-    lib/imgui/imgui_draw.cpp
-    lib/imgui/imgui_tables.cpp
-    lib/imgui/imgui_widgets.cpp
-    lib/imgui/backends/imgui_impl_sdl2.cpp
-    lib/imgui/backends/imgui_impl_sdlrenderer2.cpp
+        lib/imgui/imgui.cpp
+        lib/imgui/imgui_draw.cpp
+        lib/imgui/imgui_tables.cpp
+        lib/imgui/imgui_widgets.cpp
+        lib/imgui/backends/imgui_impl_sdl2.cpp
+        lib/imgui/backends/imgui_impl_sdlrenderer2.cpp
 )
 
 target_include_directories(imgui PUBLIC
-    ${IMGUI_DIR}
-    ${IMGUI_DIR}/backends
-    ${SDL2_INCLUDE_DIRS}
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+        ${SDL2_INCLUDE_DIRS}
 )
 
 # ----------------------------------------------------------
 # --- Project directories
 # ----------------------------------------------------------
 include_directories(
-    src/classes
-    src/exceptions
-    src/constants
-    src/utils
-    ${IMGUI_DIR}
-    ${IMGUI_DIR}/backends
-    ${SDL2_INCLUDE_DIRS}
+        src/classes
+        src/exceptions
+        src/constants
+        src/utils
+        src/include
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+        ${SDL2_INCLUDE_DIRS}
 )
 
 # ----------------------------------------------------------
 # --- Header and source files
 # ----------------------------------------------------------
 set(Headers
-    src/exceptions/path_not_exist_exception.h
-    src/exceptions/file_not_found_exception.h
-    src/exceptions/file_not_open_exception.h
-    src/constants/languages.h
-    src/classes/i18n/i18n.h
+        src/exceptions/path_not_exist_exception.h
+        src/exceptions/file_not_found_exception.h
+        src/exceptions/file_not_open_exception.h
+        src/constants/languages.h
+        src/constants/SystemConst.h
+        src/classes/i18n/i18n.h
+        src/classes/env/env.h
+        src/include/adsString.h
+        src/include/i18nUtils.h
 )
 
 set(Sources
-    main.cpp
-    src/classes/i18n/i18n.cpp
+        main.cpp
+        src/classes/i18n/i18n.cpp
         src/classes/env/env.cpp
         src/classes/env/env.h
-    include/string.h
-    include/string.cpp
-    include/i18nUtils.h
-    include/i18nUtils.cpp
-    src/constants/SystemConst.h
+        src/include/adsString.h
+        src/include/adsString.cpp
+        src/include/i18nUtils.h
+        src/include/i18nUtils.cpp
 )
 
 # ----------------------------------------------------------
@@ -113,9 +117,9 @@ set(Sources
 add_executable(${ADSProject} ${Sources} ${Headers})
 
 target_link_libraries(${ADSProject} PRIVATE
-    nlohmann_json::nlohmann_json
-    imgui
-    ${SDL2_LIBRARIES}
+        nlohmann_json::nlohmann_json
+        imgui
+        ${SDL2_LIBRARIES}
 )
 
 # ----------------------------------------------------------
@@ -123,12 +127,12 @@ target_link_libraries(${ADSProject} PRIVATE
 # ----------------------------------------------------------
 include(CTest)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Test")    ### NUEVO ###
+if (CMAKE_BUILD_TYPE STREQUAL "Test")    ### NUEVO ###
     message(STATUS "Modo TEST activado — incluyendo GoogleTest")
     add_subdirectory(lib/googletest)
     add_subdirectory(tests)
     enable_testing()
-endif()
+endif ()
 
 # ----------------------------------------------------------
 # --- Useful information

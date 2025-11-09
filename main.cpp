@@ -17,8 +17,8 @@
 #include <unistd.h>
 
 #include "src/classes/env/env.h"
-#include "include/i18nUtils.h"
-#include "include/string.h"
+#include "i18nUtils.h"
+#include "adsString.h"
 
 #ifdef BUILD_TESTING_ENABLED
     #include "lib/googletest/googletest/include/gtest/internal/gtest-string.h"
@@ -38,7 +38,7 @@
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
 #endif
 
-int main(int argc, char** argv)
+int main()
 {
     std::cout << "Start of Main" << std::endl;
     std::cout << "Using the C++ version: " << __cplusplus << std::endl;

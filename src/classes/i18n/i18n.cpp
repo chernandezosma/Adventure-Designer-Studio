@@ -16,15 +16,13 @@
 #include <cstring>
 #include <functional>
 #include <regex>
-#include <sstream>
 #include <fstream>
 #include <locale>
 #include <map>
 #include <nlohmann/json.hpp>
 
-#include "SystemConst.h"
 #include "file_not_found_exception.h"
-#include "../../../include/string.h"
+#include "adsString.h"
 
 using json = nlohmann::json;
 
