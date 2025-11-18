@@ -13,8 +13,10 @@
 #define BASE_EXCEPTION_H
 #include <format>
 #include <utility>
+#include <iostream>
 
 namespace ADS::Exceptions {
+    using namespace std;
     using std::string;
     using std::format;
     using std::runtime_error;
@@ -38,8 +40,8 @@ namespace ADS::Exceptions {
                 msg
             );
 #else
-             this->full_message = sprintf ("[%s:%d] - %s",
-                this->file,
+            this->full_message = sprintf((char*)"[%s:%d] - %s", 
+                this->file.c_str(),
                 this->line,
                 msg
             );

@@ -13,6 +13,7 @@
 #ifndef ADS_ENV_H
 #define ADS_ENV_H
 #include <ranges>
+#include <string>
 #include <unordered_map>
 
 namespace ADS::env {
@@ -99,7 +100,7 @@ namespace ADS::env {
          *          object exists and the internal map is not modified
          * @note Consider using const string& for the key parameter
          */
-        string* get (const string &key);
+        string* get(const string& key);
 
     };
 

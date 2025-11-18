@@ -14,7 +14,9 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <random>
+#ifndef _WIN32
 #include <unistd.h>
+#endif // !_WIN32
 
 #include "src/classes/env/env.h"
 #include "i18nUtils.h"

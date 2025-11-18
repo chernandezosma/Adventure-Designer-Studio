@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <ProjectGuid>{4C5B5908-31D0-2953-E165-B2B7A3E040B3}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <ExecutablePath>C:\SDL\include;$(ExecutablePath)</ExecutablePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>$(ProjectDir)lib\imgui\backends;$(ProjectDir)lib\imgui;$(ProjectDir)lib;$(ProjectDir)src\include;$(ProjectDir)src\exceptions;$(ProjectDir)src\classes;$(ProjectDir)src\constants;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\SDL\include;$(ProjectDir)lib\imgui\backends;$(ProjectDir)lib\imgui;$(ProjectDir)lib;$(ProjectDir)src\include;$(ProjectDir)src\exceptions;$(ProjectDir)src\classes;$(ProjectDir)src\constants;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>$(ProjectDir)lib\imgui\backends;$(ProjectDir)lib\imgui;$(ProjectDir)lib;$(ProjectDir)src\include;$(ProjectDir)src\exceptions;$(ProjectDir)src\classes;$(ProjectDir)src\constants;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalIncludeDirectories>$(ProjectDir)lib\imgui\backends;$(ProjectDir)lib\imgui;$(ProjectDir)lib;$(ProjectDir)src\include;$(ProjectDir)src\exceptions;$(ProjectDir)src\classes;$(ProjectDir)src\constants;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="lib\imgui\backends\imgui_impl_allegro5.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_android.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_dx10.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_dx9.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_glut.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_opengl2.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_sdl2.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_sdlgpu3.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_sdlrenderer2.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_sdlrenderer3.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_vulkan.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_wgpu.cpp" />
+    <ClCompile Include="lib\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_allegro5\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_android_opengl3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_glfw_opengl2\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_glfw_opengl3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_glfw_vulkan\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_glfw_wgpu\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_glut_opengl2\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_null\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl2_directx11\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl2_opengl2\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl2_opengl3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl2_sdlrenderer2\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl2_vulkan\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl3_directx11\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl3_opengl3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl3_sdlgpu3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl3_sdlrenderer3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_sdl3_vulkan\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_win32_directx10\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_win32_directx11\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_win32_directx12\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_win32_directx9\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_win32_opengl3\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\example_win32_vulkan\main.cpp" />
+    <ClCompile Include="lib\imgui\examples\libs\usynergy\uSynergy.c" />
+    <ClCompile Include="lib\imgui\imgui.cpp" />
+    <ClCompile Include="lib\imgui\imgui_demo.cpp" />
+    <ClCompile Include="lib\imgui\imgui_draw.cpp" />
+    <ClCompile Include="lib\imgui\imgui_tables.cpp" />
+    <ClCompile Include="lib\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="lib\imgui\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="lib\imgui\misc\fonts\binary_to_compressed_c.cpp" />
+    <ClCompile Include="lib\imgui\misc\freetype\imgui_freetype.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\classes\env\env.cpp" />
+    <ClCompile Include="src\classes\i18n\i18n.cpp" />
+    <ClCompile Include="src\classes\i18n\translations.cpp" />
+    <ClCompile Include="src\include\adsString.cpp" />
+    <ClCompile Include="src\include\i18nUtils.cpp" />
+    <ClCompile Include="tests\i18nTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lib\gtest\gtest-assertion-result.h" />
+    <ClInclude Include="lib\gtest\gtest-death-test.h" />
+    <ClInclude Include="lib\gtest\gtest-matchers.h" />
+    <ClInclude Include="lib\gtest\gtest-message.h" />
+    <ClInclude Include="lib\gtest\gtest-param-test.h" />
+    <ClInclude Include="lib\gtest\gtest-printers.h" />
+    <ClInclude Include="lib\gtest\gtest-spi.h" />
+    <ClInclude Include="lib\gtest\gtest-test-part.h" />
+    <ClInclude Include="lib\gtest\gtest-typed-test.h" />
+    <ClInclude Include="lib\gtest\gtest.h" />
+    <ClInclude Include="lib\gtest\gtest_pred_impl.h" />
+    <ClInclude Include="lib\gtest\gtest_prod.h" />
+    <ClInclude Include="lib\gtest\internal\custom\gtest-port.h" />
+    <ClInclude Include="lib\gtest\internal\custom\gtest-printers.h" />
+    <ClInclude Include="lib\gtest\internal\custom\gtest.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-death-test-internal.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-filepath.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-internal.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-param-util.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-port-arch.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-port.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-string.h" />
+    <ClInclude Include="lib\gtest\internal\gtest-type-util.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_allegro5.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_android.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_dx10.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_dx11.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_dx9.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_glfw.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_glut.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_metal.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_opengl2.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_opengl3.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_osx.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_sdl2.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_sdl3.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_sdlgpu3.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_sdlgpu3_shaders.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_sdlrenderer2.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_sdlrenderer3.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_vulkan.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_wgpu.h" />
+    <ClInclude Include="lib\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="lib\imgui\examples\example_allegro5\imconfig_allegro5.h" />
+    <ClInclude Include="lib\imgui\examples\libs\emscripten\emscripten_mainloop_stub.h" />
+    <ClInclude Include="lib\imgui\examples\libs\glfw\include\GLFW\glfw3.h" />
+    <ClInclude Include="lib\imgui\examples\libs\glfw\include\GLFW\glfw3native.h" />
+    <ClInclude Include="lib\imgui\examples\libs\usynergy\uSynergy.h" />
+    <ClInclude Include="lib\imgui\imconfig.h" />
+    <ClInclude Include="lib\imgui\imgui.h" />
+    <ClInclude Include="lib\imgui\imgui_internal.h" />
+    <ClInclude Include="lib\imgui\imstb_rectpack.h" />
+    <ClInclude Include="lib\imgui\imstb_textedit.h" />
+    <ClInclude Include="lib\imgui\imstb_truetype.h" />
+    <ClInclude Include="lib\imgui\misc\cpp\imgui_stdlib.h" />
+    <ClInclude Include="lib\imgui\misc\freetype\imgui_freetype.h" />
+    <ClInclude Include="lib\imgui\misc\single_file\imgui_single_file.h" />
+    <ClInclude Include="lib\nlohmann\json.hpp" />
+    <ClInclude Include="src\classes\env\env.h" />
+    <ClInclude Include="src\classes\i18n\i18n.h" />
+    <ClInclude Include="src\classes\i18n\translations.h" />
+    <ClInclude Include="src\constants\languages.h" />
+    <ClInclude Include="src\constants\SystemConst.h" />
+    <ClInclude Include="src\exceptions\base_exception.h" />
+    <ClInclude Include="src\exceptions\file_not_found_exception.h" />
+    <ClInclude Include="src\exceptions\file_not_open_exception.h" />
+    <ClInclude Include="src\exceptions\not_found_exception.h" />
+    <ClInclude Include="src\exceptions\path_not_exist_exception.h" />
+    <ClInclude Include="src\include\adsString.h" />
+    <ClInclude Include="src\include\i18nUtils.h" />
+    <ClInclude Include="tests\i18nTests.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="CMakeLists.txt" />
+    <Text Include="tests\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
+    <None Include=".gitignore" />
+    <None Include="CMakeSettings.json" />
+    <None Include="COPIYING" />
+    <None Include="lib\imgui\examples\example_glfw_wgpu\web\index.html" />
+    <None Include="lib\imgui\examples\libs\emscripten\shell_minimal.html" />
+    <None Include="LICENSE" />
+    <None Include="public\translations\core\de_DE.json" />
+    <None Include="public\translations\core\en_US.json" />
+    <None Include="public\translations\core\es_ES.json" />
+    <None Include="public\translations\core\fr_FR.json" />
+    <None Include="public\translations\core\it_IT.json" />
+    <None Include="public\translations\core\pt_PT.json" />
+    <None Include="public\translations\core\ru_RU.json" />
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="doc\assets\logo.png" />
+    <Image Include="public\assets\logo.png" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -18,7 +18,7 @@
 namespace ADS_CONSTANTS_SYSTEM {
     class SystemConst {
     public:
-        static constexpr std::string APPLICATION_NAME = "Adventure Studio";
+        static constexpr auto APPLICATION_NAME = "Adventure Studio";
         static constexpr int DEFAULT_X_WIN_SIZE = 1200;
         static constexpr int DEFAULT_Y_WIN_SIZE = 800;
     };

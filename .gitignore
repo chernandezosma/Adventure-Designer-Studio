@@ -376,3 +376,7 @@ bh_unicode_properties.cache
 # https://packagecontrol.io/packages/sublime-github
 GitHub.sublime-settings
 
+.vs
+Adventur.4C5B5908
+lib/**
+build
