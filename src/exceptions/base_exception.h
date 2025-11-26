@@ -11,12 +11,10 @@
  */
 #ifndef BASE_EXCEPTION_H
 #define BASE_EXCEPTION_H
-#include <format>
 #include <utility>
 
 namespace ADS::Exceptions {
     using std::string;
-    using std::format;
     using std::runtime_error;
     using std::move;
 
@@ -26,28 +24,15 @@ namespace ADS::Exceptions {
         string full_message;
 
     public:
-        explicit BaseException(const string &msg,
+        explicit BaseException(const string& msg,
                                string file = __FILE__,
-                               const int line = __LINE__): runtime_error(msg), file(move(file)), line(line) {
-#if __cplusplus >= 202302L
-            // You might format the message here or in what()
-            this->full_message = format(
-                "[{}:{}] - {}",
-                this->file,
-                this->line,
-                msg
-            );
-#else
-             this->full_message = sprintf ("[%s:%d] - %s",
-                this->file,
-                this->line,
-                msg
-            );
-            cerr << this->full_message << endl;
-#endif
+                               const int line = __LINE__): runtime_error(msg), file(std::move(file)), line(line)
+        {
+            this->full_message = "[" + this->file + ":" + std::to_string(this->line) + "] - " + msg;
         }
 
-        [[nodiscard]] const char *what() const noexcept override {
+        [[nodiscard]] const char* what() const noexcept override
+        {
             return this->full_message.c_str();
         }
     };
