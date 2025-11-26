@@ -294,7 +294,7 @@ namespace ADS::i18n {
 
             for (auto it = jsonData.begin(); it != jsonData.end(); ++it) {
                 if (it.value().is_object()) {
-                    // It's another JSON object. it Needs to be parse again
+                    // It's another JSON object. It needs to be parsed again
                     this->parseJsonContent(it.key(), it.value().dump(), translations);
                 }
                 else {
