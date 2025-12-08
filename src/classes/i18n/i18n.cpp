@@ -21,7 +21,7 @@
 #include <map>
 #include <nlohmann/json.hpp>
 
-#include "file_not_found_exception.h"
+#include "../../exceptions/filesystem/file_not_found_exception.h"
 #include "adsString.h"
 
 using json = nlohmann::json;

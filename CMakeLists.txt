@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14...3.31)
 
 set(ADSProject Adventure_Designer_Studio)
+set(HEADER_GUARD_PREFIX "ADS" CACHE STRING "Prefix for header guards")
 
 project(${ADSProject} CXX)
 
@@ -31,6 +32,7 @@ add_compile_definitions(
 # --- Compilation flags configuration
 # ----------------------------------------------------------
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
     set(CMAKE_CXX_FLAGS_TEST "-g3 -O0 -Wall -Wextra -DTEST_MODE")   ### NUEVO ###
@@ -87,6 +89,8 @@ add_custom_target(copy_public_folder ALL
 find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 add_subdirectory(lib/nlohmann_json)
+add_subdirectory(lib/spdlog)
+add_subdirectory(lib/uuid_v4)
 
 add_library(imgui
         lib/imgui/imgui.cpp
@@ -122,9 +126,9 @@ include_directories(
 # --- Header and source files
 # ----------------------------------------------------------
 set(Headers
-        src/exceptions/path_not_exist_exception.h
-        src/exceptions/file_not_found_exception.h
-        src/exceptions/file_not_open_exception.h
+        src/exceptions/filesystem/path_not_exist_exception.h
+        src/exceptions/filesystem/file_not_found_exception.h
+        src/exceptions/filesystem/file_not_open_exception.h
         src/constants/languages.h
         src/constants/System.h
         src/classes/i18n/i18n.h
@@ -144,6 +148,14 @@ set(Sources
         src/include/i18nUtils.cpp
         src/include/im_gui_tools.cpp
         src/include/im_gui_tools.h
+        src/include/app.cpp
+        src/include/app.h
+        src/classes/Logger/logger.cpp
+        src/classes/Logger/logger.h
+        src/classes/UI/UI.cpp
+        src/classes/UI/UI.h
+        src/classes/UI/Window.cpp
+        src/classes/UI/Window.h
 )
 
 # ----------------------------------------------------------
@@ -156,6 +168,8 @@ target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
         imgui
         ${SDL2_LIBRARIES}
+        spdlog::spdlog
+        uuid_v4::uuid_v4
 )
 
 # ----------------------------------------------------------

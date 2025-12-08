@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include "uuid_v4.h"
+
 /**
  * @brief Split a string by delimiter (PHP explode equivalent)
  *
@@ -87,5 +89,56 @@ std::string implode(const std::vector<std::string>& parts,
  * @note Used internally by parsePoContent()
  */
 std::string extractQuotedString(const std::string& str);
+
+/**
+ * @brief Trim specified characters from both ends of a string
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Nov 2025
+ *
+ * Removes all occurrences of the specified characters from the
+ * beginning and end of the input string. The original string is
+ * not modified; a new trimmed string is returned.
+ *
+ * @param str The string to be trimmed
+ * @param charsToTrim String containing all characters to remove (default: whitespace)
+ *
+ * @return A new string with leading and trailing characters removed
+ *
+ * @note If the string contains only characters to trim, an empty string is returned
+ * @note Default whitespace characters include space, tab, newline, and carriage return
+ */
+std::string trim(const std::string& str, const std::string& charsToTrim = " \t\n\r");
+
+/**
+ * @brief Generate hash value for a string
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Computes a hash value for the given string using std::hash. This is
+ * commonly used for creating unique identifiers or keys in hash-based
+ * containers like unordered_map. Handles empty strings correctly by
+ * returning their valid hash value.
+ *
+ * @param str The string to hash
+ *
+ * @return std::size_t Hash value of the input string
+ *
+ * @note Empty strings return a valid hash (implementation-defined but consistent)
+ */
+std::size_t makeHash(const std::string& str);
+
+/**
+ * @brief Generate a random UUIDv4
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Computes a random UUIDv4
+ *
+ * @return A new UUIDv4
+ */
+UUIDv4::UUID getRandomUuid();
 
 #endif //ADS_STRING_H

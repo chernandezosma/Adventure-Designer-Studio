@@ -9,17 +9,17 @@
  * The original author's name must be displayed in any user interface or
  * promotional material.
  */
-#ifndef PATH_NOT_EXIST_EXCEPTION_H
-#define PATH_NOT_EXIST_EXCEPTION_H
+#ifndef ADS_FILE_NOT_OPEN_EXCEPTION_H
+#define ADS_FILE_NOT_OPEN_EXCEPTION_H
 #include <utility>
-#include "base_exception.h"
+#include "../base_exception.h"
 
 namespace ADS::Exceptions {
-    class path_not_exist_exception final : public BaseException {
+    class file_not_found_exception final : public BaseException {
     public:
-        explicit path_not_exist_exception(const std::string &msg, std::string file = __FILE__, const int line = __LINE__):
+        explicit file_not_found_exception(const std::string &msg, std::string file = __FILE__, const int line = __LINE__):
             BaseException(msg, std::move(file), line) {}
     };
 } // ADS::Exceptions
 
-#endif //PATH_NOT_EXIST_EXCEPTION_H
+#endif //ADS_FILE_NOT_OPEN_EXCEPTION_H

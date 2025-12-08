@@ -15,16 +15,16 @@
 #define ADS_SYSTEMS_H
 #include <string>
 
-#ifndef ADS_DEBUG
-    #define ADS_DEBUG
-#endif
-
 namespace ADS::Constants {
     // using namespace std;
 
     class System {
     public:
+
+        static bool ADS_DEBUG;
+
         static constexpr auto APPLICATION_NAME = "Adventure Studio";
+        static constexpr auto CONFIG_FILE = "imgui.ini";
         static constexpr int DEFAULT_X_WIN_SIZE = 1200;
         static constexpr int DEFAULT_Y_WIN_SIZE = 800;
 
