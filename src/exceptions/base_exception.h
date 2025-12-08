@@ -9,9 +9,12 @@
  * The original author's name must be displayed in any user interface or
  * promotional material.
  */
-#ifndef BASE_EXCEPTION_H
-#define BASE_EXCEPTION_H
+#ifndef ADS_BASE_EXCEPTION_H
+#define ADS_BASE_EXCEPTION_H
+#include <format>
+#include <stdexcept>
 #include <utility>
+#include <string>
 
 namespace ADS::Exceptions {
     using std::string;
@@ -21,21 +24,19 @@ namespace ADS::Exceptions {
     class BaseException : public std::runtime_error {
         string file;
         int line;
-        string full_message;
 
     public:
-        explicit BaseException(const string& msg,
+        explicit BaseException(std::string_view msg,
                                string file = __FILE__,
-                               const int line = __LINE__): runtime_error(msg), file(std::move(file)), line(line)
-        {
-            this->full_message = "[" + this->file + ":" + std::to_string(this->line) + "] - " + msg;
-        }
+                               const int line = __LINE__)
+            : runtime_error(std::format("[{}:{}] - {}", std::string_view(file), std::to_string(line), std::string_view(msg))),
+              file(std::move(file)), line(line) {}
 
         [[nodiscard]] const char* what() const noexcept override
         {
-            return this->full_message.c_str();
+            return runtime_error::what();
         }
     };
 } // ADS::Exceptions
 
-#endif // BASE_EXCEPTION_H
+#endif // ADS_BASE_EXCEPTION_H

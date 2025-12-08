@@ -1,0 +1,250 @@
+/*
+ * Adventure Designer Studio
+ * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ *
+ * This file is licensed under the GNU General Public License version 3 (GPLv3).
+ * See LICENSE.md and COPYING for full license details.
+ *
+ * This software includes an additional requirement for visible attribution:
+ * The original author's name must be displayed in any user interface or
+ * promotional material.
+ */
+
+
+#ifndef ADS_IMGUI_WINDOW_H
+#define ADS_IMGUI_WINDOW_H
+#include <SDL_render.h>
+#include <SDL_video.h>
+#include <ratio>
+#include <string>
+#include <X11/X.h>
+
+namespace ADS::UI {
+
+    /**
+     * Structure which hold the Window position, size and flags information
+     */
+    typedef struct {
+        std::string title;
+        float x;
+        float y;
+        float width;
+        float height;
+    } SDL_WINDOW_INFO;
+
+    typedef struct {
+        SDL_WindowFlags windowFlags;
+        Uint32 rendererFlags;
+    } SDL_FLAGS;
+
+    /**
+     * Class to manage the Window
+     */
+    class Window {
+
+    private:
+        /**
+         * Flags used for the current window, and its render
+         */
+        SDL_FLAGS* flags;
+
+        /**
+         * The Window handler itself
+         */
+        SDL_Window* window;
+
+        /**
+         * A structure representing rendering state
+         */
+        SDL_Renderer* renderer;
+
+
+        float mainScale;
+
+    protected:
+        /**
+         * @brief Add a flag to the current window flags
+         *
+         * Adds an SDL window flag to the existing flags.
+         *
+         * @param flag SDL window flag to add
+         */
+        void addWindowFlag(SDL_WindowFlags flag);
+
+        /**
+         * @brief Add a flag to the current window renderer flags
+         *
+         * Adds an SDL window flag to the existing renderer flags.
+         *
+         * @param flag SDL window flag to add
+         */
+        void addRendererFlag(uint32_t flag);
+
+
+    public:
+        /**
+         * Default flags
+         */
+        static constexpr SDL_WindowFlags DEFAULT_FLAGS = static_cast<SDL_WindowFlags>(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+        static constexpr Uint32 DEFAULT_RENDER_FLAGS = static_cast<SDL_RendererFlags>(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+
+        static constexpr int FIRST_AVAILABLE_DRIVER = -1;
+
+        static constexpr int WINDOW_FLAGS = 1;
+        static constexpr int RENDERER_FLAGS = 2;
+
+        /**
+         * @brief Construct a new Window instance with SDL backend
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Creates an SDL window with the specified dimensions and title. Automatically
+         * applies DPI scaling for high-resolution displays and combines provided flags
+         * with default window flags.
+         *
+         * @param title Window title displayed in the title bar
+         * @param x X position of the window (use SDL_WINDOWPOS_CENTERED for center)
+         * @param y Y position of the window (use SDL_WINDOWPOS_CENTERED for center)
+         * @param width Window width in logical units (scaled by DPI factor)
+         * @param height Window height in logical units (scaled by DPI factor)
+         * @param flags Additional SDL render and window flags (combined with existing ones)
+         *
+         * @throws std::runtime_error if SDL window creation fails
+         *
+         * @see DEFAULT_FLAGS, getWindow()
+         */
+        Window(std::string title, float x, float y, float width, float height, SDL_FLAGS* flags);
+
+        /**
+         * @brief Construct a new Window from SDL_WINDOW_INFO structure
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Convenience constructor that accepts a SDL_WINDOW_INFO structure and
+         * delegates to the main constructor. This simplifies window creation when
+         * configuration is stored in a SDL_WINDOW_INFO struct.
+         *
+         * @param info     Pointer to SDL_WINDOW_INFO structure containing all window parameters
+         * @param flags    Flags to be applied to the Window and Renderer
+         *
+         * @throws std::runtime_error if SDL window creation fails
+         *
+         * @see internally uses Window::Window() constructor
+         */
+        Window(SDL_WINDOW_INFO* info, SDL_FLAGS* flags);
+
+        /**
+         * @brief Destructor for Window instance
+         *
+         * Default destructor that releases window resources. SDL cleanup should be
+         * handled externally by the application.
+         */
+        ~Window() = default;
+
+        /**
+         * @brief Create a 2D rendering context for a window.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Create a 2D rendering context for a window.
+         *
+         * @param int index The index of the rendering driver to initialize, or -1 to
+         *                  initialize the first one supporting the requested flags.
+         * @param Uint32 rendererFlags  0, or one or more SDL_RendererFlags OR'd together.
+         *
+         * @throws std::runtime_error if SDL window creation fails (delegated from main constructor)
+         *
+         * @note This constructor uses constructor delegation (C++11 feature)
+         * @see SDL_WINDOW_INFO, Window(std::string, float, float, float, float, SDL_WindowFlags)
+         */
+        SDL_Renderer* createRenderer(int index = -1) const;
+
+        /**
+         * @brief Return the default flags for rendering the window
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Check, build and return the flags to apply the best configuration to render the window
+         *
+         * @return Uint32
+         */
+        Uint32 getDefaultRenderFlags() const;
+
+        /**
+         * @brief Add a flag to the current window or renderer flags
+         *
+         * Adds an SDL window flag to the existing window or renderer flags.
+         *
+         * @param target    target to add the flag window or renderer
+         * @param flags     SDL window flags to add
+         */
+        void addFlag(uint8_t target, SDL_FLAGS flags);
+
+        /**
+         * @brief Get the underlying SDL window pointer
+         *
+         * Returns the raw SDL_Window pointer for use with SDL and ImGui functions.
+         * The window remains owned by this Window instance.
+         *
+         * @return SDL_Window* Pointer to the SDL window
+         *
+         * @note The returned pointer is valid only while this Window instance exists
+         */
+        SDL_Window* getWindow() const;
+
+        /**
+         * @brief Get the current window flags
+         *
+         * Returns the SDL window flags that were set during window creation,
+         * including both default and custom flags.
+         *
+         * @return SDL_WindowFlags Current window flags
+         */
+        SDL_WindowFlags getFlags() const;
+
+        /**
+         * @brief Get the main display content scale factor
+         *
+         * Returns the content scale factor for the primary display, which is used
+         * for high-DPI display support. This value is cached during initialization.
+         *
+         * @return float The content scale factor (typically 1.0 for standard DPI,
+         *               2.0 for Retina/HiDPI displays)
+         *
+         * @note This value is set during init() and remains constant during runtime
+         */
+        [[nodiscard]] float getMainScale() const;
+
+        /**
+         * @brief Get the render handler for the current window
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Retuen the handler to render the window
+         *
+         * @return SDL_Renderer pointer
+         *
+         */
+        [[nodiscard]] SDL_Renderer* getRenderer() const;
+
+        /**
+         * @brief Set the window rendering handler
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Set a valid handler for rendering the window
+         *
+         */
+        void setRenderer(SDL_Renderer* rendererHandler);
+
+
+    };
+}
+
+#endif //_ADS_IMGUI_WINDOW_H

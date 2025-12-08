@@ -14,13 +14,15 @@
 #include <SDL.h>
 #include <random>
 #include <unistd.h>
+#include <X11/X.h>
 
 #include "System.h"
 #include "src/classes/env/env.h"
 #include "i18nUtils.h"
 #include "adsString.h"
-#include "im_gui_tools.h"
-#include "imstb_truetype.h"
+#include "app.h"
+#include "UI/Window.h"
+#include "imgui/window_intialization_exception.h"
 
 #ifdef BUILD_TESTING_ENABLED
 #include "lib/googletest/googletest/include/gtest/internal/gtest-string.h"
@@ -322,15 +324,14 @@ void RenderWorkingArea()
     // Your main content here
     // Example: Add tabs for different documents
     if (ImGui::BeginTabBar("DocumentTabs")) {
-
         std::string tabLabel = std::string(ICON_FA_CARET_UP) + " Script 1";
         if (ImGui::BeginTabItem(tabLabel.c_str())) {
             static char script_text[4096] =
-                ICON_FA_TREE " Forest Entrance\n"
-                ICON_FA_BOOK " Description: You stand at the edge of a dark forest...\n"
-                ICON_FA_COMMENT " Dialog: 'Welcome, traveler...'\n";
+                    ICON_FA_TREE " Forest Entrance\n"
+                    ICON_FA_BOOK " Description: You stand at the edge of a dark forest...\n"
+                    ICON_FA_COMMENT " Dialog: 'Welcome, traveler...'\n";
 
-                    // "// Your text adventure script here\n\nScene: Forest Entrance\nDescription: You stand at the edge of a dark forest...\n";
+            // "// Your text adventure script here\n\nScene: Forest Entrance\nDescription: You stand at the edge of a dark forest...\n";
             ImGui::InputTextMultiline("##script", script_text, IM_ARRAYSIZE(script_text), ImVec2(-1, -1));
             ImGui::EndTabItem();
         }
@@ -368,62 +369,31 @@ void RenderIDE()
 
 int main()
 {
-    std::cout << "Start of Main" << std::endl;
-    std::cout << "Using the C++ version: " << __cplusplus << std::endl;
-    std::cout << "Read the .env file" << std::endl;
+    ADS::Core::App* app = new ADS::Core::App();
 
-    ADS::env::Environment environment = ADS::env::Environment();
-    std::string* langs = environment.get("LANGUAGES");
-
-    std::cout << "Load the languages" << std::endl;
-    std::vector<std::string> languages = explode(*langs, ',');
-    i18n::i18n translations = loadI18n(languages);
-    std::cout << "Using im GUI Library " << std::endl;
-
-    // Windows - DPI Awareness
-#ifdef _WIN32
-    ::SetProcessDPIAware();
-#endif
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
-        printf("Error: %s\n", SDL_GetError());
-        return 1;
-    }
-
-    // macOS - High resolution configuration
-#ifdef __APPLE__
-    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
-#endif
-
-    // From 2.0.18: Enable native IME.
-#ifdef SDL_HINT_IME_SHOW_UI
-    SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
-#endif
-
-    // Enable high DPI support
-    // SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
+    spdlog::info("Start of Main");
+    spdlog::info(format("Using the C++ version: {0}", __cplusplus));
+    spdlog::info("Read the .env file");
 
     // Create window with SDL_Renderer graphics context
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    float mainScale = ImGui_ImplSDL2_GetContentScaleForDisplay(0);
-    SDL_Window* window = SDL_CreateWindow(
-        translations.translate("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA)).c_str(),
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        (int)(System::DEFAULT_X_WIN_SIZE * mainScale),
-        (int)(System::DEFAULT_Y_WIN_SIZE * mainScale),
-        window_flags
-    );
+    std::pair<UUIDv4::UUID, ADS::UI::Window*> WindowInfo;
+    ADS::UI::SDL_WINDOW_INFO* sdlwi = new ADS::UI::SDL_WINDOW_INFO();
 
-    if (window == nullptr) {
-        printf("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
-        return -1;
-    }
+    sdlwi->title = app->_t("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA));
+    sdlwi->x = SDL_WINDOWPOS_CENTERED;
+    sdlwi->y= SDL_WINDOWPOS_CENTERED;
+    sdlwi->width = System::DEFAULT_X_WIN_SIZE;
+    sdlwi->height = System::DEFAULT_Y_WIN_SIZE;
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-    if (renderer == nullptr) {
-        printf("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
-        return -1;
-    }
+    ADS::UI::SDL_FLAGS* flags = new ADS::UI::SDL_FLAGS();
+
+    ADS::UI::ImGuiManager& imguiObject = app->getImGuiObject();
+    pair<UUIDv4::UUID, ADS::UI::Window*> windowInfo = imguiObject.newWindow(sdlwi, flags);
+    ADS::UI::Window* mainWindow = windowInfo.second;
+    SDL_Window* window = mainWindow->getWindow();
+
+    float mainScale = mainWindow->getMainScale();
+    SDL_Renderer* renderer = mainWindow->getRenderer();
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -457,8 +427,7 @@ int main()
     float DPIScale = 1.0f;
     int displayIndex = SDL_GetWindowDisplayIndex(window);
     float ddpi, hdpi, vdpi;
-    if (SDL_GetDisplayDPI(displayIndex, &ddpi, &hdpi, &vdpi) == 0)
-    {
+    if (SDL_GetDisplayDPI(displayIndex, &ddpi, &hdpi, &vdpi) == 0) {
         DPIScale = ddpi / 96.0f; // 96 DPI is the standard
     }
 
@@ -497,7 +466,7 @@ int main()
     // - Read 'docs/FONTS.md' for more instructions and details. If you like the default font but want it to scale better, consider using the 'ProggyVector' from the same author!
     // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
     // style.FontSizeBase = 14.0f;
-    style.FontSizeBase = atof((environment.get("FONT_SIZE_BASE"))->data());
+    style.FontSizeBase = atof((app->getEnv()->get("FONT_SIZE_BASE"))->data());
     io.Fonts->AddFontDefault();
 
     ImFontConfig config;
@@ -505,9 +474,9 @@ int main()
     config.GlyphMinAdvanceX = 13.0f;
     io.Fonts->AddFontFromFileTTF("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f, &config);
 
-    ImFont* lightFont = io.Fonts->AddFontFromFileTTF(environment.get("LIGHT_FONT")->data());
-    ImFont* mediumFont = io.Fonts->AddFontFromFileTTF(environment.get("MEDIUM_FONT")->data());
-    ImFont* RegularFont = io.Fonts->AddFontFromFileTTF(environment.get("REGULAR_FONT")->data());
+    ImFont* lightFont = io.Fonts->AddFontFromFileTTF(app->getEnv()->get("LIGHT_FONT")->data());
+    ImFont* mediumFont = io.Fonts->AddFontFromFileTTF(app->getEnv()->get("MEDIUM_FONT")->data());
+    ImFont* RegularFont = io.Fonts->AddFontFromFileTTF(app->getEnv()->get("REGULAR_FONT")->data());
     ImFont* font = lightFont;
     if (font == nullptr) {
         printf("Error: Font cannot be created: %s\n", SDL_GetError());
@@ -546,7 +515,8 @@ int main()
             ImGui_ImplSDL2_ProcessEvent(&event);
             if (event.type == SDL_QUIT) done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID ==
-                SDL_GetWindowID(window)) done = true;
+                SDL_GetWindowID(window))
+                done = true;
         }
 
         // Start the Dear ImGui frame
