@@ -156,6 +156,8 @@ set(Sources
         src/classes/UI/UI.h
         src/classes/UI/Window.cpp
         src/classes/UI/Window.h
+        src/classes/UI/fonts.cpp
+        src/classes/UI/fonts.h
 )
 
 # ----------------------------------------------------------

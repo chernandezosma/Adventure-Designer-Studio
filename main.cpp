@@ -57,13 +57,14 @@ ImVec4 RGB(int r, int g, int b, int a = 255)
 void SetupDockingLayout(ImGuiID dockSpaceId)
 {
     // Only setup once
-    if (isDockingSetup) return;
+    if (isDockingSetup)
+        return;
 
     isDockingSetup = true;
 
     // Check if there's an existing layout in the .ini file
     // If the dock node exists, it means we have a saved layout - don't override it!
-    ImGuiDockNode* existingNode = ImGui::DockBuilderGetNode(dockSpaceId);
+    ImGuiDockNode *existingNode = ImGui::DockBuilderGetNode(dockSpaceId);
     if (existingNode != nullptr && existingNode->IsSplitNode()) {
         // Layout already exists from saved settings, don't override it
         std::cout << "Found saved layout, using it..." << std::endl;
@@ -98,10 +99,10 @@ void SetupDockingLayout(ImGuiID dockSpaceId)
     ImGui::DockBuilderFinish(dockSpaceId);
 }
 
-void RenderMainWindow(float& statusBarHeight)
+void RenderMainWindow(float &statusBarHeight)
 {
     // Setup main window to fill the viewport (except for status bar)
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
 
     // Calculate the main window size (95% of viewport height)
     ImVec2 mainWindowPos = viewport->Pos;
@@ -169,6 +170,16 @@ void RenderMainWindow(float& statusBarHeight)
             if (ImGui::MenuItem("Reset Layout")) {
                 isDockingSetup = false;
             }
+            ImGui::Separator();
+            if (ImGui::BeginMenu("Theme")) {
+                if (ImGui::MenuItem("Dark Theme")) {
+                    ImGui::StyleColorsDark();
+                }
+                if (ImGui::MenuItem("Light Theme")) {
+                    ImGui::StyleColorsLight();
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Help")) {
@@ -184,7 +195,7 @@ void RenderMainWindow(float& statusBarHeight)
 
 void RenderStatusBar(float statusBarHeight)
 {
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
 
     // Status Bar (fixed at bottom, 5% height)
     // ImVec2 statusBarPos = ImVec2(viewport->Pos.x, viewport->Pos.y + mainWindowSize.y);
@@ -369,141 +380,48 @@ void RenderIDE()
 
 int main()
 {
-    ADS::Core::App* app = new ADS::Core::App();
+    ADS::Core::App *app = new ADS::Core::App();
 
     spdlog::info("Start of Main");
     spdlog::info(format("Using the C++ version: {0}", __cplusplus));
     spdlog::info("Read the .env file");
 
     // Create window with SDL_Renderer graphics context
-    std::pair<UUIDv4::UUID, ADS::UI::Window*> WindowInfo;
-    ADS::UI::SDL_WINDOW_INFO* sdlwi = new ADS::UI::SDL_WINDOW_INFO();
+    std::pair<UUIDv4::UUID, ADS::UI::Window *> WindowInfo;
+    ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO(
+            {
+                    app->_t("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA)),
+                    SDL_WINDOWPOS_CENTERED,
+                    SDL_WINDOWPOS_CENTERED,
+                    System::DEFAULT_X_WIN_SIZE,
+                    System::DEFAULT_Y_WIN_SIZE,
+            }
+            );
+    ADS::UI::SDL_FLAGS *flags = new ADS::UI::SDL_FLAGS();
+    ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
+    pair<UUIDv4::UUID, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
+    ADS::UI::Window *mainWindow = windowInfo.second;
+    SDL_Window *window = mainWindow->getWindow();
+    ADS::Environment *env = app->getEnv();
 
-    sdlwi->title = app->_t("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA));
-    sdlwi->x = SDL_WINDOWPOS_CENTERED;
-    sdlwi->y= SDL_WINDOWPOS_CENTERED;
-    sdlwi->width = System::DEFAULT_X_WIN_SIZE;
-    sdlwi->height = System::DEFAULT_Y_WIN_SIZE;
+    // float mainScale = mainWindow->getMainScale();
+    SDL_Renderer *renderer = mainWindow->getRenderer();
+    ImGuiIO *io = imguiObject.getIO();
+    ADS::UI::Fonts *fm = imguiObject.getFontManager();
+    fm->loadDefaultFonts();
+    fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
+    fm->loadFontFromFile("lightFont", env->get("LIGHT_FONT")->data());
+    fm->loadFontFromFile("mediumFont", env->get("MEDIUM_FONT")->data());
+    fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data());
 
-    ADS::UI::SDL_FLAGS* flags = new ADS::UI::SDL_FLAGS();
+    ImFont *font = fm->getFont("lightFont");
 
-    ADS::UI::ImGuiManager& imguiObject = app->getImGuiObject();
-    pair<UUIDv4::UUID, ADS::UI::Window*> windowInfo = imguiObject.newWindow(sdlwi, flags);
-    ADS::UI::Window* mainWindow = windowInfo.second;
-    SDL_Window* window = mainWindow->getWindow();
-
-    float mainScale = mainWindow->getMainScale();
-    SDL_Renderer* renderer = mainWindow->getRenderer();
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.IniFilename = System::CONFIG_FILE;
-    if (filesystem::exists(System::CONFIG_FILE)) {
-        ImGui::LoadIniSettingsFromDisk(System::CONFIG_FILE);
-    }
-
-    (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Enable Multi-Viewport / Platform Windows
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    // ImGui::StyleColorsLight();
-
-    // When viewports are enabled we tweak WindowRounding/WindowBg so platform windows can look identical to regular ones.
-    ImGuiStyle& style = ImGui::GetStyle();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        style.WindowRounding = 0.0f;
-        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
-    }
-
-    // Setup scaling
-
-    // Get DPI scale factor
-    float DPIScale = 1.0f;
-    int displayIndex = SDL_GetWindowDisplayIndex(window);
-    float ddpi, hdpi, vdpi;
-    if (SDL_GetDisplayDPI(displayIndex, &ddpi, &hdpi, &vdpi) == 0) {
-        DPIScale = ddpi / 96.0f; // 96 DPI is the standard
-    }
-
-    // // Base font size - will be scaled by ImGui automatically for high DPI
-    // float base_font_size = 18.0f;  // Larger base size for 4K displays
-    //
-    // ImFontConfig font_config;
-    // font_config.OversampleH = 2;
-    // font_config.OversampleV = 2;
-    // font_config.PixelSnapH = true;
-    //
-    // io.Fonts->AddFontDefault(&font_config);
-
-    // ImGuiStyle& style = ImGui::GetStyle();
-    // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-    style.ScaleAllSizes(mainScale);
-
-    // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
-    style.FontScaleDpi = mainScale;
-
-    // [Experimental] Automatically overwrite style.FontScaleDpi in Begin() when Monitor DPI changes. This will scale fonts but _NOT_ scale sizes/padding for now.
-    io.ConfigDpiScaleFonts = true;
-
-    // [Experimental] Scale Dear ImGui and Platform Windows when Monitor DPI changes.
-    io.ConfigDpiScaleViewports = true;
-
-    // Setup Platform/Renderer backends
+    // Setup Platform/Renderer backends (MUST be called before main loop)
     ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
     ImGui_ImplSDLRenderer2_Init(renderer);
 
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-    // - Read 'docs/FONTS.md' for more instructions and details. If you like the default font but want it to scale better, consider using the 'ProggyVector' from the same author!
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    // style.FontSizeBase = 14.0f;
-    style.FontSizeBase = atof((app->getEnv()->get("FONT_SIZE_BASE"))->data());
-    io.Fonts->AddFontDefault();
-
-    ImFontConfig config;
-    config.MergeMode = true;
-    config.GlyphMinAdvanceX = 13.0f;
-    io.Fonts->AddFontFromFileTTF("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f, &config);
-
-    ImFont* lightFont = io.Fonts->AddFontFromFileTTF(app->getEnv()->get("LIGHT_FONT")->data());
-    ImFont* mediumFont = io.Fonts->AddFontFromFileTTF(app->getEnv()->get("MEDIUM_FONT")->data());
-    ImFont* RegularFont = io.Fonts->AddFontFromFileTTF(app->getEnv()->get("REGULAR_FONT")->data());
-    ImFont* font = lightFont;
-    if (font == nullptr) {
-        printf("Error: Font cannot be created: %s\n", SDL_GetError());
-        return -1;
-    }
-
-    // // Scale the style for high DPI
-    // style.ScaleAllSizes(dpi_scale);
-
-    // // Font configuration for better readability on high DPI
-    // io.Fonts->Clear();
-    //
-    // // Base font size - will be scaled by ImGui automatically for high DPI
-    // float base_font_size = 18.0f;  // Larger base size for 4K displays
-    //
-    // ImFontConfig font_config;
-    // font_config.OversampleH = 2;
-    // font_config.OversampleV = 2;
-    // font_config.PixelSnapH = true;
-    //
-    // io.Fonts->AddFontDefault(&font_config);
-    //
-    // // If you have custom fonts, use them like this:
-    // // io.Fonts->AddFontFromFileTTF("fonts/Roboto-Regular.ttf", base_font_size, &font_config);
-    //
-    // // Build font atlas
-    // io.Fonts->Build();
+    // Apply window style for viewports and DPI scaling
+    mainWindow->setStyle();
 
     // Main loop
     bool done = false;
@@ -513,7 +431,8 @@ int main()
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT) done = true;
+            if (event.type == SDL_QUIT)
+                done = true;
             if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID ==
                 SDL_GetWindowID(window))
                 done = true;
@@ -529,14 +448,14 @@ int main()
 
         // Rendering
         ImGui::Render();
-        SDL_RenderSetScale(renderer, io.DisplayFramebufferScale.x, io.DisplayFramebufferScale.y);
+        SDL_RenderSetScale(renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
         // SDL_SetRenderDrawColor(renderer, 114, 144, 154, 255);
         SDL_SetRenderDrawColor(renderer, 45, 45, 48, 255); // Dark gray background
         SDL_RenderClear(renderer);
         ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
 
         // Update and Render additional Platform Windows
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
         }
