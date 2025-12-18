@@ -13,11 +13,13 @@
 
 #include "UI.h"
 #include <SDL.h>
+#include <filesystem>
 
+#include "System.h"
 #include "Window.h"
 #include "adsString.h"
+#include "app.h"
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
 #include "imgui/window_intialization_exception.h"
 #include "spdlog/spdlog.h"
 
@@ -41,8 +43,10 @@ namespace ADS::UI {
 #ifdef _WIN32
         ::SetProcessDPIAware();
 #endif
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0) {
-            auto message = std::format("{0}:{1} - Error: {2}", __FILE__, __LINE__, SDL_GetError());
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) !=
+            0) {
+            auto message = std::format("{0}:{1} - Error: {2}", __FILE__, __LINE__,
+                                       SDL_GetError());
             spdlog::error(message);
             throw Imgui::Exceptions::window_initialization_exception(message);
         }
@@ -58,9 +62,30 @@ namespace ADS::UI {
 #endif
 
         // Setup Dear ImGui context
-        ::ImGui::DebugCheckVersionAndDataLayout(IMGUI_VERSION, sizeof(ImGuiIO), sizeof(ImGuiStyle), sizeof(ImVec2), sizeof(ImVec4), sizeof(ImDrawVert), sizeof(ImDrawIdx));
+        ::ImGui::DebugCheckVersionAndDataLayout(
+                IMGUI_VERSION, sizeof(ImGuiIO), sizeof(ImGuiStyle), sizeof(ImVec2),
+                sizeof(ImVec4), sizeof(ImDrawVert), sizeof(ImDrawIdx));
         ::ImGui::CreateContext();
         this->io = &::ImGui::GetIO();
+
+        // Initialize font manager after io is ready
+        this->fontManager = new Fonts(this->io);
+        this->fontManager->loadDefaultFonts();
+
+        this->setIniConfiguration();
+        this->setIOConfigFlags();
+
+        // Setup Dear ImGui style
+        this->darkTheme ? ImGui::StyleColorsDark() : ImGui::StyleColorsLight();
+
+        // [Experimental] Automatically overwrite style.FontScaleDpi
+        // in Begin() when Monitor DPI changes. This will scale
+        // fonts but _NOT_ scale sizes/padding for now.
+        this->io->ConfigDpiScaleFonts = true;
+
+        // [Experimental] Scale Dear ImGui and Platform Windows
+        // when Monitor DPI changes.
+        this->io->ConfigDpiScaleViewports = true;
     }
 
     /**
@@ -75,9 +100,12 @@ namespace ADS::UI {
      */
     ImGuiManager::ImGuiManager()
     {
+        this->darkTheme = true;  // Use dark theme by default
         this->fonts = std::vector<std::string>();
         this->windows = std::unordered_map<UUIDv4::UUID, Window *>();
         this->io = nullptr;
+        this->fontManager = nullptr;
+        this->init();
     }
 
     /**
@@ -99,17 +127,17 @@ namespace ADS::UI {
      *
      * @see Window
      */
-    std::pair<UUIDv4::UUID, Window*> ImGuiManager::newWindow(const SDL_WINDOW_INFO* windowInfo, SDL_FLAGS* flags)
+    std::pair<UUIDv4::UUID, Window *> ImGuiManager::newWindow(
+            const SDL_WINDOW_INFO *windowInfo, SDL_FLAGS *flags)
     {
-        Window* window = new Window(
-            windowInfo->title,
-            windowInfo->x,
-            windowInfo->y,
-            windowInfo->width,
-            windowInfo->height,
-            flags
-        );
-
+        Window *window = new Window(
+                windowInfo->title,
+                windowInfo->x,
+                windowInfo->y,
+                windowInfo->width,
+                windowInfo->height,
+                flags,
+                this->io);
         UUIDv4::UUID uuid = getRandomUuid();
         this->windows.insert({uuid, window});
 
@@ -133,7 +161,7 @@ namespace ADS::UI {
      * @note This function does not throw exceptions on failure
      * @see newWindow()
      */
-    Window* ImGuiManager::getWindowFromId(const UUIDv4::UUID& uuid)
+    Window *ImGuiManager::getWindowFromId(const UUIDv4::UUID &uuid)
     {
         auto it = this->windows.find(uuid);
 
@@ -144,5 +172,172 @@ namespace ADS::UI {
         return nullptr;
     }
 
+    /**
+     * @brief Configure ImGui settings persistence
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Sets up the ImGui configuration file location and loads existing
+     * settings if the file exists. This enables persistent UI state
+     * (window positions, sizes, docking layouts) across application sessions.
+     * The configuration file path is read from system constants.
+     *
+     * @note Only executes if the ImGui I/O context is properly initialized
+     * @see setIOConfigFlags()
+     */
+    void ImGuiManager::setIniConfiguration() const
+    {
+        if (this->io != nullptr) {
+            this->io->IniFilename = Constants::System::CONFIG_FILE;
+            if (std::filesystem::exists(Constants::System::CONFIG_FILE)) {
+                ImGui::LoadIniSettingsFromDisk(Constants::System::CONFIG_FILE);
+            }
+        }
+    }
+
+    /**
+     * @brief Configure ImGui I/O flags for input and rendering features
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Enables essential ImGui features by setting configuration flags:
+     * - Keyboard navigation support for accessibility and usability
+     * - Gamepad/controller input for console-style navigation
+     * - Docking system for flexible window layout management
+     * - Multi-viewport rendering for windows outside main viewport
+     *
+     * These flags must be set after context creation but before the first
+     * frame is rendered. Changes to these flags during runtime may cause
+     * undefined behavior.
+     *
+     * @note This method assumes the ImGui I/O context is already initialized
+     * @see init(), setIniConfiguration()
+     */
+    void ImGuiManager::setIOConfigFlags() const
+    {
+        this->io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;    // Enable Keyboard Controls
+        this->io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;     // Enable Gamepad Controls
+        this->io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;        // Enable Docking
+        this->io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;      // Enable Multi-Viewport / Platform Windows
+    }
+
+    /**
+     * @brief Apply dark theme color scheme to ImGui
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Sets the internal theme flag to true and applies ImGui's built-in
+     * dark color scheme to all windows and widgets. This change takes
+     * effect immediately for all rendered UI elements.
+     */
+    void ImGuiManager::setDarkTheme()
+    {
+        this->darkTheme = true;
+        ImGui::StyleColorsDark();
+    }
+
+    /**
+     * @brief Apply light theme color scheme to ImGui
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Sets the internal theme flag to false and applies ImGui's built-in
+     * light color scheme to all windows and widgets. This change takes
+     * effect immediately for all rendered UI elements.
+     */
+    void ImGuiManager::setLightTheme()
+    {
+        this->darkTheme = false;
+        ImGui::StyleColorsLight();
+    }
+
+    /**
+     * @brief Set the active window by UUID
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Searches for a window with the given UUID in the managed windows
+     * collection and sets it as the currently active window. If the UUID
+     * is not found in the collection, the active window remains unchanged.
+     * This method is useful for managing focus and operations on multiple
+     * windows within the application.
+     *
+     * @param uuid The unique identifier of the window to set as active
+     *
+     * @see getWindowFromId(), getActiveWindow()
+     */
+    void ImGuiManager::setActiveWindow(UUIDv4::UUID uuid)
+    {
+        Window* window = this->getWindowFromId(uuid);
+        if (window != nullptr) {
+            this->activeWindow = window;
+        }
+    }
+
+    /**
+     * @brief Retrieve the currently active window
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Returns a pointer to the window that is currently set as active.
+     * If no active window has been explicitly set via setActiveWindow(),
+     * this method defaults to returning the first window in the windows
+     * collection.
+     *
+     * @return Window* Pointer to the active window
+     *
+     * @note This method modifies the internal active window state before returning
+     * @see setActiveWindow()
+     */
+    Window* ImGuiManager::getActiveWindow()
+    {
+        this->activeWindow = this->windows.begin()->second;
+
+        return this->activeWindow;
+    }
+
+    /**
+     * @brief Get the font manager instance
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Returns a pointer to the Fonts manager that handles all font
+     * loading and retrieval for the application. Use this to load
+     * custom fonts or retrieve loaded fonts by name.
+     *
+     * @return Fonts* Pointer to the font manager
+     *
+     * @see Fonts, getIO()
+     */
+    Fonts* ImGuiManager::getFontManager() const
+    {
+        return this->fontManager;
+    }
+
+    /**
+     * @brief Get the ImGui I/O context
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Returns a pointer to the ImGui I/O context for direct access
+     * when needed for rendering operations, checking input state,
+     * or accessing display properties.
+     *
+     * @return ImGuiIO* Pointer to the ImGui I/O context
+     *
+     * @see getFontManager()
+     */
+    ImGuiIO* ImGuiManager::getIO() const
+    {
+        return this->io;
+    }
 
 } // ADS::UI

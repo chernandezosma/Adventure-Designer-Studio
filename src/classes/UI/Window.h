@@ -17,14 +17,16 @@
 #include <SDL_video.h>
 #include <ratio>
 #include <string>
-#include <X11/X.h>
+
+#include "imgui.h"
 
 namespace ADS::UI {
 
     /**
      * Structure which hold the Window position, size and flags information
      */
-    typedef struct {
+    typedef struct
+    {
         std::string title;
         float x;
         float y;
@@ -32,34 +34,88 @@ namespace ADS::UI {
         float height;
     } SDL_WINDOW_INFO;
 
-    typedef struct {
+    /**
+     * Flags used to apply to Window and Renderer
+     */
+    typedef struct
+    {
         SDL_WindowFlags windowFlags;
         Uint32 rendererFlags;
     } SDL_FLAGS;
 
     /**
+     * DPI scale factors
+     *
+     * DPI Scale Reference:
+     *  - 1.0 = Standard 1080p (96 DPI)
+     *  - 1.5 = 1440p or some high DPI displays
+     *  - 2.0 = 4K/Retina (192 DPI)
+     *  - 3.0 = 6K displays
+     */
+    typedef struct
+    {
+        float diagonal;
+        float horizontal;
+        float vertical;
+        float scale;
+    } SDL_DPI;
+
+    /**
      * Class to manage the Window
      */
-    class Window {
+    class Window
+    {
 
     private:
         /**
          * Flags used for the current window, and its render
          */
-        SDL_FLAGS* flags;
+        SDL_FLAGS *flags;
 
         /**
          * The Window handler itself
          */
-        SDL_Window* window;
+        SDL_Window *window;
 
         /**
          * A structure representing rendering state
          */
-        SDL_Renderer* renderer;
+        SDL_Renderer *renderer;
 
+        /**
+         * When viewports are enabled we tweak WindowRounding/WindowBg
+         * so platform windows can look identical to regular ones.
+         */
+        ImGuiStyle *style;
 
+        /**
+         * The mainScale value ensures that the UI elements and fonts
+         * are properly sized based on the display's DPI, making the
+         * interface readable on both standard and high-resolution (4K,
+         * retina, etc.) displays.
+         *
+         * This is a common pattern in ImGui applications to handle
+         * DPI scaling correctly.
+         */
         float mainScale;
+
+        /**
+         * Index of the display (monitor) where this window is currently located.
+         * Retrieved via SDL_GetWindowDisplayIndex() and used to query display-specific
+         * properties like DPI. Updates automatically if the window is moved to a
+         * different monitor.
+         */
+        int displayIndex;
+
+        /**
+         * DPI (Dots Per Inch) information for the display where this window resides.
+         * Contains diagonal, horizontal, and vertical DPI values, plus a computed
+         * scale factor (diagonal DPI / 96.0). Used to properly scale UI elements
+         * for high-resolution displays.
+         *
+         * @see SDL_DPI, setDPIScale()
+         */
+        SDL_DPI DPI;
 
     protected:
         /**
@@ -80,6 +136,10 @@ namespace ADS::UI {
          */
         void addRendererFlag(uint32_t flag);
 
+        /**
+         * ImGui I/O handler reference
+         */
+        ImGuiIO *io;
 
     public:
         /**
@@ -87,11 +147,10 @@ namespace ADS::UI {
          */
         static constexpr SDL_WindowFlags DEFAULT_FLAGS = static_cast<SDL_WindowFlags>(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         static constexpr Uint32 DEFAULT_RENDER_FLAGS = static_cast<SDL_RendererFlags>(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
-
         static constexpr int FIRST_AVAILABLE_DRIVER = -1;
-
         static constexpr int WINDOW_FLAGS = 1;
         static constexpr int RENDERER_FLAGS = 2;
+        static constexpr float DEFAULT_DPI_SCALE = 96.0f;
 
         /**
          * @brief Construct a new Window instance with SDL backend
@@ -103,18 +162,19 @@ namespace ADS::UI {
          * applies DPI scaling for high-resolution displays and combines provided flags
          * with default window flags.
          *
-         * @param title Window title displayed in the title bar
-         * @param x X position of the window (use SDL_WINDOWPOS_CENTERED for center)
-         * @param y Y position of the window (use SDL_WINDOWPOS_CENTERED for center)
-         * @param width Window width in logical units (scaled by DPI factor)
-         * @param height Window height in logical units (scaled by DPI factor)
-         * @param flags Additional SDL render and window flags (combined with existing ones)
+         * @param title     Window title displayed in the title bar
+         * @param x         X position of the window (use SDL_WINDOWPOS_CENTERED for center)
+         * @param y         Y position of the window (use SDL_WINDOWPOS_CENTERED for center)
+         * @param width     Window width in logical units (scaled by DPI factor)
+         * @param height    Window height in logical units (scaled by DPI factor)
+         * @param flags     Additional SDL render and window flags (combined with existing ones)
+         * @param io        Parameter to reference the ImGuiManager::io object
          *
          * @throws std::runtime_error if SDL window creation fails
          *
          * @see DEFAULT_FLAGS, getWindow()
          */
-        Window(std::string title, float x, float y, float width, float height, SDL_FLAGS* flags);
+        Window(std::string title, float x, float y, float width, float height, SDL_FLAGS *flags, ImGuiIO *io);
 
         /**
          * @brief Construct a new Window from SDL_WINDOW_INFO structure
@@ -128,12 +188,13 @@ namespace ADS::UI {
          *
          * @param info     Pointer to SDL_WINDOW_INFO structure containing all window parameters
          * @param flags    Flags to be applied to the Window and Renderer
+         * @param io       Parameter to reference the ImGuiManager::io object
          *
          * @throws std::runtime_error if SDL window creation fails
          *
          * @see internally uses Window::Window() constructor
          */
-        Window(SDL_WINDOW_INFO* info, SDL_FLAGS* flags);
+        Window(SDL_WINDOW_INFO *info, SDL_FLAGS *flags, ImGuiIO *io);
 
         /**
          * @brief Destructor for Window instance
@@ -160,7 +221,7 @@ namespace ADS::UI {
          * @note This constructor uses constructor delegation (C++11 feature)
          * @see SDL_WINDOW_INFO, Window(std::string, float, float, float, float, SDL_WindowFlags)
          */
-        SDL_Renderer* createRenderer(int index = -1) const;
+        SDL_Renderer *createRenderer(int index = -1) const;
 
         /**
          * @brief Return the default flags for rendering the window
@@ -194,7 +255,7 @@ namespace ADS::UI {
          *
          * @note The returned pointer is valid only while this Window instance exists
          */
-        SDL_Window* getWindow() const;
+        SDL_Window *getWindow() const;
 
         /**
          * @brief Get the current window flags
@@ -230,7 +291,7 @@ namespace ADS::UI {
          * @return SDL_Renderer pointer
          *
          */
-        [[nodiscard]] SDL_Renderer* getRenderer() const;
+        [[nodiscard]] SDL_Renderer *getRenderer() const;
 
         /**
          * @brief Set the window rendering handler
@@ -241,7 +302,93 @@ namespace ADS::UI {
          * Set a valid handler for rendering the window
          *
          */
-        void setRenderer(SDL_Renderer* rendererHandler);
+        void setRenderer(SDL_Renderer *rendererHandler);
+
+        /**
+         * @brief Query and store the DPI scaling information for the window's display
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Retrieves the display index of the window and queries SDL for the diagonal,
+         * horizontal, and vertical DPI values of that display. The DPI scale factor
+         * is calculated as diagonal DPI / 96.0 (where 96 DPI is the standard baseline).
+         * This is automatically called during window construction.
+         *
+         * @note If SDL_GetDisplayDPI fails, the scale defaults to 1.0
+         * @see getDPIScale(), DEFAULT_DPI_SCALE
+         */
+        void setDPIScale();
+
+        /**
+         * @brief Get the complete DPI information structure
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Returns the SDL_DPI structure containing all DPI-related values:
+         * diagonal, horizontal, vertical DPI, and the computed scale factor.
+         *
+         * @return SDL_DPI Structure with diagonal, horizontal, vertical, and scale values
+         *
+         * @see setDPIScale(), SDL_DPI
+         */
+        SDL_DPI getDPIScale();
+
+        /**
+         * @brief Get the diagonal DPI of the window's display
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Returns the diagonal dots per inch measurement of the display where
+         * the window is currently located. This is typically used to calculate
+         * the overall DPI scaling factor.
+         *
+         * @return float Diagonal DPI value
+         *
+         * @see setDPIScale(), getHorizontalDpi(), getVerticalDpi()
+         */
+        float getDiagonalDpi();
+
+        /**
+         * @brief Get the horizontal DPI of the window's display
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Returns the horizontal dots per inch measurement of the display.
+         * This can differ from diagonal DPI on displays with non-square pixels.
+         *
+         * @return float Horizontal DPI value
+         *
+         * @see setDPIScale(), getDiagonalDpi(), getVerticalDpi()
+         */
+        float getHorizontalDpi();
+
+        /**
+         * @brief Get the vertical DPI of the window's display
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Returns the vertical dots per inch measurement of the display.
+         * This can differ from diagonal DPI on displays with non-square pixels.
+         *
+         * @return float Vertical DPI value
+         *
+         * @see setDPIScale(), getDiagonalDpi(), getHorizontalDpi()
+         */
+        float getVerticalDpi();
+
+        /**
+         * @brief Configure ImGui style settings for viewports
+         *
+         * Adjusts window rounding and background opacity when multi-viewport
+         * mode is enabled to ensure platform windows look consistent with
+         * the main window.
+         */
+        void setStyle();
 
 
     };
