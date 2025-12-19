@@ -109,7 +109,7 @@ namespace ADS {
          *
          * Searches into the environment for the 'DEBUG' and return its value
          *
-         s* @return Boolean value
+         * @return Boolean value
          */
         bool isDebug();
     };

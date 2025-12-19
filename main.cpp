@@ -49,11 +49,44 @@ using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
 
 static bool isDockingSetup = false;
 
+/**
+ * @brief Convert RGB color values to ImGui color format
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Converts standard RGB color values (0-255 range) to ImGui's ImVec4
+ * format (0.0-1.0 range) by dividing each component by 255.0.
+ *
+ * @param r Red component (0-255)
+ * @param g Green component (0-255)
+ * @param b Blue component (0-255)
+ * @param a Alpha/opacity component (0-255), default is 255 (fully opaque)
+ *
+ * @return ImVec4 Color vector in ImGui format with normalized values (0.0-1.0)
+ */
 ImVec4 RGB(int r, int g, int b, int a = 255)
 {
     return ImVec4(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f);
 }
 
+/**
+ * @brief Setup the default docking layout for the IDE
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Configures the default layout for IDE windows if no saved layout exists.
+ * Creates a split layout with Entities panel on the left (20%), Working Area
+ * in the center, and Properties/Inspector panels on the right (20%).
+ * If a saved layout exists in the .ini file, it is preserved and this function
+ * returns without making changes.
+ *
+ * @param dockSpaceId The ImGui dock space identifier for the main window
+ *
+ * @note Only runs once per application session (controlled by isDockingSetup flag)
+ * @note Saved layouts in imgui.ini take precedence over the default layout
+ */
 void SetupDockingLayout(ImGuiID dockSpaceId)
 {
     // Only setup once
@@ -99,6 +132,22 @@ void SetupDockingLayout(ImGuiID dockSpaceId)
     ImGui::DockBuilderFinish(dockSpaceId);
 }
 
+/**
+ * @brief Render the main window with docking support and menu bar
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Creates and renders the main application window that fills 95% of the viewport
+ * height (leaving 5% for the status bar). Sets up the dockspace for window docking
+ * and renders the main menu bar with File, View, and Help menus. The status bar
+ * height is calculated and returned via the output parameter.
+ *
+ * @param statusBarHeight Output parameter that receives the calculated status bar height
+ *
+ * @note This window has no title bar, is not movable/resizable, and has no background
+ * @see SetupDockingLayout(), RenderStatusBar()
+ */
 void RenderMainWindow(float &statusBarHeight)
 {
     // Setup main window to fill the viewport (except for status bar)
@@ -193,6 +242,22 @@ void RenderMainWindow(float &statusBarHeight)
     ImGui::End();
 }
 
+/**
+ * @brief Render the status bar at the bottom of the application window
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Creates a fixed status bar at the bottom of the viewport displaying current
+ * application state information including line/column position, FPS counter,
+ * and application name. The status bar occupies 5% of the viewport height
+ * and cannot be moved, resized, or docked.
+ *
+ * @param statusBarHeight Height of the status bar in pixels
+ *
+ * @note The status bar is always positioned at the bottom of the viewport
+ * @see RenderMainWindow()
+ */
 void RenderStatusBar(float statusBarHeight)
 {
     ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -229,6 +294,19 @@ void RenderStatusBar(float statusBarHeight)
     ImGui::End();
 }
 
+/**
+ * @brief Render the Entities panel showing game objects hierarchy
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Displays a dockable panel listing all game entities organized in a tree
+ * structure. Currently shows placeholder categories for Scenes, Characters,
+ * and Items. The panel can be freely moved and docked within the IDE.
+ *
+ * @note This window is dockable and can be rearranged by the user
+ * @see SetupDockingLayout() for default position
+ */
 void RenderEntitiesWindow()
 {
     // No restrictive flags - window can be freely moved and docked
@@ -265,6 +343,20 @@ void RenderEntitiesWindow()
     ImGui::End();
 }
 
+/**
+ * @brief Render the Properties panel for editing selected object properties
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Displays a dockable panel with editable properties for the currently selected
+ * entity. Includes text inputs, multi-line text areas, sliders, and checkboxes
+ * for common object properties like name, description, value, visibility, and
+ * interactivity. Changes can be applied or reset using the buttons at the bottom.
+ *
+ * @note This window is dockable and can be rearranged by the user
+ * @see SetupDockingLayout() for default position
+ */
 void RenderPropertiesWindow()
 {
     // No restrictive flags - window can be freely moved and docked
@@ -302,6 +394,19 @@ void RenderPropertiesWindow()
     ImGui::End();
 }
 
+/**
+ * @brief Render the Inspector panel showing detailed information
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Displays a dockable panel with detailed information about the currently
+ * selected entity. Shows metadata such as selection status, type, and location.
+ * Currently displays placeholder text prompting the user to select an entity.
+ *
+ * @note This window is dockable and can be rearranged by the user
+ * @see SetupDockingLayout() for default position
+ */
 void RenderInspectorWindow()
 {
     // No restrictive flags - window can be freely moved and docked
@@ -324,6 +429,21 @@ void RenderInspectorWindow()
     ImGui::End();
 }
 
+/**
+ * @brief Render the main Working Area with tabbed document interface
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Displays the central dockable panel containing tabbed editors for scripts
+ * and other documents. Supports multiple tabs for different files and includes
+ * a multi-line text editor for each tab. Uses icon fonts (FontAwesome) for
+ * visual elements in the content.
+ *
+ * @note This window is dockable and can be rearranged by the user
+ * @note The "+" tab allows users to create new script documents
+ * @see SetupDockingLayout() for default position (center)
+ */
 void RenderWorkingArea()
 {
     // No restrictive flags - window can be freely moved and docked
@@ -361,6 +481,20 @@ void RenderWorkingArea()
     ImGui::End();
 }
 
+/**
+ * @brief Render all IDE windows and panels
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Orchestrates the rendering of all IDE components in the correct order:
+ * main window with dockspace, status bar, and all dockable panels (Entities,
+ * Properties, Inspector, Working Area). This function is called once per frame
+ * during the main application render loop.
+ *
+ * @note Must be called between ImGui::NewFrame() and ImGui::Render()
+ * @see App::render() for usage in main loop
+ */
 void RenderIDE()
 {
     static float statusBarHeight = 0.0f;
@@ -382,31 +516,23 @@ int main()
 {
     ADS::Core::App *app = new ADS::Core::App();
 
-    spdlog::info("Start of Main");
-    spdlog::info(format("Using the C++ version: {0}", __cplusplus));
-    spdlog::info("Read the .env file");
+    // Create window
+    ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
+            app->_t("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA)),
+            SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED,
+            System::DEFAULT_X_WIN_SIZE,
+            System::DEFAULT_Y_WIN_SIZE,
+    });
 
-    // Create window with SDL_Renderer graphics context
-    std::pair<UUIDv4::UUID, ADS::UI::Window *> WindowInfo;
-    ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO(
-            {
-                    app->_t("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA)),
-                    SDL_WINDOWPOS_CENTERED,
-                    SDL_WINDOWPOS_CENTERED,
-                    System::DEFAULT_X_WIN_SIZE,
-                    System::DEFAULT_Y_WIN_SIZE,
-            }
-            );
     ADS::UI::SDL_FLAGS *flags = new ADS::UI::SDL_FLAGS();
     ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
     pair<UUIDv4::UUID, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
     ADS::UI::Window *mainWindow = windowInfo.second;
-    SDL_Window *window = mainWindow->getWindow();
-    ADS::Environment *env = app->getEnv();
+    app->setMainWindow(mainWindow);
 
-    // float mainScale = mainWindow->getMainScale();
-    SDL_Renderer *renderer = mainWindow->getRenderer();
-    ImGuiIO *io = imguiObject.getIO();
+    // Load fonts
+    ADS::Environment *env = app->getEnv();
     ADS::UI::Fonts *fm = imguiObject.getFontManager();
     fm->loadDefaultFonts();
     fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
@@ -414,66 +540,17 @@ int main()
     fm->loadFontFromFile("mediumFont", env->get("MEDIUM_FONT")->data());
     fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data());
 
-    ImFont *font = fm->getFont("lightFont");
-
-    // Setup Platform/Renderer backends (MUST be called before main loop)
-    ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
-    ImGui_ImplSDLRenderer2_Init(renderer);
-
-    // Apply window style for viewports and DPI scaling
+    // Setup backends
+    ImGui_ImplSDL2_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
+    ImGui_ImplSDLRenderer2_Init(mainWindow->getRenderer());
     mainWindow->setStyle();
 
-    // Main loop
-    bool done = false;
-
-    while (!done) {
-        // Poll and handle events
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT)
-                done = true;
-            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID ==
-                SDL_GetWindowID(window))
-                done = true;
-        }
-
-        // Start the Dear ImGui frame
-        ImGui_ImplSDLRenderer2_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
-        ImGui::NewFrame();
-
-        // Render the IDE
-        RenderIDE();
-
-        // Rendering
-        ImGui::Render();
-        SDL_RenderSetScale(renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
-        // SDL_SetRenderDrawColor(renderer, 114, 144, 154, 255);
-        SDL_SetRenderDrawColor(renderer, 45, 45, 48, 255); // Dark gray background
-        SDL_RenderClear(renderer);
-        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
-
-        // Update and Render additional Platform Windows
-        if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-        }
-
-        SDL_RenderPresent(renderer);
-    }
-
-    // Save the configuration
-    ImGui::SaveIniSettingsToDisk(System::CONFIG_FILE);
+    // Run the application
+    app->run();
 
     // Cleanup
-    ImGui_ImplSDLRenderer2_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+    app->shutdown();
+    delete app;
 
-    std::cout << "End of Main" << std::endl;
     return 0;
 }

@@ -121,18 +121,32 @@ namespace ADS::UI {
         /**
          * @brief Add a flag to the current window flags
          *
-         * Adds an SDL window flag to the existing flags.
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Adds an SDL window flag to the existing flags by performing a bitwise OR
+         * operation. This allows combining multiple window flags to control window
+         * behavior such as resizability, high DPI support, fullscreen mode, etc.
          *
          * @param flag SDL window flag to add
+         *
+         * @see addRendererFlag(), addFlag()
          */
         void addWindowFlag(SDL_WindowFlags flag);
 
         /**
          * @brief Add a flag to the current window renderer flags
          *
-         * Adds an SDL window flag to the existing renderer flags.
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
          *
-         * @param flag SDL window flag to add
+         * Adds an SDL renderer flag to the existing renderer flags by performing a
+         * bitwise OR operation. This allows combining multiple renderer flags to control
+         * rendering behavior such as VSync, hardware acceleration, software rendering, etc.
+         *
+         * @param flag SDL renderer flag to add
+         *
+         * @see addWindowFlag(), addFlag()
          */
         void addRendererFlag(uint32_t flag);
 
