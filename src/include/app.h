@@ -19,6 +19,7 @@
 
 #include "UI/UI.h"
 #include "i18n/i18n.h"
+#include "IDE/IDERenderer.h"
 
 namespace ADS::Core {
     class App
@@ -56,6 +57,12 @@ namespace ADS::Core {
          * Handles all rendering operations for the application.
          */
         SDL_Renderer *renderer;
+
+        /**
+         * IDE renderer for managing all IDE UI components.
+         * Coordinates rendering of panels, layout, and menu bar.
+         */
+        IDE::IDERenderer *m_ideRenderer;
 
         /**
          * @brief Initialize all internal App structures and systems

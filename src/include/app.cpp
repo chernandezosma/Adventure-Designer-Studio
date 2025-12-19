@@ -22,9 +22,6 @@
 #include "imgui_impl_sdlrenderer2.h"
 #include "System.h"
 
-// Forward declaration of RenderIDE from main.cpp
-extern void RenderIDE();
-
 namespace ADS::Core {
     void App::init()
     {
@@ -39,6 +36,10 @@ namespace ADS::Core {
         }
         spdlog::info(format("{}:{} - Using im GUI Library", __FILE__, __LINE__));
         this->imguiObject = UI::ImGuiManager();
+
+        // Initialize IDE renderer
+        spdlog::info("Initialize IDE Renderer");
+        this->m_ideRenderer = new IDE::IDERenderer();
 
         // Initialize application state
         this->running = false;
@@ -77,6 +78,7 @@ namespace ADS::Core {
     App::~App()
     {
         delete this->environment;
+        delete this->m_ideRenderer;
     }
 
     /**
@@ -271,12 +273,12 @@ namespace ADS::Core {
      * @version Dec 2025
      *
      * Prepares and renders a complete frame including ImGui UI elements.
-     * Handles frame preparation, UI rendering via RenderIDE(), and final
+     * Handles frame preparation, UI rendering via IDERenderer, and final
      * presentation to the screen. Supports multi-viewport rendering when
      * enabled in ImGui configuration.
      *
      * @note Automatically handles DPI scaling and platform-specific rendering
-     * @see run(), update(), RenderIDE()
+     * @see run(), update(), IDE::IDERenderer::render()
      */
     void App::render()
     {
@@ -288,7 +290,7 @@ namespace ADS::Core {
         ImGui::NewFrame();
 
         // Render the IDE
-        RenderIDE();
+        m_ideRenderer->render();
 
         // Rendering
         ImGui::Render();

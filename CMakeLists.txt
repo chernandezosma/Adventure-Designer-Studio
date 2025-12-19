@@ -158,6 +158,24 @@ set(Sources
         src/classes/UI/Window.h
         src/classes/UI/fonts.cpp
         src/classes/UI/fonts.h
+        src/classes/IDE/IDERenderer.cpp
+        src/classes/IDE/IDERenderer.h
+        src/classes/IDE/LayoutManager.cpp
+        src/classes/IDE/LayoutManager.h
+        src/classes/IDE/MenuBarRenderer.cpp
+        src/classes/IDE/MenuBarRenderer.h
+        src/classes/IDE/panels/BasePanel.cpp
+        src/classes/IDE/panels/BasePanel.h
+        src/classes/IDE/panels/StatusBarPanel.cpp
+        src/classes/IDE/panels/StatusBarPanel.h
+        src/classes/IDE/panels/EntitiesPanel.cpp
+        src/classes/IDE/panels/EntitiesPanel.h
+        src/classes/IDE/panels/PropertiesPanel.cpp
+        src/classes/IDE/panels/PropertiesPanel.h
+        src/classes/IDE/panels/InspectorPanel.cpp
+        src/classes/IDE/panels/InspectorPanel.h
+        src/classes/IDE/panels/WorkingAreaPanel.cpp
+        src/classes/IDE/panels/WorkingAreaPanel.h
 )
 
 # ----------------------------------------------------------
