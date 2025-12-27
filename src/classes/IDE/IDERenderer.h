@@ -14,8 +14,11 @@
 #ifndef ADS_IDE_RENDERER_H
 #define ADS_IDE_RENDERER_H
 
+#include "IDEBase.h"
 #include "LayoutManager.h"
 #include "MenuBarRenderer.h"
+#include "env/env.h"
+#include "i18n/i18n.h"
 #include "panels/StatusBarPanel.h"
 #include "panels/EntitiesPanel.h"
 #include "panels/PropertiesPanel.h"
@@ -33,42 +36,43 @@ namespace ADS::IDE {
      * layout management, and menu bar. Replaces the RenderIDE() function
      * from main.cpp.
      */
-    class IDERenderer {
+    class IDERenderer : public IDEBase
+    {
     private:
         /**
          * Layout manager for docking configuration
          */
-        LayoutManager* m_layoutManager;
+        LayoutManager *m_layoutManager;
 
         /**
          * Menu bar renderer
          */
-        MenuBarRenderer* m_menuBarRenderer;
+        MenuBarRenderer *m_menuBarRenderer;
 
         /**
          * Status bar panel at the bottom
          */
-        Panels::StatusBarPanel* m_statusBarPanel;
+        Panels::StatusBarPanel *m_statusBarPanel;
 
         /**
          * Entities panel on the left
          */
-        Panels::EntitiesPanel* m_entitiesPanel;
+        Panels::EntitiesPanel *m_entitiesPanel;
 
         /**
          * Properties panel on the right-top
          */
-        Panels::PropertiesPanel* m_propertiesPanel;
+        Panels::PropertiesPanel *m_propertiesPanel;
 
         /**
          * Inspector panel on the right-bottom
          */
-        Panels::InspectorPanel* m_inspectorPanel;
+        Panels::InspectorPanel *m_inspectorPanel;
 
         /**
          * Working area panel in the center
          */
-        Panels::WorkingAreaPanel* m_workingAreaPanel;
+        Panels::WorkingAreaPanel *m_workingAreaPanel;
 
         /**
          * @brief Initialize all panels
@@ -113,35 +117,35 @@ namespace ADS::IDE {
          *
          * @return Panels::StatusBarPanel* Pointer to status bar panel
          */
-        Panels::StatusBarPanel* getStatusBar() const;
+        Panels::StatusBarPanel *getStatusBar() const;
 
         /**
          * @brief Get the entities panel
          *
          * @return Panels::EntitiesPanel* Pointer to entities panel
          */
-        Panels::EntitiesPanel* getEntitiesPanel() const;
+        Panels::EntitiesPanel *getEntitiesPanel() const;
 
         /**
          * @brief Get the properties panel
          *
          * @return Panels::PropertiesPanel* Pointer to properties panel
          */
-        Panels::PropertiesPanel* getPropertiesPanel() const;
+        Panels::PropertiesPanel *getPropertiesPanel() const;
 
         /**
          * @brief Get the inspector panel
          *
          * @return Panels::InspectorPanel* Pointer to inspector panel
          */
-        Panels::InspectorPanel* getInspectorPanel() const;
+        Panels::InspectorPanel *getInspectorPanel() const;
 
         /**
          * @brief Get the working area panel
          *
          * @return Panels::WorkingAreaPanel* Pointer to working area panel
          */
-        Panels::WorkingAreaPanel* getWorkingAreaPanel() const;
+        Panels::WorkingAreaPanel *getWorkingAreaPanel() const;
     };
 }
 

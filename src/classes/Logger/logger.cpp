@@ -17,6 +17,9 @@
 #include <iomanip>
 #include <sstream>
 
+#include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/sinks/rotating_file_sink.h"
+
 std::shared_ptr<spdlog::logger> ADS::Core::Logger::instance = nullptr;
 
 /**
@@ -51,21 +54,34 @@ std::string ADS::Core::Logger::getDateString()
  *
  * @see getInstance()
  */
-void ADS::Core::Logger::init()
+void ADS::Core::Logger::init(const bool useStdout)
 {
-    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    console_sink->set_level(spdlog::level::debug);
+    std::vector<spdlog::sink_ptr> sinks;
 
+    // File sink - always enabled
     std::string log_filename = "logs/" + getDateString() + "_ads.log";
     auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
         log_filename, 1048576 * 5, 3);
     file_sink->set_level(spdlog::level::trace);
+    sinks.push_back(file_sink);
 
-    std::vector<spdlog::sink_ptr> sinks {console_sink, file_sink};
+    // Configure console output based on DEBUG mode
+    if (useStdout) {
+        // DEBUG mode: All messages to stdout console
+        auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        console_sink->set_level(spdlog::level::trace);
+        sinks.push_back(console_sink);
+    } else {
+        // Production mode: Only errors and critical to stderr
+        auto stderr_sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+        stderr_sink->set_level(spdlog::level::err);
+        sinks.push_back(stderr_sink);
+    }
+
     instance = std::make_shared<spdlog::logger>("ADS", sinks.begin(), sinks.end());
 
     spdlog::set_default_logger(instance);
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::trace);
 }
 
 /**

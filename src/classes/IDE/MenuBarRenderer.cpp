@@ -7,49 +7,60 @@
  *
  * This software includes an additional requirement for visible attribution:
  * The original author's name must be displayed in any user interface or
- * promotional material.
+ * promotional material
  */
 
 
 #include "MenuBarRenderer.h"
 #include "imgui.h"
 #include <SDL.h>
+#include "themes/DarkTheme.h"
+#include "themes/LightTheme.h"
 
 namespace ADS::IDE {
-    MenuBarRenderer::MenuBarRenderer(LayoutManager* layoutManager)
-        : m_layoutManager(layoutManager) {
+    MenuBarRenderer::MenuBarRenderer(LayoutManager *layoutManager) :
+        IDEBase(),
+        m_layoutManager(layoutManager)
+    {
+        this->m_locale = this->m_layoutManager->getTranslationManager()->getCurrentLocale();
     }
 
-    void MenuBarRenderer::renderFileMenu() {
-        if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("New")) {
+    void MenuBarRenderer::renderFileMenu()
+    {
+        i18n::i18n* tm = this->getTranslationManager();
+
+        if (ImGui::BeginMenu(tm->_t("MENU.FILE_HEADER").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_NEW").data())) {
                 // Handle new
             }
-            if (ImGui::MenuItem("Open")) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_OPEN").data())) {
                 // Handle open
             }
-            if (ImGui::MenuItem("Save")) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_SAVE").data())) {
                 // Handle save
             }
             ImGui::Separator();
-            if (ImGui::MenuItem("Exit")) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_EXIT").data())) {
                 handleExit();
             }
             ImGui::EndMenu();
         }
     }
 
-    void MenuBarRenderer::renderViewMenu() {
-        if (ImGui::BeginMenu("View")) {
-            if (ImGui::MenuItem("Reset Layout")) {
+    void MenuBarRenderer::renderViewMenu()
+    {
+        i18n::i18n* tm = this->getTranslationManager();
+
+        if (ImGui::BeginMenu(tm->_t("MENU.VIEW_HEADER").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.VIEW_RESET_LAYOUT").data())) {
                 m_layoutManager->resetLayout();
             }
             ImGui::Separator();
-            if (ImGui::BeginMenu("Theme")) {
-                if (ImGui::MenuItem("Dark Theme")) {
+            if (ImGui::BeginMenu(tm->_t("MENU.VIEW_THEME").data())) {
+                if (ImGui::MenuItem(tm->_t("MENU.VIEW_DARK_THEME").data())) {
                     handleThemeChange(true);
                 }
-                if (ImGui::MenuItem("Light Theme")) {
+                if (ImGui::MenuItem(tm->_t("MENU.VIEW_LIGHT_THEME").data())) {
                     handleThemeChange(false);
                 }
                 ImGui::EndMenu();
@@ -58,30 +69,38 @@ namespace ADS::IDE {
         }
     }
 
-    void MenuBarRenderer::renderHelpMenu() {
-        if (ImGui::BeginMenu("Help")) {
-            if (ImGui::MenuItem("About")) {
+    void MenuBarRenderer::renderHelpMenu()
+    {
+        i18n::i18n* tm = this->getTranslationManager();
+
+        if (ImGui::BeginMenu(tm->_t("MENU.HELP_HEADER").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.HELP_ABOUT").data())) {
                 // Show about dialog
             }
             ImGui::EndMenu();
         }
     }
 
-    void MenuBarRenderer::handleExit() {
+    void MenuBarRenderer::handleExit()
+    {
         SDL_Event quit_event;
         quit_event.type = SDL_QUIT;
         SDL_PushEvent(&quit_event);
     }
 
-    void MenuBarRenderer::handleThemeChange(bool darkTheme) {
+    void MenuBarRenderer::handleThemeChange(bool darkTheme)
+    {
         if (darkTheme) {
-            ImGui::StyleColorsDark();
+            DarkTheme theme;
+            theme.apply();
         } else {
-            ImGui::StyleColorsLight();
+            LightTheme theme;
+            theme.apply();
         }
     }
 
-    void MenuBarRenderer::render() {
+    void MenuBarRenderer::render()
+    {
         renderFileMenu();
         renderViewMenu();
         renderHelpMenu();

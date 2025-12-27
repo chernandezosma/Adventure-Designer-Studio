@@ -24,6 +24,11 @@
 #include "imgui.h"
 #include "uuid_v4.h"
 
+// Forward declaration to avoid circular dependency
+namespace ADS::IDE {
+    class Theme;
+}
+
 namespace ADS::UI {
     class ImGuiManager {
     private:
@@ -58,6 +63,11 @@ namespace ADS::UI {
          * Font manager for the application
          */
         Fonts* fontManager;
+
+        /**
+         * Current active theme for the IDE
+         */
+        IDE::Theme* currentTheme;
 
         /**
          * @brief Initialize SDL library and ImGui context
@@ -187,6 +197,19 @@ namespace ADS::UI {
          * @return ImGuiIO* Pointer to the ImGui I/O context
          */
         ImGuiIO* getIO() const;
+
+        /**
+         * @brief Get the current active theme
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Returns a pointer to the currently active theme instance.
+         * This can be used to query theme properties or apply the theme.
+         *
+         * @return IDE::Theme* Pointer to current theme
+         */
+        IDE::Theme* getCurrentTheme() const;
 
     };
 } // ADS::UI

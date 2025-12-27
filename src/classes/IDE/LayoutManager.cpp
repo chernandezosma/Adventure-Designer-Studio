@@ -16,9 +16,11 @@
 #include "imgui_internal.h"
 #include <iostream>
 
+#include "spdlog/spdlog.h"
+
 namespace ADS::IDE {
-    LayoutManager::LayoutManager()
-        : m_isDockingSetup(false), m_dockSpaceId(0) {
+    LayoutManager::LayoutManager(): IDEBase(),
+        m_isDockingSetup(false), m_dockSpaceId(0) {
     }
 
     bool LayoutManager::hasSavedLayout() {
@@ -63,7 +65,7 @@ namespace ADS::IDE {
 
         // Check if there's an existing layout
         if (hasSavedLayout()) {
-            std::cout << "Found saved layout, using it..." << std::endl;
+            spdlog::info("Found saved layout, using it...");
             return;
         }
 

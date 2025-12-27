@@ -10,7 +10,6 @@
  * promotional material.
  */
 #include <fstream>
-#include <iostream>
 #include <SDL.h>
 #include <random>
 #include <unistd.h>
@@ -18,7 +17,6 @@
 #include "System.h"
 #include "src/classes/env/env.h"
 #include "i18nUtils.h"
-#include "adsString.h"
 #include "app.h"
 #include "UI/Window.h"
 #include "imgui/window_intialization_exception.h"
@@ -31,13 +29,9 @@
 #include <windows.h>        // SetProcessDPIAware()
 #endif
 
-#include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
-#include "imgui_internal.h"
 #include "languages.h"
-#include "i18n/i18n.h"
-#include "IconsFontAwesome4.h"
 
 #if !SDL_VERSION_ATLEAST(2, 0, 17)
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
@@ -52,7 +46,7 @@ int main()
 
     // Create window
     ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
-            app->_t("WIN_TITLE", std::string(lang::RUSSIAN_RUSSIA)),
+            app->getTranslationsManager()->_t("WIN_TITLE"),
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             System::DEFAULT_X_WIN_SIZE,

@@ -34,7 +34,8 @@ namespace ADS::i18n {
      * human-readable language name (e.g., "Spanish (Spain)"). Provides utility
      * methods for extracting language and country codes.
      */
-    struct LocaleInfo {
+    struct LocaleInfo
+    {
         string locale; // POSIX format (e.g., "es_ES")
         string language; // Full name (e.g., "Spanish (Spain)")
 
@@ -113,7 +114,8 @@ namespace ADS::i18n {
      * - Fallback language support
      * - Translation statistics and validation
      */
-    class i18n {
+    class i18n
+    {
     private:
         /**
          * Translations storage.
@@ -197,7 +199,7 @@ namespace ADS::i18n {
          * @note Updates the translations member variable with loaded data
          * @see parseJsonContent(), parsePropertiesContent(), parsePoContent()
          */
-        bool loadTranslationFile(const string& language);
+        bool loadTranslationFile(const string &language);
 
         /**
          * @brief Parse JSON format translation file content
@@ -218,9 +220,10 @@ namespace ADS::i18n {
          * @note Requires nlohmann/json library for JSON parsing
          * @see parseNestedJson() for nested object handling
          */
-        bool parseJsonContent(const string& key,
-                              const string& content,
-                              unordered_map<string, string>& translations);
+        bool parseJsonContent(const string &key,
+                              const string &content,
+                              unordered_map<string, string> &translations,
+                              const string &file_path = "");
 
         /**
          * @brief Create LocaleInfo structure from language code
@@ -237,7 +240,26 @@ namespace ADS::i18n {
          * @throws locale_exception if locale code is invalid or unsupported
          * @see LocaleInfo::isValid()
          */
-        LocaleInfo createLocaleInfo(const string& localeCode) const;
+        LocaleInfo createLocaleInfo(const string &localeCode) const;
+
+        /**
+         * @brief Get translation for a specific key
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jul 2025
+         *
+         * Retrieves the translation for the given key in the specified language.
+         * Falls back to the fallback language if translation is not found.
+         * Returns the key itself if no translation is available.
+         *
+         * @param translationKey The key to translate
+         * @param language Specific language code (empty uses current locale)
+         * @return Translated string, fallback translation, or the key itself
+         *
+         * @note Implements automatic fallback chain: specified language → fallback language → key
+         */
+        [[nodiscard]] string translate(const string &translationKey,
+                                       const string &language = "") const;
 
     public:
         /**
@@ -259,8 +281,8 @@ namespace ADS::i18n {
          * @note The base folder path is resolved relative to current working directory
          * @see init(), extractSystemLocale()
          */
-        explicit i18n(const string& baseFolder,
-                      const string& fallback = string(Constants::Languages::DEFAULT_FALLBACK));
+        explicit i18n(const string &baseFolder,
+                      const string &fallback = string(Constants::Languages::DEFAULT_FALLBACK));
 
         /**
          * @brief Destructor - cleanup resources
@@ -274,13 +296,13 @@ namespace ADS::i18n {
         ~i18n() = default;
 
         // Copy/Move constructors and assignment operators
-        i18n(const i18n&) = delete;
+        i18n(const i18n &) = delete;
 
-        i18n& operator=(const i18n&) = delete;
+        i18n &operator=(const i18n &) = delete;
 
-        i18n(i18n&&) = default;
+        i18n(i18n &&) = default;
 
-        i18n& operator=(i18n&&) = default;
+        i18n &operator=(i18n &&) = default;
 
         /**
          * @brief Set the current active locale using LocaleInfo
@@ -296,7 +318,7 @@ namespace ADS::i18n {
          * @throws std::invalid_argument if locale is invalid or not supported
          * @see LocaleInfo::isValid(), addLanguage()
          */
-        void setLocale(const LocaleInfo& locale);
+        void setLocale(const LocaleInfo &locale);
 
         /**
          * @brief Set the current active locale using language code
@@ -313,7 +335,7 @@ namespace ADS::i18n {
          * @throws std::invalid_argument if locale code is invalid or not supported
          * @see createLocaleInfo(), addLanguage()
          */
-        void setLocale(const string& localeCode);
+        void setLocale(const string &localeCode);
 
         /**
          * @brief Get the currently active locale information
@@ -342,7 +364,7 @@ namespace ADS::i18n {
          *
          * @note Returns empty map if language is not loaded
          */
-        [[nodiscard]] unordered_map<string, string> getTranslations(const string& language = "") const;
+        [[nodiscard]] unordered_map<string, string> getTranslations(const string &language = "") const;
 
         /**
          * @brief Get pointer to fallback language translation data
@@ -357,7 +379,7 @@ namespace ADS::i18n {
          *
          * @note The returned pointer is valid until translations are modified
          */
-        [[nodiscard]] const pair<const string, unordered_map<string, string> >* getFallbackLanguageTranslations() const;
+        [[nodiscard]] const pair<const string, unordered_map<string, string> > *getFallbackLanguageTranslations() const;
 
         /**
          * @brief Get pointer to specific language translation data
@@ -373,7 +395,7 @@ namespace ADS::i18n {
          *
          * @note The returned pointer is valid until translations are modified
          */
-        [[nodiscard]] const pair<const string, unordered_map<string, string> >* getLanguage(const string& language) const;
+        [[nodiscard]] const pair<const string, unordered_map<string, string> > *getLanguage(const string &language) const;
 
         /**
          * @brief Check if a language is currently loaded
@@ -387,7 +409,7 @@ namespace ADS::i18n {
          * @param language The language code to check
          * @return true if language is loaded, false otherwise
          */
-        [[nodiscard]] bool hasLanguage(const string& language) const;
+        [[nodiscard]] bool hasLanguage(const string &language) const;
 
         /**
          * @brief Add or load a language into the translation system
@@ -407,7 +429,7 @@ namespace ADS::i18n {
          *
          * @see loadTranslationFile(), Constants::Languages::isLanguageSupported()
          */
-        pair<const string, unordered_map<string, string> >* addLanguage(const string& language);
+        pair<const string, unordered_map<string, string> > *addLanguage(const string &language);
 
         /**
          * @brief Add a translation key-value pair to the system
@@ -426,29 +448,25 @@ namespace ADS::i18n {
          *
          * @note Automatically loads the target language if not already loaded
          */
-        void addTranslation(const string& key,
-                            const string& translation,
-                            const string& language = "",
-                            const string& fallbackTranslation = "");
+        void addTranslation(const string &key,
+                            const string &translation,
+                            const string &language = "",
+                            const string &fallbackTranslation = "");
+
 
         /**
-         * @brief Get translation for a specific key
+         * @brief Return the translations for the text on selected language
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jul 2025
+         * @version Nov 2025
          *
-         * Retrieves the translation for the given key in the specified language.
-         * Falls back to the fallback language if translation is not found.
-         * Returns the key itself if no translation is available.
+         * @param text          Key to translate. It must exist in translations
          *
-         * @param translationKey The key to translate
-         * @param language Specific language code (empty uses current locale)
-         * @return Translated string, fallback translation, or the key itself
+         * @return Reference to the i18n translations instance
          *
-         * @note Implements automatic fallback chain: specified language → fallback language → key
+         * @see i18n::i18n
          */
-        [[nodiscard]] string translate(const string& translationKey,
-                                       const string& language = "") const;
+        string _t(const string &text) const;
 
         /**
          * @brief Get translation with pluralization support
@@ -468,10 +486,10 @@ namespace ADS::i18n {
          *
          * @note Falls back through the same chain as translate() for each form
          */
-        [[nodiscard]] string translatePlural(const string& singularKey,
-                                             const string& pluralKey,
+        [[nodiscard]] string translatePlural(const string &singularKey,
+                                             const string &pluralKey,
                                              int count,
-                                             const string& language = "") const;
+                                             const string &language = "") const;
 
         /**
          * @brief Get translation with parameter substitution
@@ -492,9 +510,9 @@ namespace ADS::i18n {
          * @note Unmatched parameters in the translation are left unchanged
          * @example translate("hello.user", {{"name", "John"}}) → "Hello, John!"
          */
-        [[nodiscard]] string translateWithParams(const string& translationKey,
-                                                 const unordered_map<string, string>& parameters,
-                                                 const string& language = "") const;
+        [[nodiscard]] string translateWithParams(const string &translationKey,
+                                                 const unordered_map<string, string> &parameters,
+                                                 const string &language = "") const;
 
         /**
          * @brief Get all currently loaded/available language codes
@@ -559,7 +577,7 @@ namespace ADS::i18n {
          * @note Supports saving to JSON, Properties, PO, and TXT formats
          * @see serializeJsonContent(), serializePropertiesContent(), serializePoContent()
          */
-        bool saveTranslations(const string& language, const bool& useExisting = false) const;
+        bool saveTranslations(const string &language, const bool &useExisting = false) const;
 
         /**
          * @brief Get translation statistics for all loaded languages
@@ -590,7 +608,7 @@ namespace ADS::i18n {
          *
          * @note Useful for identifying incomplete translations during development
          */
-         [[nodiscard]] vector<string> findMissingTranslations(const string& language) const;
+        [[nodiscard]] vector<string> findMissingTranslations(const string &language) const;
     };
 
     /**
@@ -605,13 +623,17 @@ namespace ADS::i18n {
      *
      * @see locale_exception, translation_file_exception
      */
-    class i18n_exception : public Exceptions::BaseException {
+    class i18n_exception : public Exceptions::BaseException
+    {
     public:
         /**
          * @brief Construct i18n exception with error message
          * @param message Descriptive error message
          */
-        explicit i18n_exception(const string& message): BaseException(message) {}
+        explicit i18n_exception(const string &message) :
+            BaseException(message)
+        {
+        }
     };
 
     /**
@@ -624,13 +646,17 @@ namespace ADS::i18n {
      * Thrown when locale detection, validation, or configuration operations
      * fail. Includes automatic "Locale error:" prefix for clear error identification.
      */
-    class locale_exception : public i18n_exception {
+    class locale_exception : public i18n_exception
+    {
     public:
         /**
          * @brief Construct locale exception with error message
          * @param message Descriptive error message (automatically prefixed)
          */
-        explicit locale_exception(const string& message): i18n_exception("Locale error: " + message) {}
+        explicit locale_exception(const string &message) :
+            i18n_exception("Locale error: " + message)
+        {
+        }
     };
 
     /**
@@ -644,7 +670,8 @@ namespace ADS::i18n {
      * fail. Includes automatic "Translation file error:" prefix for clear
      * error identification.
      */
-    class translation_file_exception : public i18n_exception {
+    class translation_file_exception : public i18n_exception
+    {
     public:
         /**
          * @brief Construct translation file exception with error message
@@ -654,8 +681,10 @@ namespace ADS::i18n {
          *
          * @param message Descriptive error message (automatically prefixed)
          */
-        explicit translation_file_exception(const string& message)
-            : i18n_exception("Translation file error: " + message) {}
+        explicit translation_file_exception(const string &message) :
+            i18n_exception("Translation file error: " + message)
+        {
+        }
     };
 }
 

@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <algorithm>
 
 #include "uuid_v4.h"
 #include "spdlog/fmt/bundled/chrono.h"
@@ -202,6 +203,43 @@ std::string trim(const std::string& str, const std::string& charsToTrim = " \t\n
     result.erase(result.find_last_not_of(charsToTrim) + 1);
 
     return result;
+}
+
+/**
+ * @brief Convert string representation to boolean value
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Converts a string to a boolean value by checking against common
+ * representations of "true". The comparison is case-insensitive and
+ * automatically trims whitespace from the input string.
+ *
+ * Recognized true values: "TRUE", "1", "YES", "ON"
+ * All other values (including empty string): false
+ *
+ * @param value String value to convert to boolean
+ * @return Boolean conversion result
+ */
+bool stringToBool(const std::string& value)
+{
+    // Return false for empty strings
+    if (value.empty()) {
+        return false;
+    }
+
+    // Trim whitespace
+    std::string trimmedValue = trim(value);
+
+    // Convert to uppercase for case-insensitive comparison
+    std::transform(trimmedValue.begin(), trimmedValue.end(), trimmedValue.begin(),
+        [](unsigned char c){ return std::toupper(c); });
+
+    // Check for common "true" values
+    return trimmedValue == "TRUE" ||
+           trimmedValue == "1" ||
+           trimmedValue == "YES" ||
+           trimmedValue == "ON";
 }
 
 /**

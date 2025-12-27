@@ -53,7 +53,7 @@ namespace ADS::UI {
         this->window = SDL_CreateWindow(title.data(), x, y, width * this->mainScale, height * this->mainScale, this->flags->windowFlags);
 
         if (this->window == nullptr) {
-            auto errorMessage = std::format("{}:{} Error: SDL_CreateWindow(): {}\n", __FILE__, __LINE__, SDL_GetError());
+            string errorMessage = std::format("{}:{} Error: SDL_CreateWindow(): {}\n", __FILE__, __LINE__, SDL_GetError());
             spdlog::error(errorMessage);
             throw std::runtime_error(std::format("Failed to create window: {}", errorMessage));
         }

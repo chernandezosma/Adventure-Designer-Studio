@@ -11,27 +11,27 @@
  */
 
 
-#include "BasePanel.h"
+#include "IDEBase.h"
 
 #include "app.h"
 
-namespace ADS::IDE::Panels {
+namespace ADS::IDE {
 
-    BasePanel::BasePanel(const std::string& name)
-        : m_windowName(name), m_isVisible(true) {
+    IDEBase::IDEBase()
+    {
         this->m_environment = Core::App::getEnv();
         this->m_translationsManager = Core::App::getTranslationsManager();
     }
 
-    void BasePanel::setVisible(bool visible) {
-        m_isVisible = visible;
+    i18n::i18n * IDEBase::getTranslationManager()
+    {
+        return this->m_translationsManager;
     }
 
-    bool BasePanel::isVisible() const {
-        return m_isVisible;
+    Environment * IDEBase::getEnvironment()
+    {
+        return this->m_environment;
     }
 
-    const std::string& BasePanel::getWindowName() const {
-        return m_windowName;
-    }
-}
+
+} // ADS

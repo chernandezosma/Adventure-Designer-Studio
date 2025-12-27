@@ -14,20 +14,23 @@
 #include "IDERenderer.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "spdlog/fmt/bundled/chrono.h"
 
 namespace ADS::IDE {
-    IDERenderer::IDERenderer()
-        : m_layoutManager(nullptr),
-          m_menuBarRenderer(nullptr),
-          m_statusBarPanel(nullptr),
-          m_entitiesPanel(nullptr),
-          m_propertiesPanel(nullptr),
-          m_inspectorPanel(nullptr),
-          m_workingAreaPanel(nullptr) {
+    IDERenderer::IDERenderer() : IDEBase(),
+        m_layoutManager(nullptr),
+        m_menuBarRenderer(nullptr),
+        m_statusBarPanel(nullptr),
+        m_entitiesPanel(nullptr),
+        m_propertiesPanel(nullptr),
+        m_inspectorPanel(nullptr),
+        m_workingAreaPanel(nullptr)
+    {
         initializePanels();
     }
 
-    IDERenderer::~IDERenderer() {
+    IDERenderer::~IDERenderer()
+    {
         delete m_statusBarPanel;
         delete m_entitiesPanel;
         delete m_propertiesPanel;
@@ -37,7 +40,8 @@ namespace ADS::IDE {
         delete m_layoutManager;
     }
 
-    void IDERenderer::initializePanels() {
+    void IDERenderer::initializePanels()
+    {
         // Create layout manager and menu bar renderer
         m_layoutManager = new LayoutManager();
         m_menuBarRenderer = new MenuBarRenderer(m_layoutManager);
@@ -50,7 +54,8 @@ namespace ADS::IDE {
         m_workingAreaPanel = new Panels::WorkingAreaPanel();
     }
 
-    void IDERenderer::renderMainWindow() {
+    void IDERenderer::renderMainWindow()
+    {
         ImGuiViewport *viewport = ImGui::GetMainViewport();
 
         // Calculate the main window size (subtract status bar height)
@@ -94,7 +99,8 @@ namespace ADS::IDE {
         ImGui::End();
     }
 
-    void IDERenderer::render() {
+    void IDERenderer::render()
+    {
         // Render main dockspace window (with menu bar)
         renderMainWindow();
 
@@ -108,23 +114,28 @@ namespace ADS::IDE {
         m_workingAreaPanel->render();
     }
 
-    Panels::StatusBarPanel* IDERenderer::getStatusBar() const {
+    Panels::StatusBarPanel *IDERenderer::getStatusBar() const
+    {
         return m_statusBarPanel;
     }
 
-    Panels::EntitiesPanel* IDERenderer::getEntitiesPanel() const {
+    Panels::EntitiesPanel *IDERenderer::getEntitiesPanel() const
+    {
         return m_entitiesPanel;
     }
 
-    Panels::PropertiesPanel* IDERenderer::getPropertiesPanel() const {
+    Panels::PropertiesPanel *IDERenderer::getPropertiesPanel() const
+    {
         return m_propertiesPanel;
     }
 
-    Panels::InspectorPanel* IDERenderer::getInspectorPanel() const {
+    Panels::InspectorPanel *IDERenderer::getInspectorPanel() const
+    {
         return m_inspectorPanel;
     }
 
-    Panels::WorkingAreaPanel* IDERenderer::getWorkingAreaPanel() const {
+    Panels::WorkingAreaPanel *IDERenderer::getWorkingAreaPanel() const
+    {
         return m_workingAreaPanel;
     }
 }

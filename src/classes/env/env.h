@@ -102,6 +102,32 @@ namespace ADS {
         string* get (const string &key);
 
         /**
+         * @brief Retrieve value for a key with fallback default
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Searches for the specified key in the internal environment map
+         * and returns its value if found. If the key does not exist, returns
+         * the provided default value instead. This is a safer alternative to
+         * get() when you need to handle missing keys gracefully.
+         *
+         * @param key Environment variable name to search
+         * @param defaultValue Value to return if key is not found (default: "")
+         *
+         * @return String value from environment if key exists
+         * @return defaultValue if key is not found
+         *
+         * @note Returns by value (copy), not by pointer/reference
+         * @note Thread-safe for reading (no modification to internal state)
+         *
+         * @example
+         * string port = env.getOrDefault("PORT", "8080");
+         * string debug = env.getOrDefault("DEBUG", "false");
+         */
+        string getOrDefault(const string& key, const string& defaultValue = "");
+
+        /**
          * @brief Return true if debug mode is on (.env). False otherwise
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>

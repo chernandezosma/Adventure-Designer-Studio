@@ -22,7 +22,9 @@
 #include <nlohmann/json.hpp>
 
 #include "../../exceptions/filesystem/file_not_found_exception.h"
+#include "../../exceptions/json/json_parse_exception.h"
 #include "adsString.h"
+#include "spdlog/spdlog.h"
 
 using json = nlohmann::json;
 
@@ -51,7 +53,8 @@ namespace ADS::i18n {
      * @note The base folder path is resolved relative to current working directory
      * @see init(), extractSystemLocale()
      */
-    i18n::i18n(const string& baseFolder, const string& fallback): baseFolder(std::filesystem::current_path() / baseFolder), fallbackLanguage(fallback)
+    i18n::i18n(const string &baseFolder, const string &fallback) :
+        baseFolder(std::filesystem::current_path() / baseFolder), fallbackLanguage(fallback)
     {
         // Validate base folder
         if (!std::filesystem::exists(this->baseFolder)) {
@@ -89,8 +92,7 @@ namespace ADS::i18n {
             // Set current locale to system locale (fallback to fallback language if system not supported)
             if (Constants::Languages::isLanguageSupported(systemLocale.locale)) {
                 this->currentLocale = systemLocale;
-            }
-            else {
+            } else {
                 this->currentLocale = createLocaleInfo(fallbackLanguage);
             }
 
@@ -104,13 +106,11 @@ namespace ADS::i18n {
             if (currentLocale.locale != fallbackLanguage) {
                 try {
                     this->addLanguage(currentLocale.locale);
-                }
-                catch (const std::exception&) {
+                } catch (const std::exception &) {
                     // If current locale can't be loaded, stick with fallback
                 }
             }
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             throw i18n_exception("Failed to initialize i18n system: " + string(e.what()));
         }
     }
@@ -145,18 +145,19 @@ namespace ADS::i18n {
 
             if (normalizedLocale.empty()) {
                 // Try environment variables as fallback
-                const char* envLocale = nullptr;
+                const char *envLocale = nullptr;
 
 #ifdef _WIN32
                 if ((envLocale = std::getenv("LANG")) && strlen(envLocale) > 0) {
                     normalizedLocale = Constants::Languages::normalizePlatformLocale(envLocale);
                 }
 #else
-                const char* envVars[] = {"LC_ALL", "LC_MESSAGES", "LANG"};
-                for (const char* var: envVars) {
+                const char *envVars[] = {"LC_ALL", "LC_MESSAGES", "LANG"};
+                for (const char *var: envVars) {
                     if ((envLocale = std::getenv(var)) && std::strlen(envLocale) > 0) {
                         normalizedLocale = Constants::Languages::normalizePlatformLocale(envLocale);
-                        if (!normalizedLocale.empty()) break;
+                        if (!normalizedLocale.empty())
+                            break;
                     }
                 }
 #endif
@@ -168,8 +169,7 @@ namespace ADS::i18n {
             }
 
             this->systemLocale = this->createLocaleInfo(normalizedLocale);
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             // Ultimate fallback
             this->systemLocale = this->createLocaleInfo(fallbackLanguage);
         }
@@ -190,7 +190,7 @@ namespace ADS::i18n {
      * @throws locale_exception if locale code is invalid or unsupported
      * @see LocaleInfo::isValid()
      */
-    LocaleInfo i18n::createLocaleInfo(const string& localeCode) const
+    LocaleInfo i18n::createLocaleInfo(const string &localeCode) const
     {
         LocaleInfo locale;
 
@@ -236,7 +236,7 @@ namespace ADS::i18n {
      * @note Updates the translations member variable with loaded data
      * @see parseJsonContent(), parsePropertiesContent(), parsePoContent()
      */
-    bool i18n::loadTranslationFile(const string& language)
+    bool i18n::loadTranslationFile(const string &language)
     {
         filesystem::path filePath = baseFolder / (language + ".json");
 
@@ -246,26 +246,34 @@ namespace ADS::i18n {
 
                 string content((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
                 file.close();
-
                 unordered_map<string, string> languageTranslations;
 
-                if (this->parseJsonContent("", content, languageTranslations)) {
+                if (this->parseJsonContent("", content, languageTranslations, filePath.string())) {
                     this->translations[language] = std::move(languageTranslations);
 
                     return true;
                 }
-            }
-            catch (const std::ios_base::failure& e)
-            {
-                std::cout << "Caught an ios_base::failure.\n"
-                          << "Explanatory string: " << e.what() << '\n'
-                          << "Error code: " << e.code() << '\n';
-
+            } catch (const ADS::Exceptions::json_parse_exception &e) {
+                // Custom exception already contains detailed information
+                spdlog::error(e.what());
+                return false;
+            } catch (const json::exception &e) {
+                // Other JSON errors
+                spdlog::error(std::format(
+                    "JSON error loading {} translations from '{}': {}",
+                    language, filePath.string(), e.what())
+                );
+                return false;
+            } catch (const std::ios_base::failure &e) {
+                spdlog::error(std::format(
+                    "Failed to read {} translation file '{}': {} (error code: {})",
+                    language, filePath.string(), e.what(), e.code().value())
+                );
                 return false;
             }
         }
 
-        return false;   // File not found
+        return false; // File not found
     }
 
     /**
@@ -287,29 +295,35 @@ namespace ADS::i18n {
      * @note Requires nlohmann/json library for JSON parsing
      * @see parseNestedJson() for nested object handling
      */
-    bool i18n::parseJsonContent(const string& key, const string& content, unordered_map<string, string>& translations)
+    bool i18n::parseJsonContent(const string &key, const string &content, unordered_map<string, string> &translations, const string &file_path)
     {
         try {
+            // Parse JSON directly - this will throw json::parse_error if malformed
             json jsonData = json::parse(content);
 
             for (auto it = jsonData.begin(); it != jsonData.end(); ++it) {
                 if (it.value().is_object()) {
                     // It's another JSON object. It needs to be parsed again
-                    this->parseJsonContent(it.key(), it.value().dump(), translations);
-                }
-                else {
+                    this->parseJsonContent(it.key(), it.value().dump(), translations, file_path);
+                } else {
                     // it's a string...
                     translations[key.empty() ? it.key() : key + "." + it.key()] = it.value().get<string>();
                 }
             }
 
             return !translations.empty();
-        }
-        catch (const std::exception&) {
-            return false;
-        }
 
-        return false;
+        } catch (const json::exception &e) {
+            // Create custom exception with file and key path information
+            throw ADS::Exceptions::json_parse_exception(file_path, key, e);
+        } catch (const std::exception &e) {
+            // Log unexpected errors and re-throw
+            spdlog::error(std::format(
+                "Unexpected error parsing JSON for key '{}' in file '{}': {}",
+                key.empty() ? "<root>" : key, file_path, e.what())
+            );
+            throw;
+        }
     }
 
     /**
@@ -326,7 +340,7 @@ namespace ADS::i18n {
      * @throws std::invalid_argument if locale is invalid or not supported
      * @see LocaleInfo::isValid(), addLanguage()
      */
-    void i18n::setLocale(const LocaleInfo& locale)
+    void i18n::setLocale(const LocaleInfo &locale)
     {
         if (!locale.isValid()) {
             throw locale_exception("Invalid locale: " + locale.locale);
@@ -355,7 +369,7 @@ namespace ADS::i18n {
      * @throws std::invalid_argument if locale code is invalid or not supported
      * @see createLocaleInfo(), addLanguage()
      */
-    void i18n::setLocale(const string& localeCode)
+    void i18n::setLocale(const string &localeCode)
     {
         LocaleInfo locale = createLocaleInfo(localeCode);
         setLocale(locale);
@@ -375,7 +389,7 @@ namespace ADS::i18n {
      *
      * @note Returns empty map if language is not loaded
      */
-    unordered_map<string, string> i18n::getTranslations(const string& language) const
+    unordered_map<string, string> i18n::getTranslations(const string &language) const
     {
         string targetLanguage = language.empty() ? currentLocale.locale : language;
 
@@ -400,7 +414,7 @@ namespace ADS::i18n {
      *
      * @note The returned pointer is valid until translations are modified
      */
-    const pair<const string, unordered_map<string, string> >* i18n::getFallbackLanguageTranslations() const
+    const pair<const string, unordered_map<string, string> > *i18n::getFallbackLanguageTranslations() const
     {
         auto it = this->translations.find(fallbackLanguage);
         return (it != this->translations.end()) ? &(*it) : nullptr;
@@ -420,7 +434,7 @@ namespace ADS::i18n {
      *
      * @note The returned pointer is valid until translations are modified
      */
-    const pair<const string, unordered_map<string, string> >* i18n::getLanguage(const string& language) const
+    const pair<const string, unordered_map<string, string> > *i18n::getLanguage(const string &language) const
     {
         auto it = this->translations.find(language);
         return (it != this->translations.end()) ? &(*it) : nullptr;
@@ -438,7 +452,7 @@ namespace ADS::i18n {
      * @param language The language code to check
      * @return true if language is loaded, false otherwise
      */
-    bool i18n::hasLanguage(const string& language) const
+    bool i18n::hasLanguage(const string &language) const
     {
         return this->translations.find(language) != this->translations.end();
     }
@@ -461,7 +475,7 @@ namespace ADS::i18n {
      *
      * @see loadTranslationFile(), Constants::Languages::isLanguageSupported()
      */
-    pair<const string, unordered_map<string, string> >* i18n::addLanguage(const string& language)
+    pair<const string, unordered_map<string, string> > *i18n::addLanguage(const string &language)
     {
         // Validate language support
         if (!Constants::Languages::isLanguageSupported(language)) {
@@ -501,8 +515,8 @@ namespace ADS::i18n {
      *
      * @note Automatically loads the target language if not already loaded
      */
-    void i18n::addTranslation(const string& key, const string& translation,
-                              const string& language, const string& fallbackTranslation)
+    void i18n::addTranslation(const string &key, const string &translation,
+                              const string &language, const string &fallbackTranslation)
     {
         string targetLanguage = language.empty() ? currentLocale.locale : language;
 
@@ -524,6 +538,24 @@ namespace ADS::i18n {
     }
 
     /**
+     * @brief Return the translations for the text on selected language and
+     * stored in LocalInfo structure. This function is a shortcut to translate() function
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Nov 2025
+     *
+     * @param text          Key to translate. It must exist in translations
+     *
+     * @return Reference to the i18n translations instance
+     *
+     * @see i18n::i18n
+     */
+    string i18n::_t(const string &text) const
+    {
+        return this->translate(text, this->getCurrentLocale().locale);
+    }
+
+    /**
      * @brief Get translation for a specific key
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -539,7 +571,7 @@ namespace ADS::i18n {
      *
      * @note Implements automatic fallback chain: specified language → fallback language → key
      */
-    string i18n::translate(const string& translationKey, const string& language) const
+    string i18n::translate(const string &translationKey, const string &language) const
     {
         string targetLanguage = language.empty() ? currentLocale.locale : language;
 
@@ -585,10 +617,10 @@ namespace ADS::i18n {
      *
      * @note Falls back through the same chain as translate() for each form
      */
-    string i18n::translatePlural(const string& singularKey,
-                                 const string& pluralKey,
+    string i18n::translatePlural(const string &singularKey,
+                                 const string &pluralKey,
                                  int count,
-                                 const string& language) const
+                                 const string &language) const
     {
         // Simple English pluralization rules (can be extended for other languages)
         string key = (count == 1) ? singularKey : pluralKey;
@@ -614,14 +646,14 @@ namespace ADS::i18n {
      * @note Unmatched parameters in the translation are left unchanged
      * @example translate("hello.user", {{"name", "John"}}) → "Hello, John!"
      */
-    string i18n::translateWithParams(const string& translationKey,
-                                     const unordered_map<string, string>& parameters,
-                                     const string& language) const
+    string i18n::translateWithParams(const string &translationKey,
+                                     const unordered_map<string, string> &parameters,
+                                     const string &language) const
     {
         string result = translate(translationKey, language);
 
         // Replace parameters in format {param_name}
-        for (const pair<const string, string>& param: parameters) {
+        for (const pair<const string, string> &param: parameters) {
             string placeholder = "{" + param.first + "}";
             size_t pos = 0;
             while ((pos = result.find(placeholder, pos)) != string::npos) {
@@ -651,7 +683,7 @@ namespace ADS::i18n {
         vector<string> languages;
         languages.reserve(this->translations.size());
 
-        for (const auto& pair: translations) {
+        for (const auto &pair: translations) {
             languages.push_back(pair.first);
         }
 
@@ -679,7 +711,7 @@ namespace ADS::i18n {
         auto supportedLocales = Constants::Languages::getSupportedLocales();
 
         languages.reserve(supportedLocales.size());
-        for (const auto& locale: supportedLocales) {
+        for (const auto &locale: supportedLocales) {
             languages.emplace_back(locale);
         }
 
@@ -706,12 +738,11 @@ namespace ADS::i18n {
         size_t reloadedCount = 0;
         vector<string> languagesToReload = getAvailableLanguages();
 
-        for (const string& lang: languagesToReload) {
+        for (const string &lang: languagesToReload) {
             this->translations.erase(lang); // Remove existing
             if (loadTranslationFile(lang)) {
                 reloadedCount++;
-            }
-            else {
+            } else {
                 // Re-add empty map if file doesn't exist
                 translations[lang] = unordered_map<string, string>();
             }
@@ -739,7 +770,7 @@ namespace ADS::i18n {
      * @note Supports saving to JSON, Properties, PO, and TXT formats
      * @see serializeJsonContent(), serializePropertiesContent(), serializePoContent()
      */
-    bool i18n::saveTranslations(const string& language, const bool& useExisting) const
+    bool i18n::saveTranslations(const string &language, const bool &useExisting) const
     {
         auto langIt = this->translations.find(language);
         if (langIt == this->translations.end()) {
@@ -755,9 +786,9 @@ namespace ADS::i18n {
                 string identifier = "";
                 std::cout << "Language: " << langIt->first << std::endl << std::endl;
                 nlohmann::json data;
-                for (const auto& [lang, translations] : langIt->second) {
+                for (const auto &[lang, translations]: langIt->second) {
                     if (lang.contains(".")) {
-                         languageParts = explode(lang, '.', true);
+                        languageParts = explode(lang, '.', true);
                         if (identifier != languageParts[0]) {
                             identifier = languageParts[0];
                         };
@@ -771,8 +802,7 @@ namespace ADS::i18n {
                 file.close();
 
                 return true;
-            }
-            catch (const std::ios_base::failure& e) {
+            } catch (const std::ios_base::failure &e) {
                 std::cout << "Caught an ios_base::failure.\n"
                         << "Explanatory string: " << e.what() << '\n'
                         << "Error code: " << e.code() << '\n';
@@ -798,7 +828,7 @@ namespace ADS::i18n {
     {
         unordered_map<string, size_t> stats;
 
-        for (const auto& lang: translations) {
+        for (const auto &lang: translations) {
             stats[lang.first] = lang.second.size();
         }
 
@@ -820,7 +850,7 @@ namespace ADS::i18n {
      *
      * @note Useful for identifying incomplete translations during development
      */
-    vector<string> i18n::findMissingTranslations(const string& language) const
+    vector<string> i18n::findMissingTranslations(const string &language) const
     {
         vector<string> missing;
 
@@ -831,7 +861,7 @@ namespace ADS::i18n {
             return missing;
         }
 
-        for (const auto& fallbackTrans: fallbackIt->second) {
+        for (const auto &fallbackTrans: fallbackIt->second) {
             if (targetIt->second.find(fallbackTrans.first) == targetIt->second.end()) {
                 missing.push_back(fallbackTrans.first);
             }

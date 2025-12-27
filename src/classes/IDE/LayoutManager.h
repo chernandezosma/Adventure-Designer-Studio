@@ -14,7 +14,9 @@
 #ifndef ADS_LAYOUT_MANAGER_H
 #define ADS_LAYOUT_MANAGER_H
 
+#include "IDEBase.h"
 #include "imgui.h"
+#include "i18n/i18n.h"
 
 namespace ADS::IDE {
     /**
@@ -27,7 +29,7 @@ namespace ADS::IDE {
      * Creates default layout on first run and provides functionality
      * to reset the layout when requested.
      */
-    class LayoutManager {
+    class LayoutManager: public IDEBase{
     private:
         /**
          * Flag indicating if docking layout has been set up
@@ -62,6 +64,11 @@ namespace ADS::IDE {
          * @brief Construct a new LayoutManager object
          */
         LayoutManager();
+
+        /**
+         * @brief Construct a new LayoutManager object with translations manager and environment
+         */
+        LayoutManager(i18n::i18n* translationsManager, Environment *environment);
 
         /**
          * @brief Destroy the LayoutManager object

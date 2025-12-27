@@ -57,31 +57,17 @@ add_custom_command(
         COMMENT "Copying public folder to build directory"
 )
 
+#add_custom_target(copy_public_folder ALL
+#        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
+#)
 add_custom_target(copy_public_folder ALL
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
+        COMMAND ${CMAKE_COMMAND} -E echo "Cleaning and copying public folder..."
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/public
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/public
+        ${CMAKE_CURRENT_BINARY_DIR}/public
+        COMMENT "Copying public folder to build directory"
 )
-#
-#if (NOT EXISTS "${CMAKE_BINARY_DIR}/public/translations")
-#    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public/translations/core")
-#    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public/translations/game")
-#endif ()
-#
-#
-#if (NOT EXISTS "${CMAKE_BINARY_DIR}/public")
-#    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public")
-#endif ()
-#
-#if (NOT EXISTS "${CMAKE_BINARY_DIR}/public/assets")
-#    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public/assets")
-#endif ()
-#
-#if (NOT EXISTS "${CMAKE_BINARY_DIR}/public/fonts")
-#    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/public/fonts")
-#endif ()
-#
-#file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/public/assets" DESTINATION "${CMAKE_BINARY_DIR}/public/assets")
-#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/public/translations/" DESTINATION "${CMAKE_BINARY_DIR}/public/translations")
-#file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/public/fonts" DESTINATION "${CMAKE_BINARY_DIR}/public/fonts")
 
 # ----------------------------------------------------------
 # --- External dependencies
@@ -111,6 +97,7 @@ target_include_directories(imgui PUBLIC
 # --- Project directories
 # ----------------------------------------------------------
 include_directories(
+        src
         src/classes
         src/exceptions
         src/constants
@@ -129,6 +116,7 @@ set(Headers
         src/exceptions/filesystem/path_not_exist_exception.h
         src/exceptions/filesystem/file_not_found_exception.h
         src/exceptions/filesystem/file_not_open_exception.h
+        src/exceptions/json/json_parse_exception.h
         src/constants/languages.h
         src/constants/System.h
         src/classes/i18n/i18n.h
@@ -139,6 +127,8 @@ set(Headers
 
 set(Sources
         main.cpp
+        src/app.cpp
+        src/app.h
         src/classes/i18n/i18n.cpp
         src/classes/env/env.cpp
         src/classes/env/env.h
@@ -148,8 +138,6 @@ set(Sources
         src/include/i18nUtils.cpp
         src/include/im_gui_tools.cpp
         src/include/im_gui_tools.h
-        src/include/app.cpp
-        src/include/app.h
         src/classes/Logger/logger.cpp
         src/classes/Logger/logger.h
         src/classes/UI/UI.cpp
@@ -176,6 +164,14 @@ set(Sources
         src/classes/IDE/panels/InspectorPanel.h
         src/classes/IDE/panels/WorkingAreaPanel.cpp
         src/classes/IDE/panels/WorkingAreaPanel.h
+        src/classes/IDE/IDEBase.cpp
+        src/classes/IDE/IDEBase.h
+        src/classes/IDE/themes/Theme.cpp
+        src/classes/IDE/themes/Theme.h
+        src/classes/IDE/themes/DarkTheme.cpp
+        src/classes/IDE/themes/DarkTheme.h
+        src/classes/IDE/themes/LightTheme.cpp
+        src/classes/IDE/themes/LightTheme.h
 )
 
 # ----------------------------------------------------------

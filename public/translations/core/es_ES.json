@@ -4,5 +4,21 @@
   "TITLES": {
     "TITLE_1": "El Señor de los anillos",
     "TITLE_2": "Matrix. La venganza"
+  },
+  "MENU": {
+    "FILE_HEADER": "Archivo",
+    "FILE_NEW": "Nuevo",
+    "FILE_OPEN": "Abrir",
+    "FILE_SAVE": "Grabar",
+    "FILE_EXIT": "Salid",
+
+    "VIEW_HEADER": "Ver",
+    "VIEW_RESET_LAYOUT": "restablecer diseño ",
+    "VIEW_THEME": "Tema",
+    "VIEW_DARK_THEME": "Tema Oscuro",
+    "VIEW_LIGHT_THEME": "Tema Claro",
+
+    "HELP_HEADER": "Ayuda",
+    "HELP_ABOUT": "Acerca de"
   }
 }

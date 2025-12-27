@@ -15,6 +15,7 @@
 #define ADS_MENU_BAR_RENDERER_H
 
 #include "LayoutManager.h"
+#include "i18n/i18n.h"
 
 namespace ADS::IDE {
     /**
@@ -26,12 +27,17 @@ namespace ADS::IDE {
      * Provides menu functionality for File, View, and Help menus
      * including theme switching and layout management.
      */
-    class MenuBarRenderer {
+    class MenuBarRenderer: public IDEBase {
     private:
         /**
          * Reference to the layout manager
          */
         LayoutManager* m_layoutManager;
+
+        /**
+         * Selected Language
+         */
+        i18n::LocaleInfo m_locale;
 
         /**
          * @brief Render the File menu
