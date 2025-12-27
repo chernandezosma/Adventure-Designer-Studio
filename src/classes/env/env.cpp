@@ -153,6 +153,26 @@ namespace ADS {
     }
 
     /**
+     * @brief Get environment value with default fallback
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Returns the value associated with the given key from the environment,
+     * or the provided default value if the key does not exist. Keys are
+     * case-insensitive (automatically converted to uppercase).
+     *
+     * @param key Environment variable name to retrieve
+     * @param defaultValue Value to return if key is not found
+     * @return Environment value or default value
+     */
+    string Environment::getOrDefault(const string& key, const string& defaultValue)
+    {
+        string* value = get(key);
+        return value ? *value : defaultValue;
+    }
+
+    /**
      * @brief Check if DEBUG environment variable is enabled
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>

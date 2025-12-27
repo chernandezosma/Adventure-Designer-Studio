@@ -16,6 +16,9 @@
 
 #include <string>
 
+#include "env/env.h"
+#include "i18n/i18n.h"
+
 namespace ADS::IDE::Panels {
     /**
      * @brief Abstract base class for all IDE panels
@@ -27,8 +30,19 @@ namespace ADS::IDE::Panels {
      * visibility management and window naming. All concrete panel classes
      * must implement the render() method.
      */
-    class BasePanel {
+    class BasePanel
+    {
     protected:
+        /**
+         * Translations manager
+         */
+        i18n::i18n *m_translationsManager;
+
+        /**
+         * Environment class to manage the .env content.
+         */
+        Environment *m_environment;
+
         /**
          * Window name displayed in ImGui
          */
@@ -45,7 +59,7 @@ namespace ADS::IDE::Panels {
          *
          * @param name Window name for the panel
          */
-        explicit BasePanel(const std::string& name);
+        explicit BasePanel(const std::string &name);
 
         /**
          * @brief Destroy the BasePanel object
@@ -79,7 +93,7 @@ namespace ADS::IDE::Panels {
          *
          * @return const std::string& Window name
          */
-        const std::string& getWindowName() const;
+        const std::string &getWindowName() const;
     };
 }
 

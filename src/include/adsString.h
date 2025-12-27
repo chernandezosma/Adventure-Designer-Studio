@@ -111,6 +111,39 @@ std::string extractQuotedString(const std::string& str);
 std::string trim(const std::string& str, const std::string& charsToTrim = " \t\n\r");
 
 /**
+ * @brief Convert string representation to boolean value
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Dec 2025
+ *
+ * Converts a string to a boolean value by checking against common
+ * representations of "true". The comparison is case-insensitive and
+ * automatically trims whitespace from the input string.
+ *
+ * Recognized true values: "TRUE", "1", "YES", "ON"
+ * All other values (including empty string): false
+ *
+ * @param value String value to convert to boolean
+ *
+ * @return true if value matches a recognized true representation
+ * @return false for all other values
+ *
+ * @note Comparison is case-insensitive (e.g., "true", "True", "TRUE" all return true)
+ * @note Whitespace is automatically trimmed before comparison
+ *
+ * @example
+ * stringToBool("true")   // returns true
+ * stringToBool("TRUE")   // returns true
+ * stringToBool("1")      // returns true
+ * stringToBool("yes")    // returns true
+ * stringToBool("on")     // returns true
+ * stringToBool("false")  // returns false
+ * stringToBool("0")      // returns false
+ * stringToBool("")       // returns false
+ */
+bool stringToBool(const std::string& value);
+
+/**
  * @brief Generate hash value for a string
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>

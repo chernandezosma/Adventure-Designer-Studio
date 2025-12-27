@@ -22,6 +22,9 @@
 #include "imgui.h"
 #include "imgui/window_intialization_exception.h"
 #include "spdlog/spdlog.h"
+#include "../IDE/themes/Theme.h"
+#include "../IDE/themes/DarkTheme.h"
+#include "../IDE/themes/LightTheme.h"
 
 namespace ADS::UI {
     /**
@@ -75,8 +78,15 @@ namespace ADS::UI {
         this->setIniConfiguration();
         this->setIOConfigFlags();
 
-        // Setup Dear ImGui style
-        this->darkTheme ? ImGui::StyleColorsDark() : ImGui::StyleColorsLight();
+        // Initialize theme based on preference
+        if (this->darkTheme) {
+            this->currentTheme = new IDE::DarkTheme();
+        } else {
+            this->currentTheme = new IDE::LightTheme();
+        }
+
+        // Apply the theme
+        this->currentTheme->apply();
 
         // [Experimental] Automatically overwrite style.FontScaleDpi
         // in Begin() when Monitor DPI changes. This will scale
@@ -105,6 +115,7 @@ namespace ADS::UI {
         this->windows = std::unordered_map<UUIDv4::UUID, Window *>();
         this->io = nullptr;
         this->fontManager = nullptr;
+        this->currentTheme = nullptr;
         this->init();
     }
 
@@ -236,7 +247,9 @@ namespace ADS::UI {
     void ImGuiManager::setDarkTheme()
     {
         this->darkTheme = true;
-        ImGui::StyleColorsDark();
+        delete this->currentTheme;
+        this->currentTheme = new IDE::DarkTheme();
+        this->currentTheme->apply();
     }
 
     /**
@@ -252,7 +265,9 @@ namespace ADS::UI {
     void ImGuiManager::setLightTheme()
     {
         this->darkTheme = false;
-        ImGui::StyleColorsLight();
+        delete this->currentTheme;
+        this->currentTheme = new IDE::LightTheme();
+        this->currentTheme->apply();
     }
 
     /**
@@ -338,6 +353,24 @@ namespace ADS::UI {
     ImGuiIO* ImGuiManager::getIO() const
     {
         return this->io;
+    }
+
+    /**
+     * @brief Get the current active theme
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Returns a pointer to the currently active theme instance.
+     * This can be used to query theme properties or apply the theme.
+     *
+     * @return IDE::Theme* Pointer to current theme
+     *
+     * @see setDarkTheme(), setLightTheme()
+     */
+    IDE::Theme* ImGuiManager::getCurrentTheme() const
+    {
+        return this->currentTheme;
     }
 
 } // ADS::UI

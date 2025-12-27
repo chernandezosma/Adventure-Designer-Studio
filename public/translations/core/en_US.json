@@ -4,5 +4,19 @@
   "TITLES": {
     "TITLE_1": "Lord of the Rings",
     "TITLE_2": "Matrix Revenge"
+  },
+  "MENU": {
+    "FILE_HEADER": "File",
+    "FILE_NEW": "New",
+    "FILE_OPEN": "Open",
+    "FILE_SAVE": "Save",
+    "FILE_EXIT": "Exit",
+    "VIEW_HEADER": "View",
+    "VIEW_RESET_LAYOUT": "Reset Layout",
+    "VIEW_THEME": "Theme",
+    "VIEW_DARK_THEME": "Dark Theme",
+    "VIEW_LIGHT_THEME": "Light Theme",
+    "HELP_HEADER": "Help",
+    "HELP_ABOUT": "About"
   }
 }
