@@ -12,13 +12,15 @@
 
 
 #include "env.h"
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <utility>
 
-#include "file_not_found_exception.h"
+#include "adsString.h"
+#include "../../exceptions/filesystem/file_not_found_exception.h"
 
-namespace ADS::env {
+namespace ADS {
 
     /**
      * @brief Construct Environment manager and load .env file
@@ -138,11 +140,74 @@ namespace ADS::env {
      */
     string* Environment::get(const string& key)
     {
-        auto it = this->environment.find(key);
+        string upperKey = key;
+        std::transform(upperKey.begin(), upperKey.end(), upperKey.begin(),
+            [](unsigned char c){ return std::toupper(c); });
+
+        auto it = this->environment.find(upperKey);
         if (it != this->environment.end()) {
             return &(it->second);
         }
 
         return nullptr;
+    }
+
+    /**
+     * @brief Get environment value with default fallback
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Dec 2025
+     *
+     * Returns the value associated with the given key from the environment,
+     * or the provided default value if the key does not exist. Keys are
+     * case-insensitive (automatically converted to uppercase).
+     *
+     * @param key Environment variable name to retrieve
+     * @param defaultValue Value to return if key is not found
+     * @return Environment value or default value
+     */
+    string Environment::getOrDefault(const string& key, const string& defaultValue)
+    {
+        string* value = get(key);
+        return value ? *value : defaultValue;
+    }
+
+    /**
+     * @brief Check if DEBUG environment variable is enabled
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Nov 2025
+     *
+     * Checks if the DEBUG environment variable exists and is set to a
+     * true value. The comparison is case-insensitive and recognizes
+     * common representations of boolean true values.
+     *
+     * @return true if DEBUG exists and is set to "TRUE", "1", "YES", or "ON"
+     * @return false if DEBUG is missing, empty, or set to any other value
+     *
+     * @note The function trims whitespace and performs case-insensitive
+     *       comparison for flexibility in .env file formatting
+     * @see get() for the underlying environment variable retrieval
+     */
+    bool Environment::isDebug()
+    {
+        string* value = this->get("DEBUG");
+
+        if (value == nullptr || value->empty()) {
+            return false;
+        }
+
+        // Trim whitespace and convert to uppercase
+        string trimmedValue = trim(*value);
+
+        // Convert to uppercase
+        std::transform(trimmedValue.begin(), trimmedValue.end(), trimmedValue.begin(),
+            [](unsigned char c){ return std::toupper(c); });
+
+        // Check for common "true" values
+        return trimmedValue == "TRUE" ||
+               trimmedValue == "1" ||
+               trimmedValue == "YES" ||
+               trimmedValue == "ON";
     }
 } // ADS
