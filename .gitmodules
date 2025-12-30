@@ -14,3 +14,9 @@
 	path = lib/nlohmann_json
 	url = https://github.com/nlohmann/json.git
 	branch = develop
+[submodule "lib/spdlog"]
+	path = lib/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "lib/uuid_v4"]
+	path = lib/uuid_v4
+	url = https://github.com/crashoz/uuid_v4.git

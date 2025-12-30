@@ -15,7 +15,7 @@
 #include <ranges>
 #include <unordered_map>
 
-namespace ADS::env {
+namespace ADS {
 
     using namespace std;
 
@@ -23,7 +23,7 @@ namespace ADS::env {
      * @brief Environment variable manager for .env file configuration
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2025
+     * @version Oct 2025
      *
      * Handles loading and accessing environment variables from .env files.
      * Parses key-value pairs and optionally sets them as system environment
@@ -47,7 +47,7 @@ namespace ADS::env {
          * @brief Construct Environment manager and load .env file
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2025
+         * @version Oct 2025
          *
          * Creates an Environment object and automatically opens and parses
          * the specified .env file, loading all variables into memory and
@@ -63,7 +63,7 @@ namespace ADS::env {
          * @brief Load and parse environment variables from .env file
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2025
+         * @version Oct 2025
          *
          * Opens the .env file and parses its contents line by line. Each line
          * should follow the format KEY=VALUE. Comments (lines starting with #)
@@ -84,7 +84,7 @@ namespace ADS::env {
          * @brief Retrieve value for a given environment variable key
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2025
+         * @version Oct 2025
          *
          * Searches for the specified key in the internal environment map
          * and returns a pointer to its value if found. Returns nullptr if
@@ -101,6 +101,43 @@ namespace ADS::env {
          */
         string* get (const string &key);
 
+        /**
+         * @brief Retrieve value for a key with fallback default
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Dec 2025
+         *
+         * Searches for the specified key in the internal environment map
+         * and returns its value if found. If the key does not exist, returns
+         * the provided default value instead. This is a safer alternative to
+         * get() when you need to handle missing keys gracefully.
+         *
+         * @param key Environment variable name to search
+         * @param defaultValue Value to return if key is not found (default: "")
+         *
+         * @return String value from environment if key exists
+         * @return defaultValue if key is not found
+         *
+         * @note Returns by value (copy), not by pointer/reference
+         * @note Thread-safe for reading (no modification to internal state)
+         *
+         * @example
+         * string port = env.getOrDefault("PORT", "8080");
+         * string debug = env.getOrDefault("DEBUG", "false");
+         */
+        string getOrDefault(const string& key, const string& defaultValue = "");
+
+        /**
+         * @brief Return true if debug mode is on (.env). False otherwise
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Nov 2025
+         *
+         * Searches into the environment for the 'DEBUG' and return its value
+         *
+         * @return Boolean value
+         */
+        bool isDebug();
     };
 
 } // ADS
