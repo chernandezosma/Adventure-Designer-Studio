@@ -49,8 +49,10 @@ namespace ADS::UI {
         this->flags = new SDL_FLAGS();
 
         this->flags->windowFlags = static_cast<SDL_WindowFlags>(Window::DEFAULT_FLAGS | flags->windowFlags);
-        this->mainScale = ImGui_ImplSDL2_GetContentScaleForDisplay(0);
-        this->window = SDL_CreateWindow(title.data(), x, y, width * this->mainScale, height * this->mainScale, this->flags->windowFlags);
+        // NOTE: ImGui_ImplSDL2_GetContentScaleForDisplay has been removed in ImGui 1.91+
+        // DPI scaling is now handled via SDL_GetDisplayDPI after window creation
+        this->mainScale = 1.0f; // Temporary value, will be updated after window creation
+        this->window = SDL_CreateWindow(title.data(), x, y, width, height, this->flags->windowFlags);
 
         if (this->window == nullptr) {
             string errorMessage = std::format("{}:{} Error: SDL_CreateWindow(): {}\n", __FILE__, __LINE__, SDL_GetError());
@@ -61,6 +63,16 @@ namespace ADS::UI {
         this->flags->rendererFlags = this->getDefaultRenderFlags() | flags->rendererFlags;
         this->renderer = this->createRenderer();
         this->setDPIScale();
+
+        // Update mainScale with the calculated DPI scale
+        this->mainScale = this->DPI.scale;
+
+        // Apply DPI scaling to fonts globally
+        if (this->io != nullptr) {
+            this->io->FontGlobalScale = this->mainScale;
+            // Set DisplayFramebufferScale for proper rendering on high-DPI displays
+            this->io->DisplayFramebufferScale = ImVec2(this->mainScale, this->mainScale);
+        }
     }
 
     /**
@@ -377,10 +389,12 @@ namespace ADS::UI {
         // resetting Style + calling this again)
         this->style->ScaleAllSizes(this->mainScale);
 
+        // NOTE: FontScaleDpi has been removed from ImGuiStyle in ImGui 1.91+
+        // DPI scaling is now handled automatically by platform backends
         // Set initial font scale. (using io.ConfigDpiScaleFonts=true
         // makes this unnecessary. We leave both here for documentation
         // purpose)
-        this->style->FontScaleDpi = this->mainScale;
+        // this->style->FontScaleDpi = this->mainScale;
 
         // Note: Font size base should be set via the Fonts class, not here
         // this->style->FontSizeBase = atof((Core::App::getEnv()->get("FONT_SIZE_BASE"))->data());

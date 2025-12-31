@@ -55,7 +55,7 @@ int main()
 
     ADS::UI::SDL_FLAGS *flags = new ADS::UI::SDL_FLAGS();
     ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
-    pair<UUIDv4::UUID, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
+    pair<boost::uuids::uuid, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
     ADS::UI::Window *mainWindow = windowInfo.second;
     app->setMainWindow(mainWindow);
 

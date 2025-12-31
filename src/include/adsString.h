@@ -17,7 +17,9 @@
 #include <string>
 #include <vector>
 
-#include "uuid_v4.h"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 /**
  * @brief Split a string by delimiter (PHP explode equivalent)
@@ -172,6 +174,6 @@ std::size_t makeHash(const std::string& str);
  *
  * @return A new UUIDv4
  */
-UUIDv4::UUID getRandomUuid();
+boost::uuids::uuid getRandomUuid();
 
 #endif //ADS_STRING_H
