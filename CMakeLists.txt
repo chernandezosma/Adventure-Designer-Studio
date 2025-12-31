@@ -7,7 +7,6 @@ project(${ADSProject} CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(IMGUI_DIR "lib/imgui")
 
 # ----------------------------------------------------------
 # --- Config build environments
@@ -70,28 +69,15 @@ add_custom_target(copy_public_folder ALL
 )
 
 # ----------------------------------------------------------
-# --- External dependencies
+# --- External dependencies (managed by vcpkg)
 # ----------------------------------------------------------
 find_package(OpenGL REQUIRED)
-find_package(SDL2 REQUIRED)
-add_subdirectory(lib/nlohmann_json)
-add_subdirectory(lib/spdlog)
-add_subdirectory(lib/uuid_v4)
-
-add_library(imgui
-        lib/imgui/imgui.cpp
-        lib/imgui/imgui_draw.cpp
-        lib/imgui/imgui_tables.cpp
-        lib/imgui/imgui_widgets.cpp
-        lib/imgui/backends/imgui_impl_sdl2.cpp
-        lib/imgui/backends/imgui_impl_sdlrenderer2.cpp
-)
-
-target_include_directories(imgui PUBLIC
-        ${IMGUI_DIR}
-        ${IMGUI_DIR}/backends
-        ${SDL2_INCLUDE_DIRS}
-)
+find_package(SDL2 CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
+find_package(Boost REQUIRED COMPONENTS uuid headers)
 
 # ----------------------------------------------------------
 # --- Project directories
@@ -103,9 +89,6 @@ include_directories(
         src/constants
         src/utils
         src/include
-        ${IMGUI_DIR}
-        ${IMGUI_DIR}/backends
-        ${SDL2_INCLUDE_DIRS}
         lib/IconFontCppHeaders
 )
 
@@ -182,10 +165,13 @@ add_dependencies(${ADSProject} copy_public_folder)  # Add this line
 
 target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
-        imgui
-        ${SDL2_LIBRARIES}
+        imgui::imgui
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2main>,SDL2::SDL2main,SDL2::SDL2main-static>
         spdlog::spdlog
-        uuid_v4::uuid_v4
+        fmt::fmt
+        Boost::uuid
+        Boost::headers
 )
 
 # ----------------------------------------------------------
@@ -195,7 +181,7 @@ include(CTest)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Test")    ### NUEVO ###
     message(STATUS "Modo TEST activado — incluyendo GoogleTest")
-    add_subdirectory(lib/googletest)
+    find_package(GTest CONFIG REQUIRED)
     add_subdirectory(tests)
     enable_testing()
 endif ()

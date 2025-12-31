@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "name": "adventure-designer-studio",
+  "version": "0.1.0",
+  "description": "Adventure Designer Studio - A powerful tool for creating conversational adventures",
+  "homepage": "https://github.com/chernandezosma/Adventure-Designer-Studio",
+  "license": "GPL-3.0",
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental",
+        "sdl2-binding",
+        "sdl2-renderer-binding"
+      ]
+    },
+    {
+      "name": "sdl2",
+      "default-features": false,
+      "features": ["x11", "wayland"]
+    },
+    "spdlog",
+    "fmt",
+    "nlohmann-json",
+    "gtest",
+    "boost-uuid",
+    "boost-container-hash"
+  ],
+  "builtin-baseline": "c1ac7948cca9f5069d156cb454a3a9734994036d"
+}

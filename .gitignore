@@ -378,3 +378,23 @@ GitHub.sublime-settings
 
 .env
 /build
+
+### vcpkg artifacts
+# vcpkg local installation directory (contains installed packages)
+vcpkg_installed/
+
+# vcpkg build artifacts
+.vcpkg-root
+buildtrees/
+downloads/
+packages/
+
+# Reference libraries (for code browsing only, not tracked in git)
+# Use setup-reference-libs.sh to clone these locally
+lib/imgui/
+lib/nlohmann_json/
+lib/spdlog/
+
+# OS-specific
+.DS_Store
+Thumbs.db

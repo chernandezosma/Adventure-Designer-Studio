@@ -14,7 +14,7 @@
 #include "IDERenderer.h"
 #include "imgui.h"
 #include "imgui_internal.h"
-#include "spdlog/fmt/bundled/chrono.h"
+#include <fmt/chrono.h>
 
 namespace ADS::IDE {
     IDERenderer::IDERenderer() : IDEBase(),
