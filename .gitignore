@@ -398,3 +398,7 @@ lib/spdlog/
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Project Specific
+logs/
+imgui.ini
