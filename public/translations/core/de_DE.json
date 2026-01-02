@@ -4,5 +4,36 @@
   "TITLES": {
     "TITLE_1": "Der Herr der Ringe",
     "TITLE_2": "Matrix Revenge"
+  },
+  "MENU": {
+    "FILE_HEADER": "Datei",
+    "FILE_NEW": "Neu",
+    "FILE_OPEN": "Öffnen",
+    "FILE_SAVE": "Speichern",
+    "FILE_EXIT": "Beenden",
+
+    "EDIT_HEADER": "Bearbeiten",
+    "EDIT_UNDO": "Rückgängig",
+    "EDIT_REDO": "Wiederholen",
+    "EDIT_COPY": "Kopieren",
+    "EDIT_CUT": "Ausschneiden",
+    "EDIT_PASTE": "Einfügen",
+
+    "VIEW_HEADER": "Ansicht",
+    "VIEW_ZOOM_IN": "Vergrößern",
+    "VIEW_ZOOM_OUT": "Verkleinern",
+    "VIEW_RESET_LAYOUT": "Layout zurücksetzen",
+    "VIEW_THEME": "Design",
+    "VIEW_DARK_THEME": "Dunkles Design",
+    "VIEW_LIGHT_THEME": "Helles Design",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Design wechseln",
+
+    "OPTIONS_HEADER": "Optionen",
+    "OPTIONS_LANGUAGE_SELECTOR": "Sprache auswählen",
+
+    "HELP_HEADER": "Hilfe",
+    "HELP_ABOUT": "Über"
   }
+}
+
 }
