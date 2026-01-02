@@ -16,7 +16,8 @@
 
 #include "IDEBase.h"
 #include "LayoutManager.h"
-#include "MenuBarRenderer.h"
+#include "navigation/MenuBarRenderer.h"
+#include "navigation/ToolBarRenderer.h"
 #include "env/env.h"
 #include "i18n/i18n.h"
 #include "panels/StatusBarPanel.h"
@@ -48,6 +49,11 @@ namespace ADS::IDE {
          * Menu bar renderer
          */
         MenuBarRenderer *m_menuBarRenderer;
+
+        /**
+         * Toolbar renderer
+         */
+        ToolBarRenderer *m_toolBarRenderer;
 
         /**
          * Status bar panel at the bottom

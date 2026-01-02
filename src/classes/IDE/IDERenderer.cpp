@@ -20,6 +20,7 @@ namespace ADS::IDE {
     IDERenderer::IDERenderer() : IDEBase(),
         m_layoutManager(nullptr),
         m_menuBarRenderer(nullptr),
+        m_toolBarRenderer(nullptr),
         m_statusBarPanel(nullptr),
         m_entitiesPanel(nullptr),
         m_propertiesPanel(nullptr),
@@ -36,15 +37,17 @@ namespace ADS::IDE {
         delete m_propertiesPanel;
         delete m_inspectorPanel;
         delete m_workingAreaPanel;
+        delete m_toolBarRenderer;
         delete m_menuBarRenderer;
         delete m_layoutManager;
     }
 
     void IDERenderer::initializePanels()
     {
-        // Create layout manager and menu bar renderer
+        // Create layout manager and renderers
         m_layoutManager = new LayoutManager();
         m_menuBarRenderer = new MenuBarRenderer(m_layoutManager);
+        m_toolBarRenderer = new ToolBarRenderer(m_layoutManager);
 
         // Create all panels
         m_statusBarPanel = new Panels::StatusBarPanel();
@@ -103,6 +106,9 @@ namespace ADS::IDE {
     {
         // Render main dockspace window (with menu bar)
         renderMainWindow();
+
+        // Render toolbar
+        m_toolBarRenderer->render();
 
         // Render status bar at the bottom
         m_statusBarPanel->render();

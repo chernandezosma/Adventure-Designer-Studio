@@ -27,6 +27,7 @@ namespace ADS::Core {
     // Define static member variables
     Environment* App::m_environment = nullptr;
     i18n::i18n* App::m_translationsManager = nullptr;
+    UI::Fonts* App::m_fontManager = nullptr;
 
     void App::init()
     {
@@ -148,6 +149,26 @@ namespace ADS::Core {
     i18n::i18n *App::getTranslationsManager()
     {
         return App::m_translationsManager;
+    }
+
+    /**
+     * Get the font manager instance for app-wide usage
+     *
+     * @return Pointer to the Fonts manager instance
+     */
+    UI::Fonts *App::getFontManager()
+    {
+        return App::m_fontManager;
+    }
+
+    /**
+     * Set the font manager instance for app-wide usage
+     *
+     * @param fontManager Pointer to the Fonts manager instance
+     */
+    void App::setFontManager(UI::Fonts *fontManager)
+    {
+        App::m_fontManager = fontManager;
     }
 
     /**

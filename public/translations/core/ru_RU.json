@@ -4,6 +4,35 @@
   "TITLES": {
     "TITLE_1": "Властелин колец",
     "TITLE_2": "Матрица: Месть"
+  },
+  "MENU": {
+    "FILE_HEADER": "Файл",
+    "FILE_NEW": "Новый",
+    "FILE_OPEN": "Открыть",
+    "FILE_SAVE": "Сохранить",
+    "FILE_EXIT": "Выход",
+
+    "EDIT_HEADER": "Правка",
+    "EDIT_UNDO": "Отменить",
+    "EDIT_REDO": "Повторить",
+    "EDIT_COPY": "Копировать",
+    "EDIT_CUT": "Вырезать",
+    "EDIT_PASTE": "Вставить",
+
+    "VIEW_HEADER": "Вид",
+    "VIEW_ZOOM_IN": "Увеличить",
+    "VIEW_ZOOM_OUT": "Уменьшить",
+    "VIEW_RESET_LAYOUT": "Сбросить макет",
+    "VIEW_THEME": "Тема",
+    "VIEW_DARK_THEME": "Тёмная тема",
+    "VIEW_LIGHT_THEME": "Светлая тема",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Переключить тему",
+
+    "OPTIONS_HEADER": "Настройки",
+    "OPTIONS_LANGUAGE_SELECTOR": "Выбор языка",
+
+    "HELP_HEADER": "Справка",
+    "HELP_ABOUT": "О программе"
   }
 }
 

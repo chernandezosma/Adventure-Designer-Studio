@@ -36,6 +36,11 @@ namespace ADS::Core {
         static i18n::i18n *m_translationsManager;
 
         /**
+         * Font manager for the application
+         */
+        static UI::Fonts *m_fontManager;
+
+        /**
          * Imgui object to interact with the GUI
          */
         UI::ImGuiManager m_imguiObject;
@@ -163,6 +168,20 @@ namespace ADS::Core {
          * @return Reference to the i18n translations instance
          */
         static i18n::i18n *getTranslationsManager();
+
+        /**
+         * Get the font manager instance for app-wide usage
+         *
+         * @return Pointer to the Fonts manager instance
+         */
+        static UI::Fonts *getFontManager();
+
+        /**
+         * Set the font manager instance for app-wide usage
+         *
+         * @param fontManager Pointer to the Fonts manager instance
+         */
+        static void setFontManager(UI::Fonts *fontManager);
 
         /**
          * Return the translation for the text in language given

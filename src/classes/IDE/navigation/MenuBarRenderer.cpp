@@ -14,15 +14,17 @@
 #include "MenuBarRenderer.h"
 #include "imgui.h"
 #include <SDL.h>
-#include "themes/DarkTheme.h"
-#include "themes/LightTheme.h"
+#include "../themes/DarkTheme.h"
+#include "../themes/LightTheme.h"
 
 namespace ADS::IDE {
     MenuBarRenderer::MenuBarRenderer(LayoutManager *layoutManager) :
         IDEBase(),
-        m_layoutManager(layoutManager)
+        m_layoutManager(layoutManager),
+        m_navigationService()
+
     {
-        this->m_locale = this->m_layoutManager->getTranslationManager()->getCurrentLocale();
+        // Locale is now managed in IDEBase
     }
 
     void MenuBarRenderer::renderFileMenu()
@@ -30,18 +32,47 @@ namespace ADS::IDE {
         i18n::i18n* tm = this->getTranslationManager();
 
         if (ImGui::BeginMenu(tm->_t("MENU.FILE_HEADER").data())) {
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_NEW").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_NEW").data(), "Ctrl+N")) {
                 // Handle new
             }
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_OPEN").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_OPEN").data(), "Ctrl+O")) {
                 // Handle open
             }
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_SAVE").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_SAVE").data(), "Ctrl+S")) {
                 // Handle save
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_EXIT").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.FILE_EXIT").data(), "Alt+F4")) {
                 handleExit();
+            }
+            ImGui::EndMenu();
+        }
+    }
+
+    void MenuBarRenderer::renderEditMenu()
+    {
+        i18n::i18n* tm = this->getTranslationManager();
+
+        if (ImGui::BeginMenu(tm->_t("MENU.EDIT_HEADER").data())) {
+
+            if (ImGui::MenuItem(tm->_t("MENU.EDIT_UNDO").data(), "Ctrl+Z")) {
+
+            }
+
+            if (ImGui::MenuItem(tm->_t("MENU.EDIT_REDO").data(), "Shift+Ctrl+Z")) {
+
+            }
+            ImGui::Separator();
+
+            if (ImGui::MenuItem(tm->_t("MENU.EDIT_COPY").data(), "Ctrl+C")) {
+
+            }
+            if (ImGui::MenuItem(tm->_t("MENU.EDIT_CUT").data(), "Ctrl+X")) {
+
+            }
+
+            if (ImGui::MenuItem(tm->_t("MENU.EDIT_PASTE").data(), "Ctrl+V")) {
+
             }
             ImGui::EndMenu();
         }
@@ -52,9 +83,30 @@ namespace ADS::IDE {
         i18n::i18n* tm = this->getTranslationManager();
 
         if (ImGui::BeginMenu(tm->_t("MENU.VIEW_HEADER").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.VIEW_ZOOM_IN").data(), "Ctrl++")) {
+
+            }
+            if (ImGui::MenuItem(tm->_t("MENU.VIEW_ZOOM_OUT").data(), "Ctrl+-")) {
+
+            }
+
+            ImGui::Separator();
             if (ImGui::MenuItem(tm->_t("MENU.VIEW_RESET_LAYOUT").data())) {
                 m_layoutManager->resetLayout();
             }
+            ImGui::EndMenu();
+        }
+    }
+
+    void MenuBarRenderer::renderOptionsMenu()
+    {
+        i18n::i18n* tm = this->getTranslationManager();
+
+        if (ImGui::BeginMenu(tm->_t("MENU.OPTIONS_HEADER").data())) {
+            if (ImGui::MenuItem(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data())) {
+
+            }
+            ImGui::Separator();
             ImGui::Separator();
             if (ImGui::BeginMenu(tm->_t("MENU.VIEW_THEME").data())) {
                 if (ImGui::MenuItem(tm->_t("MENU.VIEW_DARK_THEME").data())) {
@@ -67,6 +119,7 @@ namespace ADS::IDE {
             }
             ImGui::EndMenu();
         }
+
     }
 
     void MenuBarRenderer::renderHelpMenu()
@@ -102,7 +155,9 @@ namespace ADS::IDE {
     void MenuBarRenderer::render()
     {
         renderFileMenu();
+        renderEditMenu();
         renderViewMenu();
+        renderOptionsMenu();
         renderHelpMenu();
     }
 }

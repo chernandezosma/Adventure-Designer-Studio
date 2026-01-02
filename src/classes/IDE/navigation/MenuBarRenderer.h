@@ -14,7 +14,8 @@
 #ifndef ADS_MENU_BAR_RENDERER_H
 #define ADS_MENU_BAR_RENDERER_H
 
-#include "LayoutManager.h"
+#include "NavigationService.h"
+#include "../LayoutManager.h"
 #include "i18n/i18n.h"
 
 namespace ADS::IDE {
@@ -35,9 +36,9 @@ namespace ADS::IDE {
         LayoutManager* m_layoutManager;
 
         /**
-         * Selected Language
+         * Service for the handler functions
          */
-        i18n::LocaleInfo m_locale;
+        std::unique_ptr<NavigationService> m_navigationService;
 
         /**
          * @brief Render the File menu
@@ -47,11 +48,25 @@ namespace ADS::IDE {
         void renderFileMenu();
 
         /**
+         * @brief Render the Edit menu
+         *
+         * Includes copy, paste, cut
+         */
+        void renderEditMenu();
+
+        /**
          * @brief Render the View menu
          *
          * Includes Reset Layout and Theme submenu.
          */
         void renderViewMenu();
+
+        /**
+         * @brief Render the Options menu
+         *
+         * Includes select language
+         */
+        void renderOptionsMenu();
 
         /**
          * @brief Render the Help menu

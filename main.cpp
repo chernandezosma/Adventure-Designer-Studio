@@ -62,11 +62,16 @@ int main()
     // Load fonts
     ADS::Environment *env = app->getEnv();
     ADS::UI::Fonts *fm = imguiObject.getFontManager();
+
+    // Set the font manager as static member in App for global access
+    ADS::Core::App::setFontManager(fm);
+
     fm->loadDefaultFonts();
-    fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
     fm->loadFontFromFile("lightFont", env->get("LIGHT_FONT")->data());
     fm->loadFontFromFile("mediumFont", env->get("MEDIUM_FONT")->data());
     fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data());
+    // Load icons AFTER other fonts so they merge with the regular font (which becomes default)
+    fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
 
     // Setup backends
     ImGui_ImplSDL2_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());

@@ -133,8 +133,10 @@ set(Sources
         src/classes/IDE/IDERenderer.h
         src/classes/IDE/LayoutManager.cpp
         src/classes/IDE/LayoutManager.h
-        src/classes/IDE/MenuBarRenderer.cpp
-        src/classes/IDE/MenuBarRenderer.h
+        src/classes/IDE/navigation/MenuBarRenderer.cpp
+        src/classes/IDE/navigation/MenuBarRenderer.h
+        src/classes/IDE/navigation/ToolBarRenderer.cpp
+        src/classes/IDE/navigation/ToolBarRenderer.h
         src/classes/IDE/panels/BasePanel.cpp
         src/classes/IDE/panels/BasePanel.h
         src/classes/IDE/panels/StatusBarPanel.cpp
@@ -155,6 +157,9 @@ set(Sources
         src/classes/IDE/themes/DarkTheme.h
         src/classes/IDE/themes/LightTheme.cpp
         src/classes/IDE/themes/LightTheme.h
+        src/classes/IDE/navigation/NavigationService.cpp
+        src/classes/IDE/navigation/NavigationService.h
+        src/classes/IDE/navigation/NavigationConstants.h
 )
 
 # ----------------------------------------------------------
