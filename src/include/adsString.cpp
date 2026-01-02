@@ -15,8 +15,10 @@
 #include <sstream>
 #include <algorithm>
 
-#include "uuid_v4.h"
-#include "spdlog/fmt/bundled/chrono.h"
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <fmt/chrono.h>
 
 /**
  * @brief Split a string by delimiter (PHP explode equivalent)
@@ -274,9 +276,8 @@ std::size_t makeHash(const std::string& str)
  *
  * @return A new UUIDv4
  */
-UUIDv4::UUID getRandomUuid()
+boost::uuids::uuid getRandomUuid()
 {
-    UUIDv4::UUIDGenerator<std::mt19937_64> uuidGenerator;
-
-    return uuidGenerator.getUUID();
+    static boost::uuids::random_generator uuidGenerator;
+    return uuidGenerator();
 }
