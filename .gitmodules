@@ -1,22 +1,4 @@
-[submodule "lib/googletest"]
-	path = lib/googletest
-	url = https://github.com/google/googletest.git
-	branch = main
 [submodule "lib/IconFontCppHeaders"]
 	path = lib/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
 	branch = main
-[submodule "lib/imgui"]
-	path = lib/imgui
-	url = https://github.com/ocornut/imgui.git
-	branch = docking
-[submodule "lib/nlohmann_json"]
-	path = lib/nlohmann_json
-	url = https://github.com/nlohmann/json.git
-	branch = develop
-[submodule "lib/spdlog"]
-	path = lib/spdlog
-	url = https://github.com/gabime/spdlog.git
-[submodule "lib/uuid_v4"]
-	path = lib/uuid_v4
-	url = https://github.com/crashoz/uuid_v4.git

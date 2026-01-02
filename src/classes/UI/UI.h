@@ -19,10 +19,14 @@
 #include <unordered_map>
 #include <vector>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/functional/hash.hpp>
+
 #include "Window.h"
 #include "fonts.h"
 #include "imgui.h"
-#include "uuid_v4.h"
 
 // Forward declaration to avoid circular dependency
 namespace ADS::IDE {
@@ -47,7 +51,7 @@ namespace ADS::UI {
         /**
          * A set of windows that conformed the application
          */
-        std::unordered_map<UUIDv4::UUID, Window*> windows;
+        std::unordered_map<boost::uuids::uuid, Window*, boost::hash<boost::uuids::uuid>> windows;
 
         /**
          * Active Window
@@ -101,12 +105,12 @@ namespace ADS::UI {
          *                      title, position (x, y), and dimensions (width, height)
          * @param flags         Flags to applied to the new window and its renderer handler
          *
-         * @return std::pair<UUIDv4::UUID, Window*> Pair containing the generated UUID
+         * @return std::pair<boost::uuids::uuid, Window*> Pair containing the generated UUID
          *                                          and pointer to the newly created window
          *
          * @see Window, getWindowFromId()
          */
-        std::pair<UUIDv4::UUID, Window*> newWindow(const SDL_WINDOW_INFO* windowInfo, SDL_FLAGS* flags);
+        std::pair<boost::uuids::uuid, Window*> newWindow(const SDL_WINDOW_INFO* windowInfo, SDL_FLAGS* flags);
 
         /**
          * @brief Retrieve a window from the collection by its UUID
@@ -114,7 +118,7 @@ namespace ADS::UI {
          * @param uuid The unique identifier of the window to retrieve
          * @return Window* Pointer to the window if found, nullptr otherwise
          */
-        Window* getWindowFromId(const UUIDv4::UUID& uuid);
+        Window* getWindowFromId(const boost::uuids::uuid& uuid);
 
         /**
          * @brief Configure ImGui settings persistence
@@ -161,7 +165,7 @@ namespace ADS::UI {
          *
          * @see getWindowFromId(), getActiveWindow()
          */
-        void setActiveWindow(UUIDv4::UUID uuid);
+        void setActiveWindow(boost::uuids::uuid uuid);
 
         /**
          * @brief Retrieve the currently active window

@@ -88,14 +88,16 @@ namespace ADS::UI {
         // Apply the theme
         this->currentTheme->apply();
 
+        // NOTE: ConfigDpiScaleFonts and ConfigDpiScaleViewports have been removed in ImGui 1.91+
+        // DPI scaling is now handled automatically by the platform backends
         // [Experimental] Automatically overwrite style.FontScaleDpi
         // in Begin() when Monitor DPI changes. This will scale
         // fonts but _NOT_ scale sizes/padding for now.
-        this->io->ConfigDpiScaleFonts = true;
+        // this->io->ConfigDpiScaleFonts = true;
 
         // [Experimental] Scale Dear ImGui and Platform Windows
         // when Monitor DPI changes.
-        this->io->ConfigDpiScaleViewports = true;
+        // this->io->ConfigDpiScaleViewports = true;
     }
 
     /**
@@ -112,7 +114,7 @@ namespace ADS::UI {
     {
         this->darkTheme = true;  // Use dark theme by default
         this->fonts = std::vector<std::string>();
-        this->windows = std::unordered_map<UUIDv4::UUID, Window *>();
+        this->windows = std::unordered_map<boost::uuids::uuid, Window*, boost::hash<boost::uuids::uuid>>();
         this->io = nullptr;
         this->fontManager = nullptr;
         this->currentTheme = nullptr;
@@ -138,7 +140,7 @@ namespace ADS::UI {
      *
      * @see Window
      */
-    std::pair<UUIDv4::UUID, Window *> ImGuiManager::newWindow(
+    std::pair<boost::uuids::uuid, Window *> ImGuiManager::newWindow(
             const SDL_WINDOW_INFO *windowInfo, SDL_FLAGS *flags)
     {
         Window *window = new Window(
@@ -149,7 +151,7 @@ namespace ADS::UI {
                 windowInfo->height,
                 flags,
                 this->io);
-        UUIDv4::UUID uuid = getRandomUuid();
+        boost::uuids::uuid uuid = getRandomUuid();
         this->windows.insert({uuid, window});
 
         return std::make_pair(uuid, window);
@@ -172,7 +174,7 @@ namespace ADS::UI {
      * @note This function does not throw exceptions on failure
      * @see newWindow()
      */
-    Window *ImGuiManager::getWindowFromId(const UUIDv4::UUID &uuid)
+    Window *ImGuiManager::getWindowFromId(const boost::uuids::uuid &uuid)
     {
         auto it = this->windows.find(uuid);
 
@@ -286,7 +288,7 @@ namespace ADS::UI {
      *
      * @see getWindowFromId(), getActiveWindow()
      */
-    void ImGuiManager::setActiveWindow(UUIDv4::UUID uuid)
+    void ImGuiManager::setActiveWindow(boost::uuids::uuid uuid)
     {
         Window* window = this->getWindowFromId(uuid);
         if (window != nullptr) {
