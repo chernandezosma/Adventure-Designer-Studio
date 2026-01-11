@@ -10,19 +10,62 @@
  * promotional material.
  */
 
+/**
+ * @file StatusBarPanel.cpp
+ * @brief Implementation of the StatusBarPanel class
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Jan 2026
+ */
 
 #include "StatusBarPanel.h"
 #include "imgui.h"
 
 namespace ADS::IDE::Panels {
+    /**
+     * @brief Construct a new StatusBarPanel object
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Initializes the status bar panel with name "Status Bar" and
+     * sets initial height to 0.0f. The actual height is calculated
+     * dynamically during rendering.
+     */
     StatusBarPanel::StatusBarPanel()
         : BasePanel("Status Bar"), m_height(0.0f) {
     }
 
+    /**
+     * @brief Calculate the height of the status bar
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Calculates the height based on ImGui frame height and spacing.
+     * This method should be called during rendering to update the
+     * height based on current ImGui style settings.
+     *
+     * @note This method updates the m_height member variable
+     */
     void StatusBarPanel::calculateHeight() {
         m_height = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemSpacing.y;
     }
 
+    /**
+     * @brief Render the status bar
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Displays the status bar at the bottom of the viewport with
+     * status information, cursor position, and FPS counter. The bar
+     * is positioned as a fixed window at the bottom with no title bar,
+     * borders, or docking capabilities.
+     *
+     * @note Returns early if panel is not visible
+     * @see calculateHeight()
+     */
     void StatusBarPanel::render() {
         if (!m_isVisible) {
             return;
@@ -56,6 +99,19 @@ namespace ADS::IDE::Panels {
         ImGui::End();
     }
 
+    /**
+     * @brief Get the height of the status bar
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Returns the current calculated height of the status bar. This
+     * value is used by other components to properly size and position
+     * their content relative to the status bar.
+     *
+     * @return float Height in pixels
+     * @note The height is calculated during each render() call
+     */
     float StatusBarPanel::getHeight() const {
         return m_height;
     }

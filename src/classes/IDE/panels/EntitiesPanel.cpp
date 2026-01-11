@@ -10,15 +10,41 @@
  * promotional material.
  */
 
+/**
+ * @file EntitiesPanel.cpp
+ * @brief Implementation of the EntitiesPanel class
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Jan 2026
+ */
 
 #include "EntitiesPanel.h"
 #include "imgui.h"
 
 namespace ADS::IDE::Panels {
+    /**
+     * @brief Construct a new EntitiesPanel object
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Initializes the entities panel with name "Entities".
+     */
     EntitiesPanel::EntitiesPanel()
         : BasePanel("Entities") {
     }
 
+    /**
+     * @brief Render the scenes tree node
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Displays a collapsible tree node containing all scene entities
+     * in the current project. Each scene is displayed as a bullet item.
+     *
+     * @note Currently displays placeholder data
+     */
     void EntitiesPanel::renderSceneTree() {
         if (ImGui::TreeNode("Scenes")) {
             ImGui::BulletText("Scene 1");
@@ -28,6 +54,17 @@ namespace ADS::IDE::Panels {
         }
     }
 
+    /**
+     * @brief Render the characters tree node
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Displays a collapsible tree node containing all character entities
+     * in the current project. Each character is displayed as a bullet item.
+     *
+     * @note Currently displays placeholder data
+     */
     void EntitiesPanel::renderCharacterTree() {
         if (ImGui::TreeNode("Characters")) {
             ImGui::BulletText("Hero");
@@ -37,6 +74,17 @@ namespace ADS::IDE::Panels {
         }
     }
 
+    /**
+     * @brief Render the items tree node
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Displays a collapsible tree node containing all item entities
+     * in the current project. Each item is displayed as a bullet item.
+     *
+     * @note Currently displays placeholder data
+     */
     void EntitiesPanel::renderItemTree() {
         if (ImGui::TreeNode("Items")) {
             ImGui::BulletText("Sword");
@@ -46,10 +94,34 @@ namespace ADS::IDE::Panels {
         }
     }
 
+    /**
+     * @brief Handle add entity button click
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Handles the user action when the "Add New Entity" button is clicked.
+     * This method will be responsible for creating new entities in the project.
+     *
+     * @note Currently a placeholder implementation
+     */
     void EntitiesPanel::handleAddEntity() {
         // Handle add entity
     }
 
+    /**
+     * @brief Render the entities panel
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Displays the entity hierarchy tree with scenes, characters,
+     * and items, along with an add entity button. The panel provides
+     * a structured view of all game entities organized by type.
+     *
+     * @note Returns early if panel is not visible
+     * @see renderSceneTree(), renderCharacterTree(), renderItemTree()
+     */
     void EntitiesPanel::render() {
         if (!m_isVisible) {
             return;

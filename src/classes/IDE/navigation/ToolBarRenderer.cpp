@@ -18,6 +18,23 @@
 #include "../themes/LightTheme.h"
 
 namespace ADS::IDE {
+    /**
+     * @brief Construct a new ToolBarRenderer object
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Initializes the toolbar renderer with references to required services.
+     * Sets up the layout manager reference, creates a new NavigationService
+     * instance, obtains the translation manager from the IDEBase parent class,
+     * and initializes button dimensions with default values (26.0f height,
+     * 4.0f padding).
+     *
+     * @param layoutManager Pointer to the layout manager for layout operations
+     *
+     * @note Locale management is handled by the IDEBase parent class
+     * @see IDEBase::IDEBase()
+     */
     ToolBarRenderer::ToolBarRenderer(LayoutManager *layoutManager) :
         m_layoutManager(layoutManager),
         m_translationManager(this->getTranslationManager()),
@@ -27,6 +44,26 @@ namespace ADS::IDE {
         // Locale is now managed in IDEBase
     }
 
+    /**
+     * @brief Render a toolbar button with an icon
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Creates and renders an icon button using FontAwesome icons. Retrieves the
+     * icon font from the font manager (inherited from IDEBase) and temporarily
+     * pushes it for button rendering. If the icon font is unavailable, uses the
+     * default font. Displays a tooltip when the user hovers over the button.
+     *
+     * @param icon FontAwesome icon character constant (e.g., ICON_FA_FILE_O)
+     * @param tooltip Tooltip text to display on hover
+     *
+     * @return true if the button was clicked, false otherwise
+     *
+     * @note The icon font must be loaded in the font manager for proper rendering
+     * @see UI::Fonts::getFont()
+     * @see IDEBase::getFontManager()
+     */
     bool ToolBarRenderer::renderIconButton(const char *icon, const char *tooltip)
     {
         // Get the icon font from the font manager (inherited from IDEBase)
@@ -51,6 +88,23 @@ namespace ADS::IDE {
         return clicked;
     }
 
+    /**
+     * @brief Render file operation buttons
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Renders toolbar buttons for file operations arranged horizontally:
+     * - New (ICON_FA_FILE_O): Creates a new file via NavigationService
+     * - Open (ICON_FA_FOLDER_OPEN_O): Opens an existing file via NavigationService
+     * - Save (ICON_FA_FLOPPY_O): Saves the current file (placeholder implementation)
+     *
+     * All button tooltips are retrieved from the translation manager for i18n support.
+     *
+     * @see NavigationService::fileNewHandler()
+     * @see NavigationService::fileOpenHandler()
+     * @see renderIconButton()
+     */
     void ToolBarRenderer::renderFileButtons()
     {
         if (renderIconButton(ICON_FA_FILE_O, m_translationManager->_t("MENU.FILE_NEW").data())) {
@@ -68,6 +122,25 @@ namespace ADS::IDE {
         }
     }
 
+    /**
+     * @brief Render edit operation buttons
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Renders toolbar buttons for editing operations arranged horizontally with separators:
+     * - Undo (ICON_FA_UNDO): Undo last action (placeholder implementation)
+     * - Redo (ICON_FA_REPEAT): Redo previously undone action (placeholder implementation)
+     * - Cut (ICON_FA_SCISSORS): Cut selection to clipboard (placeholder implementation)
+     * - Copy (ICON_FA_FILES_O): Copy selection to clipboard (placeholder implementation)
+     * - Paste (ICON_FA_CLIPBOARD): Paste from clipboard (placeholder implementation)
+     *
+     * Buttons are grouped with visual separators between different operation types.
+     * All button tooltips are retrieved from the translation manager for i18n support.
+     *
+     * @note All edit operations currently contain placeholder implementations
+     * @see renderIconButton()
+     */
     void ToolBarRenderer::renderEditButtons()
     {
         ImGui::SameLine();
@@ -102,6 +175,22 @@ namespace ADS::IDE {
         }
     }
 
+    /**
+     * @brief Render view control buttons
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Renders toolbar buttons for view controls arranged horizontally with a separator:
+     * - Zoom In (ICON_FA_SEARCH_PLUS): Increase view zoom level (placeholder implementation)
+     * - Zoom Out (ICON_FA_SEARCH_MINUS): Decrease view zoom level (placeholder implementation)
+     * - Reset Layout (ICON_FA_REFRESH): Restores default IDE layout via LayoutManager
+     *
+     * All button tooltips are retrieved from the translation manager for i18n support.
+     *
+     * @see LayoutManager::resetLayout()
+     * @see renderIconButton()
+     */
     void ToolBarRenderer::renderViewButtons()
     {
         ImGui::SameLine();
@@ -123,6 +212,22 @@ namespace ADS::IDE {
         }
     }
 
+    /**
+     * @brief Render language selector
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Renders the language selector button and popup menu. The entire implementation
+     * is currently commented out. When enabled, it would provide:
+     * - A globe icon button (ICON_FA_GLOBE) that opens a popup menu
+     * - A popup menu with language options for multiple locales
+     * - Theme toggle button (ICON_FA_MOON_O) for switching between themes
+     *
+     * @note Currently not implemented - all code is commented out
+     * @see renderIconButton()
+     * @see handleThemeChange()
+     */
     void ToolBarRenderer::renderLanguageSelector()
     {
         // i18n::i18n* tm = this->getTranslationManager();
@@ -184,6 +289,21 @@ namespace ADS::IDE {
         // }
     }
 
+    /**
+     * @brief Handle theme change
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Applies the specified theme to the ImGui interface. Creates an instance of
+     * either DarkTheme or LightTheme based on the parameter and calls its apply()
+     * method to update the ImGui style colors and visual appearance.
+     *
+     * @param darkTheme True to apply dark theme, false to apply light theme
+     *
+     * @see DarkTheme::apply()
+     * @see LightTheme::apply()
+     */
     void ToolBarRenderer::handleThemeChange(bool darkTheme)
     {
         if (darkTheme) {
@@ -195,6 +315,31 @@ namespace ADS::IDE {
         }
     }
 
+    /**
+     * @brief Render the complete toolbar
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Renders the complete toolbar as a fixed-position ImGui window. The toolbar
+     * is positioned immediately below the menu bar, spanning the full width of the
+     * viewport. Creates a borderless, immovable window with custom styling and
+     * renders all toolbar button groups.
+     *
+     * The window uses the following flags:
+     * - NoTitleBar: Removes the title bar
+     * - NoResize: Prevents manual resizing
+     * - NoMove: Prevents manual repositioning
+     * - NoScrollbar: Disables scrollbars
+     * - NoSavedSettings: Prevents saving window state
+     *
+     * Custom styling is applied via PushStyleVar for window padding and item spacing.
+     *
+     * @see renderFileButtons()
+     * @see renderEditButtons()
+     * @see renderViewButtons()
+     * @see getHeight()
+     */
     void ToolBarRenderer::render()
     {
         ImGuiViewport *viewport = ImGui::GetMainViewport();
@@ -224,6 +369,21 @@ namespace ADS::IDE {
         ImGui::PopStyleVar(2);
     }
 
+    /**
+     * @brief Get the height of the toolbar
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Calculates and returns the total height of the toolbar window including
+     * padding. The calculation adds the button height to twice the padding value
+     * (once for top padding and once for bottom padding).
+     *
+     * @return float Total toolbar height in pixels (button height + 2 * padding)
+     *
+     * @note This value is used for positioning elements below the toolbar and
+     *       for setting the toolbar window size
+     */
     float ToolBarRenderer::getHeight() const
     {
         return m_buttonHeight + (m_buttonPadding * 2);
