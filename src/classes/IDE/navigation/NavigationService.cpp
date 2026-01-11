@@ -12,3 +12,17 @@
 
 
 #include "NavigationService.h"
+#include "spdlog/spdlog.h"
+
+namespace ADS::IDE {
+
+    void NavigationService::fileOpenHandler()
+    {
+        spdlog::info("Call NavigationService::fileNewHandle");
+    }
+
+    void NavigationService::fileNewHandler()
+    {
+        spdlog::info("Call NavigationService::fileNewHandle");
+    }
+} // ADS::IDE::NAVIGATION::SERVICE

@@ -19,9 +19,8 @@
 
 namespace ADS::IDE {
     ToolBarRenderer::ToolBarRenderer(LayoutManager *layoutManager) :
-        IDEBase(),
         m_layoutManager(layoutManager),
-        m_navigationService(),
+        m_translationManager(this->getTranslationManager()),
         m_buttonHeight(26.0f),
         m_buttonPadding(4.0f)
     {
@@ -32,7 +31,7 @@ namespace ADS::IDE {
     {
         // Get the icon font from the font manager (inherited from IDEBase)
         UI::Fonts* fontManager = this->getFontManager();
-        ImFont* iconFont = fontManager->getFont("icons");
+        ImFont* iconFont = fontManager != nullptr ? fontManager->getFont("icons") : nullptr;
 
         // Push the icon font if available, otherwise use default
         if (iconFont != nullptr) {
@@ -54,37 +53,33 @@ namespace ADS::IDE {
 
     void ToolBarRenderer::renderFileButtons()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
-        if (renderIconButton(ICON_FA_FILE_O, tm->_t("MENU.FILE_NEW").data())) {
-            // Handle new file
+        if (renderIconButton(ICON_FA_FILE_O, m_translationManager->_t("MENU.FILE_NEW").data())) {
+            this->m_navigationService->fileNewHandler();
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_FOLDER_OPEN_O, tm->_t("MENU.FILE_OPEN").data())) {
-            // Handle open file
+        if (renderIconButton(ICON_FA_FOLDER_OPEN_O, m_translationManager->_t("MENU.FILE_OPEN").data())) {
+            this->m_navigationService->fileOpenHandler();
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_FLOPPY_O, tm->_t("MENU.FILE_SAVE").data())) {
+        if (renderIconButton(ICON_FA_FLOPPY_O, m_translationManager->_t("MENU.FILE_SAVE").data())) {
             // Handle save file
         }
     }
 
     void ToolBarRenderer::renderEditButtons()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
         ImGui::SameLine();
         ImGui::Separator();
         ImGui::SameLine();
 
-        if (renderIconButton(ICON_FA_UNDO, tm->_t("MENU.EDIT_UNDO").data())) {
+        if (renderIconButton(ICON_FA_UNDO, m_translationManager->_t("MENU.EDIT_UNDO").data())) {
             // Handle undo
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_REPEAT, tm->_t("MENU.EDIT_REDO").data())) {
+        if (renderIconButton(ICON_FA_REPEAT, m_translationManager->_t("MENU.EDIT_REDO").data())) {
             // Handle redo
         }
 
@@ -92,103 +87,101 @@ namespace ADS::IDE {
         ImGui::Separator();
         ImGui::SameLine();
 
-        if (renderIconButton(ICON_FA_SCISSORS, tm->_t("MENU.EDIT_CUT").data())) {
+        if (renderIconButton(ICON_FA_SCISSORS, m_translationManager->_t("MENU.EDIT_CUT").data())) {
             // Handle cut
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_FILES_O, tm->_t("MENU.EDIT_COPY").data())) {
+        if (renderIconButton(ICON_FA_FILES_O, m_translationManager->_t("MENU.EDIT_COPY").data())) {
             // Handle copy
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_CLIPBOARD, tm->_t("MENU.EDIT_PASTE").data())) {
+        if (renderIconButton(ICON_FA_CLIPBOARD, m_translationManager->_t("MENU.EDIT_PASTE").data())) {
             // Handle paste
         }
     }
 
     void ToolBarRenderer::renderViewButtons()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
         ImGui::SameLine();
         ImGui::Separator();
         ImGui::SameLine();
 
-        if (renderIconButton(ICON_FA_SEARCH_PLUS, tm->_t("MENU.VIEW_ZOOM_IN").data())) {
+        if (renderIconButton(ICON_FA_SEARCH_PLUS, m_translationManager->_t("MENU.VIEW_ZOOM_IN").data())) {
             // Handle zoom in
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_SEARCH_MINUS, tm->_t("MENU.VIEW_ZOOM_OUT").data())) {
+        if (renderIconButton(ICON_FA_SEARCH_MINUS, m_translationManager->_t("MENU.VIEW_ZOOM_OUT").data())) {
             // Handle zoom out
         }
 
         ImGui::SameLine();
-        if (renderIconButton(ICON_FA_REFRESH, tm->_t("MENU.VIEW_RESET_LAYOUT").data())) {
+        if (renderIconButton(ICON_FA_REFRESH, m_translationManager->_t("MENU.VIEW_RESET_LAYOUT").data())) {
             m_layoutManager->resetLayout();
         }
     }
 
     void ToolBarRenderer::renderLanguageSelector()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
-        ImGui::SameLine();
-        ImGui::Separator();
-        ImGui::SameLine();
-
-        // Language selector with globe icon
-        if (ImGui::Button(ICON_FA_GLOBE)) {
-            ImGui::OpenPopup(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data());
-        }
-
-        if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip(static_cast<const char *>(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data()));
-        }
-
-        // Language selection popup
-        if (ImGui::BeginPopup("language_selector")) {
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ENGLISH_UNITED_STATES).data())) {
-                this->getTranslationManager()->setLocale(Constants::Languages::ENGLISH_UNITED_STATES.data());
-            }
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ENGLISH_UNITED_KINGDOM).data())) {
-                this->getTranslationManager()->setLocale(Constants::Languages::ENGLISH_UNITED_KINGDOM.data());
-            }
-
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::SPANISH_SPAIN).data())) {
-                this->getTranslationManager()->setLocale(ADS::Constants::Languages::SPANISH_SPAIN.data());
-            }
-
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::FRENCH_FRANCE).data())) {
-                this->getTranslationManager()->setLocale(ADS::Constants::Languages::FRENCH_FRANCE.data());
-            }
-
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::GERMAN_GERMANY).data())) {
-                this->getTranslationManager()->setLocale(ADS::Constants::Languages::GERMAN_GERMANY.data());
-            }
-
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ITALIAN_ITALY).data())) {
-                this->getTranslationManager()->setLocale(ADS::Constants::Languages::ITALIAN_ITALY.data());
-            }
-
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::PORTUGUESE_PORTUGAL).data())) {
-                this->getTranslationManager()->setLocale(ADS::Constants::Languages::PORTUGUESE_PORTUGAL.data());
-            }
-
-            if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::RUSSIAN_RUSSIA).data())) {
-                this->getTranslationManager()->setLocale(ADS::Constants::Languages::RUSSIAN_RUSSIA.data());
-            }
-            ImGui::EndPopup();
-        }
+        // i18n::i18n* tm = this->getTranslationManager();
+        //
+        // ImGui::SameLine();
+        // ImGui::Separator();
+        // ImGui::SameLine();
+        //
+        // // Language selector with globe icon
+        // if (ImGui::Button(ICON_FA_GLOBE)) {
+        //     ImGui::OpenPopup(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data());
+        // }
+        //
+        // if (ImGui::IsItemHovered()) {
+        //     ImGui::SetTooltip(static_cast<const char *>(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data()));
+        // }
+        //
+        // // Language selection popup
+        // if (ImGui::BeginPopup("language_selector")) {
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ENGLISH_UNITED_STATES).data())) {
+        //         this->getTranslationManager()->setLocale(Constants::Languages::ENGLISH_UNITED_STATES.data());
+        //     }
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ENGLISH_UNITED_KINGDOM).data())) {
+        //         this->getTranslationManager()->setLocale(Constants::Languages::ENGLISH_UNITED_KINGDOM.data());
+        //     }
+        //
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::SPANISH_SPAIN).data())) {
+        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::SPANISH_SPAIN.data());
+        //     }
+        //
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::FRENCH_FRANCE).data())) {
+        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::FRENCH_FRANCE.data());
+        //     }
+        //
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::GERMAN_GERMANY).data())) {
+        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::GERMAN_GERMANY.data());
+        //     }
+        //
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ITALIAN_ITALY).data())) {
+        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::ITALIAN_ITALY.data());
+        //     }
+        //
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::PORTUGUESE_PORTUGAL).data())) {
+        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::PORTUGUESE_PORTUGAL.data());
+        //     }
+        //
+        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::RUSSIAN_RUSSIA).data())) {
+        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::RUSSIAN_RUSSIA.data());
+        //     }
+        //     ImGui::EndPopup();
+        // }
 
         // Theme toggle
-        ImGui::SameLine();
-        if (renderIconButton(ICON_FA_MOON_O, tm->_t("MENU.VIEW_TOOLBAR_TOOGLE_THEME").data())) {
-            // TODO: Implement proper theme toggle state tracking
-            // For now, just toggle to dark theme
-            handleThemeChange(true);
-        }
+        // ImGui::SameLine();
+        // if (renderIconButton(ICON_FA_MOON_O, tm->_t("MENU.VIEW_TOOLBAR_TOOGLE_THEME").data())) {
+        //     // TODO: Implement proper theme toggle state tracking
+        //     // For now, just toggle to dark theme
+        //     handleThemeChange(true);
+        // }
     }
 
     void ToolBarRenderer::handleThemeChange(bool darkTheme)
@@ -224,7 +217,7 @@ namespace ADS::IDE {
             renderFileButtons();
             renderEditButtons();
             renderViewButtons();
-            renderLanguageSelector();
+            // renderLanguageSelector();
         }
 
         ImGui::End();

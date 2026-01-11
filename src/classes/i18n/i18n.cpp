@@ -18,7 +18,6 @@
 #include <regex>
 #include <fstream>
 #include <locale>
-#include <map>
 #include <nlohmann/json.hpp>
 
 #include "../../exceptions/filesystem/file_not_found_exception.h"
@@ -779,12 +778,14 @@ namespace ADS::i18n {
 
         if (useExisting) {
             filesystem::path filePath = this->baseFolder / (language + ".json");
-            std::cout << "File " << filePath << " exists" << std::endl;
+            spdlog::info(std::format("File {} exists", filePath.string()));
+            // std::cout << "File " << filePath << " exists" << std::endl;
             try {
                 ofstream file(filePath, std::ios::trunc);
                 std::vector<std::string> languageParts;
                 string identifier = "";
-                std::cout << "Language: " << langIt->first << std::endl << std::endl;
+                spdlog::info(std::format("Language: {}", langIt->first));
+                // std::cout << "Language: " << langIt->first << std::endl << std::endl;
                 nlohmann::json data;
                 for (const auto &[lang, translations]: langIt->second) {
                     if (lang.contains(".")) {
@@ -803,9 +804,10 @@ namespace ADS::i18n {
 
                 return true;
             } catch (const std::ios_base::failure &e) {
-                std::cout << "Caught an ios_base::failure.\n"
-                        << "Explanatory string: " << e.what() << '\n'
-                        << "Error code: " << e.code() << '\n';
+                spdlog::error(std::format("Caught an ios_base::failure.\nExplanatory string: {}\nError code: {}", e.what(), e.code().value()));
+                // std::cout << "Caught an ios_base::failure.\n"
+                //         << "Explanatory string: " << e.what() << '\n'
+                //         << "Error code: " << e.code() << '\n';
             }
         }
 

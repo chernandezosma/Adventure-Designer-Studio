@@ -14,15 +14,17 @@
 #ifndef ADS_NAVIGATION_SERVICE_H
 #define ADS_NAVIGATION_SERVICE_H
 
-
-class NavigationService
-{
+namespace ADS::IDE {
+    class NavigationService
+    {
 
     public:
+        NavigationService() = default;
 
-    NavigationService() = default;
+        void fileOpenHandler();
 
-};
+        void fileNewHandler();
 
-
+    };
+} // ADS::NAVIGATION::SERVICES
 #endif //ADS_NAVIGATION_SERVICE_H

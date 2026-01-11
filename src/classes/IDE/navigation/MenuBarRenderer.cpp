@@ -21,28 +21,26 @@ namespace ADS::IDE {
     MenuBarRenderer::MenuBarRenderer(LayoutManager *layoutManager) :
         IDEBase(),
         m_layoutManager(layoutManager),
-        m_navigationService()
-
+        m_navigationService(),
+        m_translationManager(this->getTranslationManager())
     {
         // Locale is now managed in IDEBase
     }
 
     void MenuBarRenderer::renderFileMenu()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
-        if (ImGui::BeginMenu(tm->_t("MENU.FILE_HEADER").data())) {
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_NEW").data(), "Ctrl+N")) {
-                // Handle new
+        if (ImGui::BeginMenu(m_translationManager->_t("MENU.FILE_HEADER").data())) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_NEW").data(), "Ctrl+N")) {
+                this->m_navigationService->fileNewHandler();
             }
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_OPEN").data(), "Ctrl+O")) {
-                // Handle open
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_OPEN").data(), "Ctrl+O")) {
+                this->m_navigationService->fileOpenHandler();
             }
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_SAVE").data(), "Ctrl+S")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_SAVE").data(), "Ctrl+S")) {
                 // Handle save
             }
             ImGui::Separator();
-            if (ImGui::MenuItem(tm->_t("MENU.FILE_EXIT").data(), "Alt+F4")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_EXIT").data(), "Alt+F4")) {
                 handleExit();
             }
             ImGui::EndMenu();
@@ -51,27 +49,25 @@ namespace ADS::IDE {
 
     void MenuBarRenderer::renderEditMenu()
     {
-        i18n::i18n* tm = this->getTranslationManager();
+        if (ImGui::BeginMenu(m_translationManager->_t("MENU.EDIT_HEADER").data())) {
 
-        if (ImGui::BeginMenu(tm->_t("MENU.EDIT_HEADER").data())) {
-
-            if (ImGui::MenuItem(tm->_t("MENU.EDIT_UNDO").data(), "Ctrl+Z")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_UNDO").data(), "Ctrl+Z")) {
 
             }
 
-            if (ImGui::MenuItem(tm->_t("MENU.EDIT_REDO").data(), "Shift+Ctrl+Z")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_REDO").data(), "Shift+Ctrl+Z")) {
 
             }
             ImGui::Separator();
 
-            if (ImGui::MenuItem(tm->_t("MENU.EDIT_COPY").data(), "Ctrl+C")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_COPY").data(), "Ctrl+C")) {
 
             }
-            if (ImGui::MenuItem(tm->_t("MENU.EDIT_CUT").data(), "Ctrl+X")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_CUT").data(), "Ctrl+X")) {
 
             }
 
-            if (ImGui::MenuItem(tm->_t("MENU.EDIT_PASTE").data(), "Ctrl+V")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_PASTE").data(), "Ctrl+V")) {
 
             }
             ImGui::EndMenu();
@@ -80,18 +76,16 @@ namespace ADS::IDE {
 
     void MenuBarRenderer::renderViewMenu()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
-        if (ImGui::BeginMenu(tm->_t("MENU.VIEW_HEADER").data())) {
-            if (ImGui::MenuItem(tm->_t("MENU.VIEW_ZOOM_IN").data(), "Ctrl++")) {
+        if (ImGui::BeginMenu(m_translationManager->_t("MENU.VIEW_HEADER").data())) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_ZOOM_IN").data(), "Ctrl++")) {
 
             }
-            if (ImGui::MenuItem(tm->_t("MENU.VIEW_ZOOM_OUT").data(), "Ctrl+-")) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_ZOOM_OUT").data(), "Ctrl+-")) {
 
             }
 
             ImGui::Separator();
-            if (ImGui::MenuItem(tm->_t("MENU.VIEW_RESET_LAYOUT").data())) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_RESET_LAYOUT").data())) {
                 m_layoutManager->resetLayout();
             }
             ImGui::EndMenu();
@@ -100,19 +94,17 @@ namespace ADS::IDE {
 
     void MenuBarRenderer::renderOptionsMenu()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
-        if (ImGui::BeginMenu(tm->_t("MENU.OPTIONS_HEADER").data())) {
-            if (ImGui::MenuItem(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data())) {
+        if (ImGui::BeginMenu(m_translationManager->_t("MENU.OPTIONS_HEADER").data())) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data())) {
 
             }
             ImGui::Separator();
             ImGui::Separator();
-            if (ImGui::BeginMenu(tm->_t("MENU.VIEW_THEME").data())) {
-                if (ImGui::MenuItem(tm->_t("MENU.VIEW_DARK_THEME").data())) {
+            if (ImGui::BeginMenu(m_translationManager->_t("MENU.VIEW_THEME").data())) {
+                if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_DARK_THEME").data())) {
                     handleThemeChange(true);
                 }
-                if (ImGui::MenuItem(tm->_t("MENU.VIEW_LIGHT_THEME").data())) {
+                if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_LIGHT_THEME").data())) {
                     handleThemeChange(false);
                 }
                 ImGui::EndMenu();
@@ -124,10 +116,8 @@ namespace ADS::IDE {
 
     void MenuBarRenderer::renderHelpMenu()
     {
-        i18n::i18n* tm = this->getTranslationManager();
-
-        if (ImGui::BeginMenu(tm->_t("MENU.HELP_HEADER").data())) {
-            if (ImGui::MenuItem(tm->_t("MENU.HELP_ABOUT").data())) {
+        if (ImGui::BeginMenu(m_translationManager->_t("MENU.HELP_HEADER").data())) {
+            if (ImGui::MenuItem(m_translationManager->_t("MENU.HELP_ABOUT").data())) {
                 // Show about dialog
             }
             ImGui::EndMenu();
