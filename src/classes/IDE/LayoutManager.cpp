@@ -29,7 +29,8 @@ namespace ADS::IDE {
     }
 
     void LayoutManager::createDefaultLayout() {
-        std::cout << "No saved layout found, creating default layout..." << std::endl;
+        spdlog::info("No saved layout found, creating default layout...");
+        // std::cout << "No saved layout found, creating default layout..." << std::endl;
 
         // Clear any existing layout
         ImGui::DockBuilderRemoveNode(m_dockSpaceId);

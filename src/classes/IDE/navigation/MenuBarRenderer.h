@@ -41,6 +41,11 @@ namespace ADS::IDE {
         std::unique_ptr<NavigationService> m_navigationService;
 
         /**
+         * Translation manager for internationalization
+         */
+        i18n::i18n* m_translationManager;
+
+        /**
          * @brief Render the File menu
          *
          * Includes New, Open, Save, and Exit menu items.

@@ -14,6 +14,7 @@
 #ifndef ADS_TOOLBAR_RENDERER_H
 #define ADS_TOOLBAR_RENDERER_H
 
+#include "NavigationConstants.h"
 #include "NavigationService.h"
 #include "../IDEBase.h"
 #include "../LayoutManager.h"
@@ -33,6 +34,7 @@ namespace ADS::IDE {
      */
     class ToolBarRenderer : public IDEBase {
     private:
+
         /**
          * Layout manager reference for actions like reset layout
          */
@@ -42,6 +44,11 @@ namespace ADS::IDE {
          * Service for the handler functions
          */
         std::unique_ptr<NavigationService> m_navigationService;
+
+        /**
+         * Translation manager for internationalization
+         */
+        i18n::i18n* m_translationManager;
 
         /**
          * Toolbar button height
