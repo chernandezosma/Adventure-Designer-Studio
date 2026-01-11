@@ -29,6 +29,27 @@ namespace ADS::Core {
     i18n::i18n* App::m_translationsManager = nullptr;
     UI::Fonts* App::m_fontManager = nullptr;
 
+    /**
+     * @brief Initialize all internal App structures and systems
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Performs initial setup of all App subsystems including:
+     * - Reading debug mode from environment configuration
+     * - Setting locale based on debug mode (Spanish for debug, default otherwise)
+     * - Initializing logger with appropriate verbosity level
+     * - Loading available languages from environment configuration
+     * - Creating ImGuiManager instance for UI management
+     * - Initializing IDE renderer for the application interface
+     * - Setting initial application state flags
+     *
+     * This method is called automatically by the App constructor and should
+     * not be invoked directly by external code.
+     *
+     * @note This is a private method called automatically by the constructor
+     * @see App(), getEnv(), getLogger(), getTranslationsManager()
+     */
     void App::init()
     {
         Environment *e = App::getEnv();
