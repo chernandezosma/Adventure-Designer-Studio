@@ -10,13 +10,26 @@
     "FILE_NEW": "Nuevo",
     "FILE_OPEN": "Abrir",
     "FILE_SAVE": "Grabar",
-    "FILE_EXIT": "Salid",
+    "FILE_EXIT": "Salir",
+
+    "EDIT_HEADER": "Editar",
+    "EDIT_UNDO": "Deshacer",
+    "EDIT_REDO": "Rehacer",
+    "EDIT_COPY": "Copiar",
+    "EDIT_CUT": "Cortar",
+    "EDIT_PASTE": "Paste",
 
     "VIEW_HEADER": "Ver",
-    "VIEW_RESET_LAYOUT": "restablecer diseño ",
+    "VIEW_ZOOM_IN": "Aumentar Zoom",
+    "VIEW_ZOOM_OUT": "Reducir Zoom",
+    "VIEW_RESET_LAYOUT": "Restablecer diseño ",
     "VIEW_THEME": "Tema",
     "VIEW_DARK_THEME": "Tema Oscuro",
     "VIEW_LIGHT_THEME": "Tema Claro",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Cambiar Tema",
+
+    "OPTIONS_HEADER": "Opciones",
+    "OPTIONS_LANGUAGE_SELECTOR": "Seleccionar Lenguaje",
 
     "HELP_HEADER": "Ayuda",
     "HELP_ABOUT": "Acerca de"

@@ -15,6 +15,7 @@
 #define ADS_IDE_BASE_H
 #include "env/env.h"
 #include "i18n/i18n.h"
+#include "UI/fonts.h"
 
 namespace ADS::IDE {
     /**
@@ -52,6 +53,23 @@ namespace ADS::IDE {
          * by IDE components.
          */
         Environment *m_environment;
+
+        /**
+         * @brief Font manager for loading and accessing fonts
+         *
+         * Provides access to the application's font manager for
+         * retrieving fonts by name, including icon fonts.
+         */
+        UI::Fonts *m_fontManager;
+
+        /**
+         * @brief Current locale information
+         *
+         * Stores the current locale information including locale code
+         * and language name. Cached to avoid repeated calls to the
+         * translation manager.
+         */
+        i18n::LocaleInfo m_locale;
 
     public:
         /**
@@ -99,6 +117,48 @@ namespace ADS::IDE {
          * @see Environment
          */
         Environment *getEnvironment();
+
+        /**
+         * @brief Get the font manager instance
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Provides access to the font manager for retrieving fonts by name,
+         * including icon fonts, within IDE components.
+         *
+         * @return Pointer to the Fonts manager instance
+         *
+         * @see UI::Fonts
+         */
+        UI::Fonts *getFontManager();
+
+        /**
+         * @brief Get the current locale information
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Returns the cached locale information including locale code and
+         * language name. This avoids repeated calls to the translation manager.
+         *
+         * @return Reference to the current LocaleInfo
+         *
+         * @see i18n::LocaleInfo
+         */
+        const i18n::LocaleInfo& getLocale() const;
+
+        /**
+         * @brief Update the cached locale information
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Refreshes the cached locale information from the translation manager.
+         * Should be called when the language is changed to keep the cache
+         * synchronized.
+         */
+        void updateLocale();
     };
 } // ADS
 

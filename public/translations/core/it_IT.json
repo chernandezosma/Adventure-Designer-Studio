@@ -4,5 +4,34 @@
   "TITLES": {
     "TITLE_1": "Il Signore degli Anelli",
     "TITLE_2": "Matrix Revenge"
+  },
+  "MENU": {
+    "FILE_HEADER": "File",
+    "FILE_NEW": "Nuovo",
+    "FILE_OPEN": "Apri",
+    "FILE_SAVE": "Salva",
+    "FILE_EXIT": "Esci",
+
+    "EDIT_HEADER": "Modifica",
+    "EDIT_UNDO": "Annulla",
+    "EDIT_REDO": "Ripristina",
+    "EDIT_COPY": "Copia",
+    "EDIT_CUT": "Taglia",
+    "EDIT_PASTE": "Incolla",
+
+    "VIEW_HEADER": "Visualizza",
+    "VIEW_ZOOM_IN": "Ingrandisci",
+    "VIEW_ZOOM_OUT": "Riduci",
+    "VIEW_RESET_LAYOUT": "Ripristina layout",
+    "VIEW_THEME": "Tema",
+    "VIEW_DARK_THEME": "Tema scuro",
+    "VIEW_LIGHT_THEME": "Tema chiaro",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Cambia tema",
+
+    "OPTIONS_HEADER": "Opzioni",
+    "OPTIONS_LANGUAGE_SELECTOR": "Seleziona lingua",
+
+    "HELP_HEADER": "Aiuto",
+    "HELP_ABOUT": "Informazioni"
   }
 }

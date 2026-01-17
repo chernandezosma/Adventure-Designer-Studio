@@ -11,11 +11,26 @@
     "FILE_OPEN": "Open",
     "FILE_SAVE": "Save",
     "FILE_EXIT": "Exit",
+
+    "EDIT_HEADER": "Edit",
+    "EDIT_UNDO": "Undo",
+    "EDIT_REDO": "Redo",
+    "EDIT_COPY": "Copy",
+    "EDIT_CUT": "Cut",
+    "EDIT_PASTE": "Paste",
+
     "VIEW_HEADER": "View",
+    "VIEW_ZOOM_IN": "Zoom In",
+    "VIEW_ZOOM_OUT": "Zoom Out",
     "VIEW_RESET_LAYOUT": "Reset Layout",
     "VIEW_THEME": "Theme",
     "VIEW_DARK_THEME": "Dark Theme",
     "VIEW_LIGHT_THEME": "Light Theme",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Toggle Theme",
+
+    "OPTIONS_HEADER": "Options",
+    "OPTIONS_LANGUAGE_SELECTOR": "Select Language",
+
     "HELP_HEADER": "Help",
     "HELP_ABOUT": "About"
   }

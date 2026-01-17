@@ -4,5 +4,34 @@
   "TITLES": {
     "TITLE_1": "Le Seigneur des Anneaux",
     "TITLE_2": "Matrix: La Revanche"
+  },
+  "MENU": {
+    "FILE_HEADER": "Fichier",
+    "FILE_NEW": "Nouveau",
+    "FILE_OPEN": "Ouvrir",
+    "FILE_SAVE": "Enregistrer",
+    "FILE_EXIT": "Quitter",
+
+    "EDIT_HEADER": "Édition",
+    "EDIT_UNDO": "Annuler",
+    "EDIT_REDO": "Rétablir",
+    "EDIT_COPY": "Copier",
+    "EDIT_CUT": "Couper",
+    "EDIT_PASTE": "Coller",
+
+    "VIEW_HEADER": "Affichage",
+    "VIEW_ZOOM_IN": "Agrandir",
+    "VIEW_ZOOM_OUT": "Rétrécir",
+    "VIEW_RESET_LAYOUT": "Réinitialiser la disposition",
+    "VIEW_THEME": "Thème",
+    "VIEW_DARK_THEME": "Thème sombre",
+    "VIEW_LIGHT_THEME": "Thème clair",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Changer de thème",
+
+    "OPTIONS_HEADER": "Options",
+    "OPTIONS_LANGUAGE_SELECTOR": "Sélectionner la langue",
+
+    "HELP_HEADER": "Aide",
+    "HELP_ABOUT": "À propos"
   }
 }
