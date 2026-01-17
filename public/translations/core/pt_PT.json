@@ -4,6 +4,35 @@
   "TITLES": {
     "TITLE_1": "O Senhor dos Anéis",
     "TITLE_2": "Matrix Revenge"
+  },
+  "MENU": {
+    "FILE_HEADER": "Arquivo",
+    "FILE_NEW": "Novo",
+    "FILE_OPEN": "Abrir",
+    "FILE_SAVE": "Salvar",
+    "FILE_EXIT": "Sair",
+
+    "EDIT_HEADER": "Editar",
+    "EDIT_UNDO": "Desfazer",
+    "EDIT_REDO": "Refazer",
+    "EDIT_COPY": "Copiar",
+    "EDIT_CUT": "Recortar",
+    "EDIT_PASTE": "Colar",
+
+    "VIEW_HEADER": "Exibir",
+    "VIEW_ZOOM_IN": "Aumentar zoom",
+    "VIEW_ZOOM_OUT": "Reduzir zoom",
+    "VIEW_RESET_LAYOUT": "Redefinir layout",
+    "VIEW_THEME": "Tema",
+    "VIEW_DARK_THEME": "Tema escuro",
+    "VIEW_LIGHT_THEME": "Tema claro",
+    "VIEW_TOOLBAR_TOOGLE_THEME": "Alternar tema",
+
+    "OPTIONS_HEADER": "Opções",
+    "OPTIONS_LANGUAGE_SELECTOR": "Selecionar idioma",
+
+    "HELP_HEADER": "Ajuda",
+    "HELP_ABOUT": "Sobre"
   }
 }
 

@@ -21,6 +21,10 @@ namespace ADS::IDE {
     {
         this->m_environment = Core::App::getEnv();
         this->m_translationsManager = Core::App::getTranslationsManager();
+        // Font manager is lazy-loaded in getFontManager() because it's not available during construction
+        this->m_fontManager = nullptr;
+        // Initialize locale cache
+        this->m_locale = this->m_translationsManager->getCurrentLocale();
     }
 
     i18n::i18n * IDEBase::getTranslationManager()
@@ -31,6 +35,25 @@ namespace ADS::IDE {
     Environment * IDEBase::getEnvironment()
     {
         return this->m_environment;
+    }
+
+    UI::Fonts * IDEBase::getFontManager()
+    {
+        // Lazy-load font manager on first access
+        if (this->m_fontManager == nullptr) {
+            this->m_fontManager = Core::App::getFontManager();
+        }
+        return this->m_fontManager;
+    }
+
+    const i18n::LocaleInfo& IDEBase::getLocale() const
+    {
+        return this->m_locale;
+    }
+
+    void IDEBase::updateLocale()
+    {
+        this->m_locale = this->m_translationsManager->getCurrentLocale();
     }
 
 

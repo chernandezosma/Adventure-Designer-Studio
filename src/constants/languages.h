@@ -135,55 +135,73 @@ namespace ADS::Constants::Languages {
 
     constexpr auto languages =
             std::to_array<std::pair<std::string_view, std::string_view> >({
-                {SPANISH_ARGENTINA, "Spanish (Argentina)"},
-                {SPANISH_BOLIVIA, "Spanish (Bolivia)"},
-                {SPANISH_CHILE, "Spanish (Chile)"},
-                {SPANISH_COLOMBIA, "Spanish (Colombia)"},
-                {SPANISH_COSTA_RICA, "Spanish (Costa Rica)"},
-                {SPANISH_DOMINICAN_REPUBLIC, "Spanish (Dominican Republic)"},
-                {SPANISH_ECUADOR, "Spanish (Ecuador)"},
-                {SPANISH_SPAIN, "Spanish (Spain)"},
-                {SPANISH_GUATEMALA, "Spanish (Guatemala)"},
-                {SPANISH_HONDURAS, "Spanish (Honduras)"},
-                {SPANISH_MEXICO, "Spanish (Mexico)"},
-                {SPANISH_NICARAGUA, "Spanish (Nicaragua)"},
-                {SPANISH_PANAMA, "Spanish (Panama)"},
-                {SPANISH_PERU, "Spanish (Peru)"},
-                {SPANISH_PUERTO_RICO, "Spanish (Puerto Rico)"},
-                {SPANISH_PARAGUAY, "Spanish (Paraguay)"},
-                {SPANISH_EL_SALVADOR, "Spanish (El Salvador)"},
-                {SPANISH_UNITED_STATES, "Spanish (United States)"},
-                {SPANISH_URUGUAY, "Spanish (Uruguay)"},
-                {SPANISH_VENEZUELA, "Spanish (Venezuela)"},
 
+                // Spanish
+                {SPANISH_ARGENTINA, "Español (Argentina)"},
+                {SPANISH_BOLIVIA, "Español (Bolivia)"},
+                {SPANISH_CHILE, "Español (Chile)"},
+                {SPANISH_COLOMBIA, "Español (Colombia)"},
+                {SPANISH_COSTA_RICA, "Español (Costa Rica)"},
+                {SPANISH_DOMINICAN_REPUBLIC, "Español (República Dominicana)"},
+                {SPANISH_ECUADOR, "Español (Ecuador)"},
+                {SPANISH_SPAIN, "Español (España)"},
+                {SPANISH_GUATEMALA, "Español (Guatemala)"},
+                {SPANISH_HONDURAS, "Español (Honduras)"},
+                {SPANISH_MEXICO, "Español (Mexico)"},
+                {SPANISH_NICARAGUA, "Español (Nicaragua)"},
+                {SPANISH_PANAMA, "Español (Panama)"},
+                {SPANISH_PERU, "Español (Peru)"},
+                {SPANISH_PUERTO_RICO, "Español (Puerto Rico)"},
+                {SPANISH_PARAGUAY, "Español (Paraguay)"},
+                {SPANISH_EL_SALVADOR, "Español (El Salvador)"},
+                {SPANISH_UNITED_STATES, "Español (Estados Unidos)"},
+                {SPANISH_URUGUAY, "Español (Uruguay)"},
+                {SPANISH_VENEZUELA, "Español (Venezuela)"},
+
+                // English
                 {ENGLISH_UNITED_KINGDOM, "English (United Kingdom)"},
                 {ENGLISH_UNITED_STATES, "English (United States)"},
                 {ENGLISH_CANADA, "English (Canada)"},
                 {ENGLISH_AUSTRALIA, "English (Australia)"},
 
-                {FRENCH_BELGIUM, "French (Belgium)"},
-                {FRENCH_CANADA, "French (Canada)"},
-                {FRENCH_SWITZERLAND, "French (Switzerland)"},
-                {FRENCH_FRANCE, "French (France)"},
-                {FRENCH_LUXEMBOURG, "French (Luxembourg)"},
-                {FRENCH_MONACO, "French (Monaco)"},
+                // French
+                {FRENCH_BELGIUM, "Français (Belgique)"},
+                {FRENCH_CANADA, "Français (Canada)"},
+                {FRENCH_SWITZERLAND, "Français (Suisse)"},
+                {FRENCH_FRANCE, "Français (France)"},
+                {FRENCH_LUXEMBOURG, "Français (Luxembourg)"},
+                {FRENCH_MONACO, "Français (Monaco)"},
 
-                {GERMAN_AUSTRIA, "German (Austria)"},
-                {GERMAN_SWITZERLAND, "German (Switzerland)"},
-                {GERMAN_GERMANY, "German (Germany)"},
-                {GERMAN_LUXEMBOURG, "German (Luxembourg)"},
+                // German
+                {GERMAN_AUSTRIA, "Deutsch (Österreich)"},
+                {GERMAN_SWITZERLAND, "Deutsch (Schweiz)"},
+                {GERMAN_GERMANY, "Deutsch (Deutschland)"},
+                {GERMAN_LUXEMBOURG, "Deutsch (Luxemburg)"},
 
-                {DUTCH_BELGIUM, "Dutch (Belgium)"},
-                {DUTCH_NETHERLANDS, "Dutch (Netherlands)"},
-                {ITALIAN_ITALY, "Italian (Italy)"},
-                {ITALIAN_SWITZERLAND, "Italian (Switzerland)"},
-                {PORTUGUESE_BRAZIL, "Portuguese (Brazil)"},
-                {PORTUGUESE_PORTUGAL, "Portuguese (Portugal)"},
-                {SWEDISH_FINLAND, "Swedish (Finland)"},
-                {SWEDISH_SWEDEN, "Swedish (Sweden)"},
-                {POLISH_POLAND, "Polish (Poland)"},
-                {RUSSIAN_RUSSIA, "Russian (Russia)"},
-                {ROMANIAN_ROMANIA, "Romanian (Romania)"},
+                // Dutch
+                {DUTCH_BELGIUM, "Nederlands (België)"},
+                {DUTCH_NETHERLANDS, "Nederlands (Nederland)"},
+
+                // Italian
+                {ITALIAN_ITALY, "Italiano (Italia)"},
+                {ITALIAN_SWITZERLAND, "Italiano (Svizzera)"},
+
+                // Portuguese
+                {PORTUGUESE_BRAZIL, "Português (Brasil)"},
+                {PORTUGUESE_PORTUGAL, "Português (Portugal)"},
+
+                // Swedish
+                {SWEDISH_FINLAND, "Svenska (Finland)"},
+                {SWEDISH_SWEDEN, "Svenska (Sverige)"},
+
+                // Polish
+                {POLISH_POLAND, "Polski (Polska)"},
+
+                // Russian
+                {RUSSIAN_RUSSIA, "Русский (Россия)"},
+
+                // Romanian
+                {ROMANIAN_ROMANIA, "Română (România)"},
             });
 
 #ifdef _WIN32

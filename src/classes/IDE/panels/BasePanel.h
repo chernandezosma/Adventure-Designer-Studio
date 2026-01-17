@@ -57,24 +57,50 @@ namespace ADS::IDE::Panels {
         /**
          * @brief Construct a new BasePanel object
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Initializes the base panel with the specified window name and sets
+         * default visibility to true. Also initializes environment and translations
+         * manager references from the application instance.
+         *
          * @param name Window name for the panel
          */
         explicit BasePanel(const std::string &name);
 
         /**
          * @brief Destroy the BasePanel object
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Virtual destructor to ensure proper cleanup of derived classes.
+         * Default implementation is sufficient as this class uses only
+         * non-owning pointers.
          */
         virtual ~BasePanel() = default;
 
         /**
          * @brief Render the panel (pure virtual method)
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
          * Must be implemented by derived classes to handle panel rendering.
+         * This method is called every frame when the panel should be drawn.
+         * Implementations should check visibility state and handle ImGui
+         * rendering calls.
          */
         virtual void render() = 0;
 
         /**
          * @brief Set panel visibility
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Controls whether the panel should be rendered. When set to false,
+         * the panel's render() method should return early without drawing.
          *
          * @param visible True to show panel, false to hide
          */
@@ -82,6 +108,13 @@ namespace ADS::IDE::Panels {
 
         /**
          * @brief Get panel visibility state
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Returns the current visibility state of the panel. This does not
+         * necessarily mean the panel is currently being displayed, only that
+         * it is marked as visible.
          *
          * @return true if panel is visible
          * @return false if panel is hidden
@@ -91,7 +124,14 @@ namespace ADS::IDE::Panels {
         /**
          * @brief Get the window name
          *
-         * @return const std::string& Window name
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Returns the name used to identify this panel's window in ImGui.
+         * This name is displayed in the window title bar and used internally
+         * by ImGui for window management.
+         *
+         * @return const std::string& Window name reference
          */
         const std::string &getWindowName() const;
     };

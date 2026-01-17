@@ -157,8 +157,11 @@ namespace ADS::UI {
         config.OversampleV = 2;             // High quality rendering
         config.PixelSnapH = true;           // Align to pixel boundaries
 
-        // Load the icon font
-        ImFont* iconFont = this->io->Fonts->AddFontFromFileTTF(path.c_str(), size, &config);
+        // FontAwesome 4 glyph range (0xf000 - 0xf2e0)
+        static const ImWchar icons_ranges[] = { 0xf000, 0xf2e0, 0 };
+
+        // Load the icon font with proper glyph ranges
+        ImFont* iconFont = this->io->Fonts->AddFontFromFileTTF(path.c_str(), size, &config, icons_ranges);
 
         if (iconFont == nullptr) {
             spdlog::error("Failed to load icon font from: {}", path);
