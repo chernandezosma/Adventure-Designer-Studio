@@ -44,7 +44,7 @@ namespace ADS::UI {
      *
      * @note Window dimensions are automatically scaled based on display DPI
      */
-    Window::Window(std::string title, float x, float y, float width, float height, SDL_FLAGS *flags, ImGuiIO* io): io(io)
+    Window::Window(std::string title, int x, int y, int width, int height, SDL_FLAGS *flags, ImGuiIO* io): io(io)
     {
         this->flags = new SDL_FLAGS();
 
