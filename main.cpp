@@ -38,6 +38,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "languages.h"
+#include "spdlog/spdlog.h"
 
 #if !SDL_VERSION_ATLEAST(2, 0, 17)
 #error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
@@ -72,49 +73,59 @@ using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
  */
 int main()
 {
-    SDL_SetMainReady();  // Required when using SDL_MAIN_HANDLED
-    ADS::Core::App *app = new ADS::Core::App();
+    try {
+        SDL_SetMainReady();  // Required when using SDL_MAIN_HANDLED
+        ADS::Core::App *app = new ADS::Core::App();
 
-    // Create window
-    ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
-            app->getTranslationsManager()->_t("WIN_TITLE"),
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
-            System::DEFAULT_X_WIN_SIZE,
-            System::DEFAULT_Y_WIN_SIZE,
-    });
+        // Create window
+        ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
+                app->getTranslationsManager()->_t("WIN_TITLE"),
+                SDL_WINDOWPOS_CENTERED,
+                SDL_WINDOWPOS_CENTERED,
+                System::DEFAULT_X_WIN_SIZE,
+                System::DEFAULT_Y_WIN_SIZE,
+        });
 
-    ADS::UI::SDL_FLAGS *flags = new ADS::UI::SDL_FLAGS();
-    ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
-    pair<boost::uuids::uuid, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
-    ADS::UI::Window *mainWindow = windowInfo.second;
-    app->setMainWindow(mainWindow);
+        ADS::UI::SDL_FLAGS *flags = new ADS::UI::SDL_FLAGS();
+        ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
+        pair<boost::uuids::uuid, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
+        ADS::UI::Window *mainWindow = windowInfo.second;
+        app->setMainWindow(mainWindow);
 
-    // Load fonts
-    ADS::Environment *env = app->getEnv();
-    ADS::UI::Fonts *fm = imguiObject.getFontManager();
+        // Load fonts
+        ADS::Environment *env = app->getEnv();
+        ADS::UI::Fonts *fm = imguiObject.getFontManager();
 
-    // Set the font manager as static member in App for global access
-    ADS::Core::App::setFontManager(fm);
+        // Set the font manager as static member in App for global access
+        ADS::Core::App::setFontManager(fm);
 
-    fm->loadDefaultFonts();
-    fm->loadFontFromFile("lightFont", env->get("LIGHT_FONT")->data());
-    fm->loadFontFromFile("mediumFont", env->get("MEDIUM_FONT")->data());
-    fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data());
-    // Load icons AFTER other fonts so they merge with the regular font (which becomes default)
-    fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
+        fm->loadDefaultFonts();
+        fm->loadFontFromFile("lightFont", env->get("LIGHT_FONT")->data());
+        fm->loadFontFromFile("mediumFont", env->get("MEDIUM_FONT")->data());
+        fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data());
+        // Load icons AFTER other fonts so they merge with the regular font (which becomes default)
+        fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
 
-    // Setup backends
-    ImGui_ImplSDL2_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
-    ImGui_ImplSDLRenderer2_Init(mainWindow->getRenderer());
-    mainWindow->setStyle();
+        // Setup backends
+        ImGui_ImplSDL2_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
+        ImGui_ImplSDLRenderer2_Init(mainWindow->getRenderer());
+        mainWindow->setStyle();
 
-    // Run the application
-    app->run();
+        // Run the application
+        app->run();
 
-    // Cleanup
-    app->shutdown();
-    delete app;
+        // Cleanup
+        app->shutdown();
+        delete app;
 
-    return 0;
+        return 0;
+    } catch (const std::exception& e) {
+        spdlog::error("Fatal error: {}", e.what());
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", e.what(), nullptr);
+        return 1;
+    } catch (...) {
+        spdlog::error("Unknown fatal error occurred");
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Fatal Error", "Unknown error occurred", nullptr);
+        return 1;
+    }
 }
