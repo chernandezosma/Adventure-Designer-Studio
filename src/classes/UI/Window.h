@@ -25,23 +25,23 @@ namespace ADS::UI {
     /**
      * Structure which hold the Window position, size and flags information
      */
-    typedef struct
+    struct SDL_WINDOW_INFO
     {
         std::string title;
-        float x;
-        float y;
-        float width;
-        float height;
-    } SDL_WINDOW_INFO;
+        int x;
+        int y;
+        int width;
+        int height;
+    };
 
     /**
      * Flags used to apply to Window and Renderer
      */
-    typedef struct
+    struct SDL_FLAGS
     {
-        SDL_WindowFlags windowFlags;
-        Uint32 rendererFlags;
-    } SDL_FLAGS;
+        SDL_WindowFlags windowFlags = static_cast<SDL_WindowFlags>(0);
+        Uint32 rendererFlags = 0;
+    };
 
     /**
      * DPI scale factors
@@ -159,7 +159,7 @@ namespace ADS::UI {
         /**
          * Default flags
          */
-        static constexpr SDL_WindowFlags DEFAULT_FLAGS = static_cast<SDL_WindowFlags>(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+        static constexpr SDL_WindowFlags DEFAULT_FLAGS = static_cast<SDL_WindowFlags>(SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         static constexpr Uint32 DEFAULT_RENDER_FLAGS = static_cast<SDL_RendererFlags>(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
         static constexpr int FIRST_AVAILABLE_DRIVER = -1;
         static constexpr int WINDOW_FLAGS = 1;
@@ -188,7 +188,7 @@ namespace ADS::UI {
          *
          * @see DEFAULT_FLAGS, getWindow()
          */
-        Window(std::string title, float x, float y, float width, float height, SDL_FLAGS *flags, ImGuiIO *io);
+        Window(std::string title, int x, int y, int width, int height, SDL_FLAGS *flags, ImGuiIO *io);
 
         /**
          * @brief Construct a new Window from SDL_WINDOW_INFO structure

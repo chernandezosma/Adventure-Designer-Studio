@@ -10,6 +10,7 @@
  * promotional material.
  */
 #include <fstream>
+#define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <random>
 
@@ -71,6 +72,7 @@ using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
  */
 int main()
 {
+    SDL_SetMainReady();  // Required when using SDL_MAIN_HANDLED
     ADS::Core::App *app = new ADS::Core::App();
 
     // Create window
