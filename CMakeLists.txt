@@ -39,6 +39,8 @@ elseif (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DEBUG:FULL /DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
     set(CMAKE_CXX_FLAGS_TEST "/Zi /Od /DEBUG:FULL /DTEST_MODE")     ### NUEVO ###
+    # Prevent Windows min/max macros from conflicting with std::min/std::max and boost
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
 endif ()
 
 # ----------------------------------------------------------
