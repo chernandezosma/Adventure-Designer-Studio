@@ -22,21 +22,150 @@ Imagine a teacher using such a tool to build a short adventure that re-creates t
 - **vcpkg**: Package manager for C++ libraries
 - **System Build Tools**: Required by vcpkg to build certain dependencies
 
-**Linux (Debian/Ubuntu):**
+### How to Install Prerequisites
+
+<details>
+<summary><strong>Linux (Debian/Ubuntu)</strong></summary>
+
+**1. Install C++ Compiler and Build Tools:**
 ```bash
+sudo apt update
 sudo apt install build-essential autoconf automake libtool pkg-config python3-jinja2
 ```
+This installs GCC, G++, Make, and other essential build tools.
 
-**Linux (Fedora/RHEL):**
+**2. Install CMake:**
+```bash
+sudo apt install cmake
+```
+If you need a newer version (3.21+), use the official Kitware repository:
+```bash
+sudo apt install software-properties-common
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
+sudo apt update
+sudo apt install cmake
+```
+
+**3. Install Git:**
+```bash
+sudo apt install git
+```
+
+**4. Verify installations:**
+```bash
+g++ --version      # Should show GCC 11+
+cmake --version    # Should show 3.21+
+git --version
+```
+
+</details>
+
+<details>
+<summary><strong>Linux (Fedora/RHEL)</strong></summary>
+
+**1. Install C++ Compiler and Build Tools:**
 ```bash
 sudo dnf install gcc-c++ autoconf automake libtool pkgconfig python3-jinja2
 ```
 
-**macOS:**
+**2. Install CMake:**
 ```bash
-brew install autoconf automake libtool pkg-config
+sudo dnf install cmake
+```
+
+**3. Install Git:**
+```bash
+sudo dnf install git
+```
+
+**4. Verify installations:**
+```bash
+g++ --version      # Should show GCC 11+
+cmake --version    # Should show 3.21+
+git --version
+```
+
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+**1. Install Xcode Command Line Tools (includes Clang compiler):**
+```bash
+xcode-select --install
+```
+
+**2. Install Homebrew (if not already installed):**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**3. Install CMake and Build Tools:**
+```bash
+brew install cmake autoconf automake libtool pkg-config
 pip3 install jinja2
 ```
+
+**4. Install Git (if not included with Xcode tools):**
+```bash
+brew install git
+```
+
+**5. Verify installations:**
+```bash
+clang++ --version  # Should show Clang 14+
+cmake --version    # Should show 3.21+
+git --version
+```
+
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+**1. Install Visual Studio Build Tools (C++ Compiler):**
+- Download [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+- Run the installer and select **"Desktop development with C++"**
+- This includes MSVC compiler and Windows SDK
+
+**2. Install CMake:**
+- Download the installer from [cmake.org/download](https://cmake.org/download/)
+- Choose the **Windows x64 Installer (.msi)**
+- **Important:** During installation, select **"Add CMake to the system PATH for all users"**
+
+**3. Install Git:**
+- Download from [git-scm.com](https://git-scm.com/download/win)
+- Run the installer with default options
+- **Recommended:** Select "Git from the command line and also from 3rd-party software"
+
+**4. Restart your terminal** (Command Prompt or PowerShell) after all installations
+
+**5. Verify installations:**
+
+From a regular Command Prompt or PowerShell:
+```batch
+cmake --version    REM Should show 3.21+
+git --version
+```
+
+To verify the C++ compiler, use one of these methods:
+
+*Option A:* Open **"Developer Command Prompt for VS"** or **"Developer PowerShell for VS"** from the Start Menu, then run:
+```batch
+cl
+```
+This should display Microsoft C/C++ compiler version info.
+
+*Option B:* From a regular Command Prompt, run:
+```batch
+where /R "C:\Program Files\Microsoft Visual Studio" cl.exe
+```
+This should find the cl.exe compiler path if Visual Studio Build Tools is installed correctly.
+
+*Option C:* Open **Visual Studio Installer** and verify that **"Desktop development with C++"** workload is installed.
+
+</details>
 
 ### Quick Start
 
@@ -68,7 +197,7 @@ git clone https://github.com/microsoft/vcpkg.git C:\vcpkg
 
 # Bootstrap vcpkg
 cd C:\vcpkg
-.\bootstrap-vcpkg.bat
+.\bootstrap-vcpkg.bat 
 
 # Set environment variable
 setx VCPKG_ROOT "C:\vcpkg"
@@ -140,17 +269,44 @@ Git submodule:
 ### Build Troubleshooting
 
 **"Cannot find vcpkg"**
+
+*Linux/macOS:*
 ```bash
 echo $VCPKG_ROOT  # Should print /opt/vcpkg
 ```
 If empty, set it: `export VCPKG_ROOT=/opt/vcpkg`
 
+*Windows:*
+```batch
+echo %VCPKG_ROOT%  REM Should print C:\vcpkg
+```
+If empty, set it: `setx VCPKG_ROOT "C:\vcpkg"` and restart your terminal.
+
+**"cmake is not recognized" (Windows)**
+
+CMake is not installed or not in PATH. Install CMake from [cmake.org/download](https://cmake.org/download/) and ensure you select **"Add CMake to the system PATH"** during installation. Restart your terminal after installation.
+
 **CMake configuration fails**
+
+*Linux/macOS:*
 ```bash
 # Clean build and try again
 rm -rf build
 ./build.sh
 ```
+
+*Windows:*
+```batch
+REM Clean build and try again
+rmdir /s /q build
+build.bat
+```
+
+**Windows: Do I need Developer Command Prompt?**
+
+No. You can run `build.bat` from a regular Command Prompt or PowerShell. CMake automatically detects Visual Studio Build Tools. Just ensure:
+1. CMake is in your PATH
+2. Visual Studio Build Tools with "Desktop development with C++" is installed
 
 **For detailed migration information**, see [VCPKG_MIGRATION.md](./VCPKG_MIGRATION.md) and [LIBRARY_SETUP.md](./LIBRARY_SETUP.md).
 

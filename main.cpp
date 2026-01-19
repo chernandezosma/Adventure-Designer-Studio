@@ -12,7 +12,12 @@
 #include <fstream>
 #include <SDL.h>
 #include <random>
+
+#ifdef _WIN32
+// Windows-specific headers
+#else
 #include <unistd.h>
+#endif
 
 #include "System.h"
 #include "src/classes/env/env.h"

@@ -12,7 +12,8 @@
 
 #ifndef ADS_ENV_H
 #define ADS_ENV_H
-#include <ranges>
+
+#include <string>
 #include <unordered_map>
 
 namespace ADS {
