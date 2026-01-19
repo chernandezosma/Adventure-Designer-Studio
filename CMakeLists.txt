@@ -58,15 +58,14 @@ add_custom_command(
         COMMENT "Copying public folder to build directory"
 )
 
-#add_custom_target(copy_public_folder ALL
-#        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
-#)
+# For multi-config generators (Visual Studio), copy to the config-specific directory
+# For single-config generators, copy to the binary directory
 add_custom_target(copy_public_folder ALL
         COMMAND ${CMAKE_COMMAND} -E echo "Cleaning and copying public folder..."
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/public
+        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/public
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/public
-        ${CMAKE_CURRENT_BINARY_DIR}/public
+        ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/public
         COMMENT "Copying public folder to build directory"
 )
 
