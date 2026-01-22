@@ -205,24 +205,23 @@ namespace ADS::IDE {
         ~ToolBarRenderer() = default;
 
         /**
-         * @brief Render the complete toolbar
+         * @brief Render toolbar content inline (without creating a window)
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jan 2026
          *
-         * Renders the complete toolbar as a fixed-position window below the menu bar.
-         * Creates a borderless, immovable window with custom padding and spacing,
-         * then renders all toolbar button groups (file, edit, view).
+         * Renders the toolbar content directly into the current ImGui context.
+         * This method should be called inside an existing ImGui window (such as
+         * the main dockspace window) before the DockSpace call, allowing ImGui
+         * to automatically account for the toolbar height when calculating
+         * available space for docked panels.
          *
-         * The toolbar is positioned at the top of the viewport, immediately below
-         * the menu bar, and spans the full width of the window.
-         *
-         * @note Creates its own ImGui window with specific flags and styling
+         * @note Does not create its own window - renders inline
          * @see renderFileButtons()
          * @see renderEditButtons()
          * @see renderViewButtons()
          */
-        void render();
+        void renderContent();
 
         /**
          * @brief Get the height of the toolbar
