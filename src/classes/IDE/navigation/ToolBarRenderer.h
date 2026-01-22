@@ -143,21 +143,6 @@ namespace ADS::IDE {
         void renderViewButtons();
 
         /**
-         * @brief Render language selector
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Renders the language selector button and popup menu. Currently commented
-         * out in the implementation. Would provide a globe icon button that opens
-         * a popup menu for selecting the application language.
-         *
-         * @note Currently not implemented (code is commented out)
-         * @see renderIconButton()
-         */
-        void renderLanguageSelector();
-
-        /**
          * @brief Handle theme change
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
