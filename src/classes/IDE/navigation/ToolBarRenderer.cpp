@@ -213,83 +213,6 @@ namespace ADS::IDE {
     }
 
     /**
-     * @brief Render language selector
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
-     *
-     * Renders the language selector button and popup menu. The entire implementation
-     * is currently commented out. When enabled, it would provide:
-     * - A globe icon button (ICON_FA_GLOBE) that opens a popup menu
-     * - A popup menu with language options for multiple locales
-     * - Theme toggle button (ICON_FA_MOON_O) for switching between themes
-     *
-     * @note Currently not implemented - all code is commented out
-     * @see renderIconButton()
-     * @see handleThemeChange()
-     */
-    void ToolBarRenderer::renderLanguageSelector()
-    {
-        // i18n::i18n* tm = this->getTranslationManager();
-        //
-        // ImGui::SameLine();
-        // ImGui::Separator();
-        // ImGui::SameLine();
-        //
-        // // Language selector with globe icon
-        // if (ImGui::Button(ICON_FA_GLOBE)) {
-        //     ImGui::OpenPopup(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data());
-        // }
-        //
-        // if (ImGui::IsItemHovered()) {
-        //     ImGui::SetTooltip(static_cast<const char *>(tm->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data()));
-        // }
-        //
-        // // Language selection popup
-        // if (ImGui::BeginPopup("language_selector")) {
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ENGLISH_UNITED_STATES).data())) {
-        //         this->getTranslationManager()->setLocale(Constants::Languages::ENGLISH_UNITED_STATES.data());
-        //     }
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ENGLISH_UNITED_KINGDOM).data())) {
-        //         this->getTranslationManager()->setLocale(Constants::Languages::ENGLISH_UNITED_KINGDOM.data());
-        //     }
-        //
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::SPANISH_SPAIN).data())) {
-        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::SPANISH_SPAIN.data());
-        //     }
-        //
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::FRENCH_FRANCE).data())) {
-        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::FRENCH_FRANCE.data());
-        //     }
-        //
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::GERMAN_GERMANY).data())) {
-        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::GERMAN_GERMANY.data());
-        //     }
-        //
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::ITALIAN_ITALY).data())) {
-        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::ITALIAN_ITALY.data());
-        //     }
-        //
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::PORTUGUESE_PORTUGAL).data())) {
-        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::PORTUGUESE_PORTUGAL.data());
-        //     }
-        //
-        //     if (ImGui::MenuItem(Constants::Languages::getLanguageName(Constants::Languages::RUSSIAN_RUSSIA).data())) {
-        //         this->getTranslationManager()->setLocale(ADS::Constants::Languages::RUSSIAN_RUSSIA.data());
-        //     }
-        //     ImGui::EndPopup();
-        // }
-
-        // Theme toggle
-        // ImGui::SameLine();
-        // if (renderIconButton(ICON_FA_MOON_O, tm->_t("MENU.VIEW_TOOLBAR_TOOGLE_THEME").data())) {
-        //     // TODO: Implement proper theme toggle state tracking
-        //     // For now, just toggle to dark theme
-        //     handleThemeChange(true);
-        // }
-    }
-
-    /**
      * @brief Handle theme change
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -367,9 +290,23 @@ namespace ADS::IDE {
      *
      * @note This value is used for positioning elements below the toolbar and
      *       for setting the toolbar window size
+     *
+     * @todo Jan 22, 2026 <chernandez@elestadoweb.com>
+     *       Probably we will need to detect the screen DPI and based the space
+     *       on that value.
      */
     float ToolBarRenderer::getHeight() const
     {
-        return m_buttonHeight + (m_buttonPadding * 2);
+        float padding = m_buttonPadding * 2.0f;
+
+        // 22 Jan 2026 <chernandez@elestadoweb.com>
+        // This patch is applied because the space between toolbar and docking windows
+        // are treated in different way if you are in Windows (add extra space) or Linux,
+        // remove the space.
+#ifdef _WIN32
+        padding = 0.0f;
+#endif
+
+        return m_buttonHeight + padding;
     }
 }
