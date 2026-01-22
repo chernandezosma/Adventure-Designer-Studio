@@ -84,7 +84,16 @@ namespace ADS::IDE {
         ImGui::Begin("MainDockSpace", nullptr, windowFlags);
         ImGui::PopStyleVar(3);
 
-        // Create the dockspace
+        // Render menu bar
+        if (ImGui::BeginMenuBar()) {
+            m_menuBarRenderer->render();
+            ImGui::EndMenuBar();
+        }
+
+        // Render toolbar content inline (before DockSpace so it reserves space)
+        m_toolBarRenderer->renderContent();
+
+        // Create the dockspace (will use remaining space after menu bar and toolbar)
         ImGuiID dockSpaceId = ImGui::GetID("MyDockSpace");
         ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
         ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), dockSpaceFlags);
@@ -93,22 +102,13 @@ namespace ADS::IDE {
         m_layoutManager->setDockSpaceId(dockSpaceId);
         m_layoutManager->setupDockingLayout();
 
-        // Render menu bar
-        if (ImGui::BeginMenuBar()) {
-            m_menuBarRenderer->render();
-            ImGui::EndMenuBar();
-        }
-
         ImGui::End();
     }
 
     void IDERenderer::render()
     {
-        // Render main dockspace window (with menu bar)
+        // Render main dockspace window (with menu bar and toolbar)
         renderMainWindow();
-
-        // Render toolbar
-        m_toolBarRenderer->render();
 
         // Render status bar at the bottom
         m_statusBarPanel->render();

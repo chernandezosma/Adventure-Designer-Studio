@@ -316,56 +316,40 @@ namespace ADS::IDE {
     }
 
     /**
-     * @brief Render the complete toolbar
+     * @brief Render toolbar content inline (without creating a window)
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jan 2026
      *
-     * Renders the complete toolbar as a fixed-position ImGui window. The toolbar
-     * is positioned immediately below the menu bar, spanning the full width of the
-     * viewport. Creates a borderless, immovable window with custom styling and
-     * renders all toolbar button groups.
+     * Renders the toolbar content directly into the current ImGui context.
+     * This method should be called inside an existing ImGui window (such as
+     * the main dockspace window) after the menu bar but before the DockSpace
+     * call. This allows ImGui to automatically account for the toolbar height
+     * when calculating available space for docked panels.
      *
-     * The window uses the following flags:
-     * - NoTitleBar: Removes the title bar
-     * - NoResize: Prevents manual resizing
-     * - NoMove: Prevents manual repositioning
-     * - NoScrollbar: Disables scrollbars
-     * - NoSavedSettings: Prevents saving window state
-     *
-     * Custom styling is applied via PushStyleVar for window padding and item spacing.
+     * The toolbar is rendered as a child region with fixed height, spanning
+     * the full available width. Custom styling is applied for item spacing.
      *
      * @see renderFileButtons()
      * @see renderEditButtons()
      * @see renderViewButtons()
      * @see getHeight()
      */
-    void ToolBarRenderer::render()
+    void ToolBarRenderer::renderContent()
     {
-        ImGuiViewport *viewport = ImGui::GetMainViewport();
-
-        // Position toolbar right below the menu bar
-        ImVec2 toolbarPos = ImVec2(viewport->Pos.x, viewport->Pos.y + ImGui::GetFrameHeight());
-        ImVec2 toolbarSize = ImVec2(viewport->Size.x, getHeight());
-
-        ImGui::SetNextWindowPos(toolbarPos);
-        ImGui::SetNextWindowSize(toolbarSize);
-
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                                        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
-                                        ImGuiWindowFlags_NoSavedSettings;
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(m_buttonPadding, m_buttonPadding));
+        // Push styling for the toolbar content
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(m_buttonPadding, 0.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(m_buttonPadding, m_buttonPadding));
 
-        if (ImGui::Begin("##Toolbar", nullptr, windowFlags)) {
-            renderFileButtons();
-            renderEditButtons();
-            renderViewButtons();
-            // renderLanguageSelector();
-        }
+        // Create a child region for the toolbar with fixed height
+        ImGui::BeginChild("##ToolbarContent", ImVec2(0, getHeight()), false, ImGuiWindowFlags_NoScrollbar);
 
-        ImGui::End();
+        renderFileButtons();
+        renderEditButtons();
+        renderViewButtons();
+        // renderLanguageSelector();
+
+        ImGui::EndChild();
         ImGui::PopStyleVar(2);
     }
 
