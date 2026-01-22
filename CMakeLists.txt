@@ -70,6 +70,16 @@ add_custom_target(copy_public_folder ALL
 )
 
 # ----------------------------------------------------------
+# --- Copy .env file
+# ----------------------------------------------------------
+add_custom_target(copy_env_file ALL
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_SOURCE_DIR}/.env
+        ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/.env
+        COMMENT "Copying .env file to build directory"
+)
+
+# ----------------------------------------------------------
 # --- External dependencies (managed by vcpkg)
 # ----------------------------------------------------------
 find_package(OpenGL REQUIRED)
@@ -167,7 +177,7 @@ set(Sources
 # --- Main executable
 # ----------------------------------------------------------
 add_executable(${ADSProject} ${Sources} ${Headers})
-add_dependencies(${ADSProject} copy_public_folder)  # Add this line
+add_dependencies(${ADSProject} copy_public_folder copy_env_file)
 
 target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
