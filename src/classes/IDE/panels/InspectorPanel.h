@@ -14,47 +14,85 @@
 #ifndef ADS_INSPECTOR_PANEL_H
 #define ADS_INSPECTOR_PANEL_H
 
+#include <map>
+#include <vector>
 #include "BasePanel.h"
+#include "Inspector/IInspectable.h"
+#include "Inspector/PropertyDescriptor.h"
+#include "Inspector/PropertyEditorRegistry.h"
 
 namespace ADS::IDE::Panels {
     /**
-     * @brief Inspector panel for displaying detailed entity information
+     * @brief Inspector panel for displaying and editing entity properties
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Dec 2025
+     * @version Jan 2026
      *
      * Shows detailed information about the currently selected entity
-     * including its type, location, and other metadata.
+     * including its type, and all editable properties organized by
+     * category. Uses a Visual Basic-like property grid interface.
      */
     class InspectorPanel : public BasePanel {
     private:
-        /**
-         * @brief Render selection information
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Displays basic information about the currently selected entity
-         * including its name, type, and location. Shows "None" if no
-         * entity is currently selected.
-         *
-         * @note Currently displays placeholder data
-         */
-        void renderSelectionInfo();
+        /// Currently selected inspectable object
+        Inspector::IInspectable* m_selectedObject;
+
+        /// Registry of property editors
+        Inspector::PropertyEditorRegistry m_editorRegistry;
+
+        /// Cached property descriptors grouped by category
+        std::map<std::string, std::vector<Inspector::PropertyDescriptor>> m_categorizedProperties;
+
+        /// Flag indicating if category cache needs refresh
+        bool m_needsRefresh;
 
         /**
-         * @brief Render metadata information
+         * @brief Render the object header (type and name)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         */
+        void renderObjectHeader();
+
+        /**
+         * @brief Render properties for a category
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jan 2026
          *
-         * Displays additional metadata and detailed information about
-         * the selected entity. Shows a message prompting the user to
-         * select an entity if none is selected.
-         *
-         * @note Currently displays placeholder data
+         * @param category Category name
+         * @param properties Properties in this category
          */
-        void renderMetadata();
+        void renderCategory(
+            const std::string& category,
+            const std::vector<Inspector::PropertyDescriptor>& properties
+        );
+
+        /**
+         * @brief Render a single property using the appropriate editor
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * @param descriptor Property metadata
+         */
+        void renderProperty(const Inspector::PropertyDescriptor& descriptor);
+
+        /**
+         * @brief Refresh the category cache from the selected object
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         */
+        void refreshCategoryCache();
+
+        /**
+         * @brief Render placeholder when no object is selected
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         */
+        void renderNoSelection();
 
     public:
         /**
@@ -83,14 +121,49 @@ namespace ADS::IDE::Panels {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jan 2026
          *
-         * Displays detailed information about the selected entity,
-         * including selection details and metadata. The panel provides
-         * an overview of the currently focused entity in the IDE.
+         * Displays a property grid for the selected entity with
+         * properties organized by category. Each property uses
+         * an appropriate editor control based on its type.
          *
          * @note Returns early if panel is not visible
-         * @see renderSelectionInfo(), renderMetadata()
          */
         void render() override;
+
+        /**
+         * @brief Set the currently selected object
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * @param object The inspectable object to display (can be nullptr)
+         */
+        void setSelectedObject(Inspector::IInspectable* object);
+
+        /**
+         * @brief Get the currently selected object
+         *
+         * @return Inspector::IInspectable* Pointer to selected object, or nullptr
+         */
+        Inspector::IInspectable* getSelectedObject() const;
+
+        /**
+         * @brief Clear the current selection
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         */
+        void clearSelection();
+
+        /**
+         * @brief Force a refresh of the property display
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Call this after the selected object's properties have changed
+         * externally (e.g., via undo/redo).
+         */
+        void refresh();
     };
 }
 

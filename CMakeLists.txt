@@ -154,8 +154,6 @@ set(Sources
         src/classes/IDE/panels/StatusBarPanel.h
         src/classes/IDE/panels/EntitiesPanel.cpp
         src/classes/IDE/panels/EntitiesPanel.h
-        src/classes/IDE/panels/PropertiesPanel.cpp
-        src/classes/IDE/panels/PropertiesPanel.h
         src/classes/IDE/panels/InspectorPanel.cpp
         src/classes/IDE/panels/InspectorPanel.h
         src/classes/IDE/panels/WorkingAreaPanel.cpp
@@ -171,6 +169,43 @@ set(Sources
         src/classes/IDE/navigation/NavigationService.cpp
         src/classes/IDE/navigation/NavigationService.h
         src/classes/IDE/navigation/NavigationConstants.h
+        # Inspector system
+        src/classes/Inspector/PropertyConstraints.cpp
+        src/classes/Inspector/PropertyConstraints.h
+        src/classes/Inspector/PropertyDescriptor.cpp
+        src/classes/Inspector/PropertyDescriptor.h
+        src/classes/Inspector/PropertyEditorRegistry.cpp
+        src/classes/Inspector/PropertyEditorRegistry.h
+        src/classes/Inspector/PropertyEvent.cpp
+        src/classes/Inspector/PropertyEvent.h
+        src/classes/Inspector/PropertyType.h
+        src/classes/Inspector/PropertyValue.h
+        src/classes/Inspector/IInspectable.h
+        # Inspector editors
+        src/classes/Inspector/Editors/IPropertyEditor.h
+        src/classes/Inspector/Editors/StringEditor.cpp
+        src/classes/Inspector/Editors/StringEditor.h
+        src/classes/Inspector/Editors/IntEditor.cpp
+        src/classes/Inspector/Editors/IntEditor.h
+        src/classes/Inspector/Editors/FloatEditor.cpp
+        src/classes/Inspector/Editors/FloatEditor.h
+        src/classes/Inspector/Editors/BoolEditor.cpp
+        src/classes/Inspector/Editors/BoolEditor.h
+        src/classes/Inspector/Editors/EnumEditor.cpp
+        src/classes/Inspector/Editors/EnumEditor.h
+        src/classes/Inspector/Editors/ColorEditor.cpp
+        src/classes/Inspector/Editors/ColorEditor.h
+        src/classes/Inspector/Editors/Vector2Editor.cpp
+        src/classes/Inspector/Editors/Vector2Editor.h
+        # Entity classes
+        src/classes/Entities/BaseEntity.cpp
+        src/classes/Entities/BaseEntity.h
+        src/classes/Entities/Scene.cpp
+        src/classes/Entities/Scene.h
+        src/classes/Entities/Character.cpp
+        src/classes/Entities/Character.h
+        src/classes/Entities/Item.cpp
+        src/classes/Entities/Item.h
 )
 
 # ----------------------------------------------------------

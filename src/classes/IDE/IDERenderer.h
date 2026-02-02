@@ -22,7 +22,6 @@
 #include "i18n/i18n.h"
 #include "panels/StatusBarPanel.h"
 #include "panels/EntitiesPanel.h"
-#include "panels/PropertiesPanel.h"
 #include "panels/InspectorPanel.h"
 #include "panels/WorkingAreaPanel.h"
 
@@ -66,12 +65,7 @@ namespace ADS::IDE {
         Panels::EntitiesPanel *m_entitiesPanel;
 
         /**
-         * Properties panel on the right-top
-         */
-        Panels::PropertiesPanel *m_propertiesPanel;
-
-        /**
-         * Inspector panel on the right-bottom
+         * Inspector panel on the right
          */
         Panels::InspectorPanel *m_inspectorPanel;
 
@@ -197,21 +191,6 @@ namespace ADS::IDE {
          * @note The returned pointer remains valid for the lifetime of the IDERenderer
          */
         Panels::EntitiesPanel *getEntitiesPanel() const;
-
-        /**
-         * @brief Get the properties panel
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Provides access to the properties panel instance for displaying and editing
-         * properties of the currently selected entity or object.
-         *
-         * @return Panels::PropertiesPanel* Pointer to the properties panel instance
-         *
-         * @note The returned pointer remains valid for the lifetime of the IDERenderer
-         */
-        Panels::PropertiesPanel *getPropertiesPanel() const;
 
         /**
          * @brief Get the inspector panel
