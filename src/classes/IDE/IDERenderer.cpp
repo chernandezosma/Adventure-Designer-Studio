@@ -23,7 +23,6 @@ namespace ADS::IDE {
         m_toolBarRenderer(nullptr),
         m_statusBarPanel(nullptr),
         m_entitiesPanel(nullptr),
-        m_propertiesPanel(nullptr),
         m_inspectorPanel(nullptr),
         m_workingAreaPanel(nullptr)
     {
@@ -34,7 +33,6 @@ namespace ADS::IDE {
     {
         delete m_statusBarPanel;
         delete m_entitiesPanel;
-        delete m_propertiesPanel;
         delete m_inspectorPanel;
         delete m_workingAreaPanel;
         delete m_toolBarRenderer;
@@ -52,7 +50,6 @@ namespace ADS::IDE {
         // Create all panels
         m_statusBarPanel = new Panels::StatusBarPanel();
         m_entitiesPanel = new Panels::EntitiesPanel();
-        m_propertiesPanel = new Panels::PropertiesPanel();
         m_inspectorPanel = new Panels::InspectorPanel();
         m_workingAreaPanel = new Panels::WorkingAreaPanel();
     }
@@ -115,7 +112,6 @@ namespace ADS::IDE {
 
         // Render all dockable panels
         m_entitiesPanel->render();
-        m_propertiesPanel->render();
         m_inspectorPanel->render();
         m_workingAreaPanel->render();
     }
@@ -128,11 +124,6 @@ namespace ADS::IDE {
     Panels::EntitiesPanel *IDERenderer::getEntitiesPanel() const
     {
         return m_entitiesPanel;
-    }
-
-    Panels::PropertiesPanel *IDERenderer::getPropertiesPanel() const
-    {
-        return m_propertiesPanel;
     }
 
     Panels::InspectorPanel *IDERenderer::getInspectorPanel() const
