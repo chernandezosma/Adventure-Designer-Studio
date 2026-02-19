@@ -61,7 +61,9 @@ namespace ADS::Core {
         }
 
         Logger::init(this->isDebug());
-        spdlog::info(format("{}:{} - Retrieve the languages from .env file", __FILE__, __LINE__));
+        // Note: we can use format to notify the line and file.
+        // spdlog::info(format("{}:{} - Retrieve the languages from .env file", __FILE__, __LINE__));
+        spdlog::info("Retrieve the languages from .env file");
         const std::string *languagesAllowedFromEnv = e->get("LANGUAGES");
         spdlog::info("Load the languages");
 
@@ -69,7 +71,7 @@ namespace ADS::Core {
              const string &language: languages) {
             tm->addLanguage(std::string(language));
         }
-        spdlog::info(format("{}:{} - Using im GUI Library", __FILE__, __LINE__));
+        spdlog::info("Using im GUI Library");
         this->m_imguiObject = UI::ImGuiManager();
 
         // Initialize IDE renderer

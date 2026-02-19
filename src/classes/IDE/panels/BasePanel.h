@@ -44,9 +44,14 @@ namespace ADS::IDE::Panels {
         Environment *m_environment;
 
         /**
-         * Window name displayed in ImGui
+         * Stable window identifier used by ImGui for docking and window management
          */
         std::string m_windowName;
+
+        /**
+         * Translated display title shown in the window title bar
+         */
+        std::string m_windowTitle;
 
         /**
          * Panel visibility state
@@ -134,6 +139,30 @@ namespace ADS::IDE::Panels {
          * @return const std::string& Window name reference
          */
         const std::string &getWindowName() const;
+
+        /**
+         * @brief Get the ImGui window label combining title and stable ID
+         *
+         * Returns a string in the form "Translated Title###stable_id" so that
+         * ImGui uses the stable ID for docking/identity while displaying the
+         * translated title in the title bar.
+         *
+         * @return std::string ImGui label with ### separator
+         */
+        std::string getImGuiLabel() const;
+
+        /**
+         * @brief Get the translations manager
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Jan 2026
+         *
+         * Returns a pointer to the i18n translations manager used for
+         * localizing panel text and UI strings.
+         *
+         * @return const i18n::i18n* Pointer to the translations manager
+         */
+        const i18n::i18n* getTranslationsManager() const;
     };
 }
 

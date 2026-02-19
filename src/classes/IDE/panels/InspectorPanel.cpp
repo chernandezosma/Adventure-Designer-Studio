@@ -203,9 +203,10 @@ namespace ADS::IDE::Panels {
     // =========================================================================
 
     InspectorPanel::InspectorPanel()
-        : BasePanel("Inspector"),
+        : BasePanel("hInspector"),
           m_selectedObject(nullptr),
           m_needsRefresh(false) {
+        m_windowTitle = this->getTranslationsManager()->_t("INSPECTOR");
         // Automatically select the test object for demonstration
         setSelectedObject(&s_testObject);
     }
@@ -273,11 +274,6 @@ namespace ADS::IDE::Panels {
         if (result.changed) {
             m_selectedObject->setPropertyValue(descriptor.getId(), result.newValue);
         }
-
-        // Show tooltip with description on hover
-        if (!descriptor.getDescription().empty() && ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("%s", descriptor.getDescription().c_str());
-        }
     }
 
     void InspectorPanel::refreshCategoryCache() {
@@ -311,7 +307,7 @@ namespace ADS::IDE::Panels {
             return;
         }
 
-        ImGui::Begin(m_windowName.c_str());
+        ImGui::Begin(getImGuiLabel().c_str());
 
         if (!m_selectedObject) {
             renderNoSelection();

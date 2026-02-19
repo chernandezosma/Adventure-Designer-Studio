@@ -36,7 +36,8 @@ namespace ADS::IDE::Panels {
      * description, dialog, and FontAwesome icons.
      */
     WorkingAreaPanel::WorkingAreaPanel()
-        : BasePanel("Working Area") {
+        : BasePanel("hWorkingArea") {
+        m_windowTitle = this->getTranslationsManager()->_t("WORKING_AREA");
         // Initialize script text with default content
         std::strcpy(m_scriptText,
                     ICON_FA_TREE " Forest Entrance\n"
@@ -68,13 +69,13 @@ namespace ADS::IDE::Panels {
 
             // Script 2 tab
             if (ImGui::BeginTabItem("Script 2")) {
-                ImGui::Text("Content of script 2 - %s", ICON_FA_CHECK);
+                ImGui::Text("%s", this->getTranslationsManager()->_t("CONTENT_OF_SCRIPT").c_str());
                 ImGui::EndTabItem();
             }
 
             // Add new tab button
             if (ImGui::BeginTabItem("+")) {
-                ImGui::Text("Click to add new script");
+                ImGui::Text("%s", this->getTranslationsManager()->_t("MAIN_CONTENT_AREA").c_str());
                 ImGui::EndTabItem();
             }
 
@@ -132,12 +133,9 @@ namespace ADS::IDE::Panels {
             return;
         }
 
-        ImGui::Begin(m_windowName.c_str());
-
-        ImGui::Text("Main Content Area");
+        ImGui::Begin(getImGuiLabel().c_str());
+        ImGui::Text("%s", this->getTranslationsManager()->_t("MAIN_CONTENT_AREA").c_str());
         ImGui::Separator();
-
-        renderTabBar();
 
         ImGui::End();
     }

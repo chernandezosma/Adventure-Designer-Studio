@@ -37,20 +37,16 @@ namespace ADS::IDE {
         ImGui::DockBuilderAddNode(m_dockSpaceId, ImGuiDockNodeFlags_DockSpace);
         ImGui::DockBuilderSetNodeSize(m_dockSpaceId, ImGui::GetMainViewport()->Size);
 
-        // Split the dockspace into left and right
+        // Split the dockspace into left, center, and right
         ImGuiID dock_main_id = m_dockSpaceId;
-        ImGuiID dock_left_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, nullptr, &dock_main_id);
+        ImGuiID dock_left_id  = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left,  0.20f, nullptr, &dock_main_id);
         ImGuiID dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id);
 
-        // Split the right side into top (Properties) and bottom (Inspector)
-        ImGuiID dock_right_top_id = dock_right_id;
-        ImGuiID dock_right_bottom_id = ImGui::DockBuilderSplitNode(dock_right_id, ImGuiDir_Down, 0.50f, nullptr, &dock_right_top_id);
-
-        // Dock windows to their respective areas
-        ImGui::DockBuilderDockWindow("Entities", dock_left_id);
-        ImGui::DockBuilderDockWindow("Properties", dock_right_top_id);
-        ImGui::DockBuilderDockWindow("Inspector", dock_right_bottom_id);
-        ImGui::DockBuilderDockWindow("Working Area", dock_main_id);
+        // Dock windows to their respective areas using the same translated titles the panels use
+        auto* tm = getTranslationManager();
+        ImGui::DockBuilderDockWindow(tm->_t("ENTITIES").c_str(),     dock_left_id);
+        ImGui::DockBuilderDockWindow(tm->_t("INSPECTOR").c_str(),    dock_right_id);
+        ImGui::DockBuilderDockWindow(tm->_t("WORKING_AREA").c_str(), dock_main_id);
 
         // Finalize the docking layout
         ImGui::DockBuilderFinish(m_dockSpaceId);

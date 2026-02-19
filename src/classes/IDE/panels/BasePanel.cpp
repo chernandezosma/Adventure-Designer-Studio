@@ -37,7 +37,7 @@ namespace ADS::IDE::Panels {
      * @param name Window name for the panel
      */
     BasePanel::BasePanel(const std::string& name)
-        : m_windowName(name), m_isVisible(true) {
+        : m_windowName(name), m_windowTitle(name), m_isVisible(true) {
         this->m_environment = Core::App::getEnv();
         this->m_translationsManager = Core::App::getTranslationsManager();
     }
@@ -89,4 +89,24 @@ namespace ADS::IDE::Panels {
     const std::string& BasePanel::getWindowName() const {
         return m_windowName;
     }
+
+    /**
+     * @brief Get the translations manager
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Returns a pointer to the i18n translations manager used for
+     * localizing panel text and UI strings.
+     *
+     * @return const i18n::i18n* Pointer to the translations manager
+     */
+    const i18n::i18n* BasePanel::getTranslationsManager() const {
+        return this->m_translationsManager;
+    };
+
+    std::string BasePanel::getImGuiLabel() const {
+        return m_windowTitle;
+    }
+
 }
