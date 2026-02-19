@@ -1,6 +1,33 @@
 {
   "LANGUAGE": "German DE",
-  "WIN_TITLE": "Abenteuer-Designer-Studio",
+  "APP_TITLE": "Abenteuer-Designer-Studio",
+  "STATUS_BAR_DEFAULT": "Bereit | FPS: %.1f",
+
+  "ENTITIES": "Entitäten",
+  "PROPERTIES": "Eigenschaften",
+  "INSPECTOR": "Inspektor",
+  "WORKING_AREA": "Arbeitsbereich",
+
+  "ENTITIES_LIST": "Entitätenliste",
+  "CONTENT_OF_SCRIPT": "Inhalt des Skripts 2 -%s",
+  "CLICK_TO_ADD_NEW_SCRIPT": "Klicken Sie, um ein neues Skript hinzuzufügen",
+  "MAIN_CONTENT_AREA": "Hauptinhaltsbereich",
+
+  "TREE_NODE_SCENE": "Szenen",
+  "TREE_NODE_SCENE_1": "Szenen 1",
+  "TREE_NODE_SCENE_2": "Szenen 2",
+  "TREE_NODE_SCENE_3": "Szenen 3",
+
+  "TREE_NODE_CHARACTERS": "Charaktere",
+  "TREE_NODE_CHARACTER_HERO": "Held",
+  "TREE_NODE_CHARACTER_VILLAIN": "Bösewicht",
+  "TREE_NODE_CHARACTER_NPC": "NSC 1",
+
+  "TREE_NODE_ITEMS": "Gegenstände",
+  "TREE_NODE_ITEMS_SWORD": "Schwert",
+  "TREE_NODE_ITEMS_KEY": "Schlüssel",
+  "TREE_NODE_ITEMS_POTION": "Trank",
+
   "TITLES": {
     "TITLE_1": "Der Herr der Ringe",
     "TITLE_2": "Matrix Revenge"

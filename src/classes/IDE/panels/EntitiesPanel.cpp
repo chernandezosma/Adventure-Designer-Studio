@@ -31,7 +31,8 @@ namespace ADS::IDE::Panels {
      * Initializes the entities panel with name "Entities".
      */
     EntitiesPanel::EntitiesPanel()
-        : BasePanel("Entities") {
+        : BasePanel("hEntities") {
+        m_windowTitle = this->getTranslationsManager()->_t("ENTITIES");
     }
 
     /**
@@ -46,10 +47,10 @@ namespace ADS::IDE::Panels {
      * @note Currently displays placeholder data
      */
     void EntitiesPanel::renderSceneTree() {
-        if (ImGui::TreeNode("Scenes")) {
-            ImGui::BulletText("Scene 1");
-            ImGui::BulletText("Scene 2");
-            ImGui::BulletText("Scene 3");
+        if (ImGui::TreeNode(this->getTranslationsManager()->_t("TREE_NODE_SCENE").c_str())) {
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_SCENE_1").c_str());
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_SCENE_2").c_str());
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_SCENE_3").c_str());
             ImGui::TreePop();
         }
     }
@@ -66,10 +67,10 @@ namespace ADS::IDE::Panels {
      * @note Currently displays placeholder data
      */
     void EntitiesPanel::renderCharacterTree() {
-        if (ImGui::TreeNode("Characters")) {
-            ImGui::BulletText("Hero");
-            ImGui::BulletText("Villain");
-            ImGui::BulletText("NPC 1");
+        if (ImGui::TreeNode(this->getTranslationsManager()->_t("TREE_NODE_CHARACTERS").c_str())) {
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_CHARACTER_HERO").c_str());
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_CHARACTER_VILLAIN").c_str());
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_CHARACTER_NPC").c_str());
             ImGui::TreePop();
         }
     }
@@ -86,10 +87,10 @@ namespace ADS::IDE::Panels {
      * @note Currently displays placeholder data
      */
     void EntitiesPanel::renderItemTree() {
-        if (ImGui::TreeNode("Items")) {
-            ImGui::BulletText("Sword");
-            ImGui::BulletText("Key");
-            ImGui::BulletText("Potion");
+        if (ImGui::TreeNode(this->getTranslationsManager()->_t("TREE_NODE_ITEMS").c_str())) {
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_ITEMS_SWORD").c_str());
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_ITEMS_KEY").c_str());
+            ImGui::BulletText("%s", this->getTranslationsManager()->_t("TREE_NODE_ITEMS_POTION").c_str());
             ImGui::TreePop();
         }
     }
@@ -127,9 +128,9 @@ namespace ADS::IDE::Panels {
             return;
         }
 
-        ImGui::Begin(m_windowName.c_str());
+        ImGui::Begin(getImGuiLabel().c_str());
 
-        ImGui::Text("Entities List");
+        ImGui::Text("%s", this->getTranslationsManager()->_t("ENTITIES_LIST").c_str());
         ImGui::Separator();
 
         renderSceneTree();
@@ -137,7 +138,7 @@ namespace ADS::IDE::Panels {
         renderItemTree();
 
         ImGui::Separator();
-        if (ImGui::Button("Add New Entity")) {
+        if (ImGui::Button(this->getTranslationsManager()->_t("CLICK_TO_ADD_NEW_SCRIPT").c_str())) {
             handleAddEntity();
         }
 

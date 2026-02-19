@@ -90,14 +90,14 @@ namespace ADS::IDE {
         // Render toolbar content inline (before DockSpace so it reserves space)
         m_toolBarRenderer->renderContent();
 
-        // Create the dockspace (will use remaining space after menu bar and toolbar)
+        // Setup docking layout before creating the DockSpace
         ImGuiID dockSpaceId = ImGui::GetID("MyDockSpace");
-        ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), dockSpaceFlags);
-
-        // Setup docking layout
         m_layoutManager->setDockSpaceId(dockSpaceId);
         m_layoutManager->setupDockingLayout();
+
+        // Create the dockspace (will use remaining space after menu bar and toolbar)
+        ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), dockSpaceFlags);
 
         ImGui::End();
     }

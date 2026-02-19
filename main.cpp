@@ -79,7 +79,7 @@ int main()
 
         // Create window
         ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
-                app->getTranslationsManager()->_t("WIN_TITLE"),
+                app->getTranslationsManager()->_t("APP_TITLE"),
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
                 System::DEFAULT_X_WIN_SIZE,

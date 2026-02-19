@@ -1,6 +1,33 @@
 {
   "LANGUAGE": "Russian RU",
-  "WIN_TITLE": "Студия дизайна приключений",
+  "APP_TITLE": "Студия дизайна приключений",
+  "STATUS_BAR_DEFAULT": "Готово | FPS: %.1f",
+
+  "ENTITIES": "Сущности",
+  "PROPERTIES": "Свойства",
+  "INSPECTOR": "Инспектор",
+  "WORKING_AREA": "Рабочая область",
+
+  "ENTITIES_LIST": "Список сущностей",
+  "CONTENT_OF_SCRIPT": "Содержимое скрипта 2 -%s",
+  "CLICK_TO_ADD_NEW_SCRIPT": "Нажмите, чтобы добавить новый скрипт",
+  "MAIN_CONTENT_AREA": "Основная область содержимого",
+
+  "TREE_NODE_SCENE": "Сцены",
+  "TREE_NODE_SCENE_1": "Сцены 1",
+  "TREE_NODE_SCENE_2": "Сцены 2",
+  "TREE_NODE_SCENE_3": "Сцены 3",
+
+  "TREE_NODE_CHARACTERS": "Персонажи",
+  "TREE_NODE_CHARACTER_HERO": "Герой",
+  "TREE_NODE_CHARACTER_VILLAIN": "Злодей",
+  "TREE_NODE_CHARACTER_NPC": "НПС 1",
+
+  "TREE_NODE_ITEMS": "Предметы",
+  "TREE_NODE_ITEMS_SWORD": "Меч",
+  "TREE_NODE_ITEMS_KEY": "Ключ",
+  "TREE_NODE_ITEMS_POTION": "Зелье",
+
   "TITLES": {
     "TITLE_1": "Властелин колец",
     "TITLE_2": "Матрица: Месть"

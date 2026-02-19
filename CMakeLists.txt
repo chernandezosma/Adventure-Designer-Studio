@@ -46,26 +46,15 @@ endif ()
 # ----------------------------------------------------------
 # --- Copy public resources
 # ----------------------------------------------------------
+# Copy at configure time so resources are available immediately
 message(STATUS "Copying the content of public folder: ${CMAKE_BUILD_TYPE}")
-file(GLOB_RECURSE PUBLIC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/public/*")
-add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/public DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# Copy on every build to pick up changes in source public folder
+add_custom_target(copy_public_folder ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/public
         ${CMAKE_CURRENT_BINARY_DIR}/public
-        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
-        DEPENDS ${PUBLIC_FILES}
-        COMMENT "Copying public folder to build directory"
-)
-
-# For multi-config generators (Visual Studio), copy to the config-specific directory
-# For single-config generators, copy to the binary directory
-add_custom_target(copy_public_folder ALL
-        COMMAND ${CMAKE_COMMAND} -E echo "Cleaning and copying public folder..."
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/public
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/public
-        ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/public
         COMMENT "Copying public folder to build directory"
 )
 

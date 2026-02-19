@@ -88,6 +88,10 @@ namespace ADS::Inspector::Editors {
         // Label column
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%s", descriptor.getDisplayName().c_str());
+        // Show tooltip on label hover
+        if (!descriptor.getDescription().empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+            ImGui::SetTooltip("%s", descriptor.getDescription().c_str());
+        }
         ImGui::NextColumn();
 
         // Widget column
@@ -114,6 +118,11 @@ namespace ADS::Inspector::Editors {
 
         if (readOnly) {
             ImGui::EndDisabled();
+        }
+
+        // Show tooltip on widget hover
+        if (!descriptor.getDescription().empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+            ImGui::SetTooltip("%s", descriptor.getDescription().c_str());
         }
 
         ImGui::Columns(1);
