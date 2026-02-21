@@ -18,12 +18,11 @@
 #include "LayoutManager.h"
 #include "navigation/MenuBarRenderer.h"
 #include "navigation/ToolBarRenderer.h"
-#include "env/env.h"
-#include "i18n/i18n.h"
 #include "panels/StatusBarPanel.h"
 #include "panels/EntitiesPanel.h"
 #include "panels/InspectorPanel.h"
 #include "panels/WorkingAreaPanel.h"
+#include "Core/Project.h"
 
 namespace ADS::IDE {
     /**
@@ -75,6 +74,11 @@ namespace ADS::IDE {
         Panels::WorkingAreaPanel *m_workingAreaPanel;
 
         /**
+         * Owning pointer to the active project (created in initializePanels)
+         */
+        Core::Project *m_project;
+
+        /**
          * @brief Initialize all panels
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -89,6 +93,24 @@ namespace ADS::IDE {
          * @see IDERenderer()
          */
         void initializePanels();
+
+        /**
+         * @brief Create a fresh empty project, discarding the current one
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Replaces the active project with a new empty Core::Project instance.
+         * Clears the inspector selection and updates the entities panel data
+         * source so the UI reflects the empty state immediately.
+         *
+         * Called by the NavigationService callback registered in initializePanels()
+         * when the user confirms "New project" via the File > New dialog.
+         *
+         * @note The old project is deleted; any unsaved data is lost
+         * @see NavigationService::fileNewHandler()
+         */
+        void newProject();
 
         /**
          * @brief Render the main dockspace window

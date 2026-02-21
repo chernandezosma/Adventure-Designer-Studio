@@ -57,7 +57,7 @@ namespace ADS::Core {
         this->setDebugMode(stringToBool(e->getOrDefault("DEBUG", "false")));
 
         if (this->isDebug()) {
-            tm->setLocale(ADS::Constants::Languages::SPANISH_SPAIN.data());
+            tm->setLocale(ADS::Constants::Languages::ENGLISH_UNITED_STATES.data());
         }
 
         Logger::init(this->isDebug());
@@ -65,17 +65,17 @@ namespace ADS::Core {
         // spdlog::info(format("{}:{} - Retrieve the languages from .env file", __FILE__, __LINE__));
         spdlog::info("Retrieve the languages from .env file");
         const std::string *languagesAllowedFromEnv = e->get("LANGUAGES");
-        spdlog::info("Load the languages");
+        spdlog::info("Load the available languages");
 
         for (const std::vector<std::string> languages = explode(*languagesAllowedFromEnv, ',');
              const string &language: languages) {
             tm->addLanguage(std::string(language));
         }
-        spdlog::info("Using im GUI Library");
+        spdlog::info("Initializing the ImGui Library Manager");
         this->m_imguiObject = UI::ImGuiManager();
 
         // Initialize IDE renderer
-        spdlog::info("Initialize IDE Renderer");
+        spdlog::info("Creating IDE Renderer...");
         this->m_ideRenderer = new IDE::IDERenderer();
 
         // Initialize application state
@@ -114,7 +114,7 @@ namespace ADS::Core {
      */
     App::~App()
     {
-        delete this->m_environment;
+        delete m_environment;
         delete this->m_ideRenderer;
     }
 
@@ -175,9 +175,17 @@ namespace ADS::Core {
     }
 
     /**
-     * Get the font manager instance for app-wide usage
+     * @brief Get the font manager instance for app-wide usage
      *
-     * @return Pointer to the Fonts manager instance
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Provides access to the initialized font manager that can be used
+     * throughout the application for font loading and selection.
+     *
+     * @return Pointer to the UI::Fonts manager instance
+     *
+     * @see ADS::UI::Fonts
      */
     UI::Fonts *App::getFontManager()
     {
@@ -185,9 +193,18 @@ namespace ADS::Core {
     }
 
     /**
-     * Set the font manager instance for app-wide usage
+     * @brief Set the font manager instance for app-wide usage
      *
-     * @param fontManager Pointer to the Fonts manager instance
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Jan 2026
+     *
+     * Assigns the font manager to be used application-wide. This must be
+     * called after the font manager is created and before any component
+     * attempts to retrieve it via getFontManager().
+     *
+     * @param fontManager Pointer to the UI::Fonts manager instance
+     *
+     * @see getFontManager(), ADS::UI::Fonts
      */
     void App::setFontManager(UI::Fonts *fontManager)
     {

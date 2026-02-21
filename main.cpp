@@ -75,10 +75,10 @@ int main()
 {
     try {
         SDL_SetMainReady();  // Required when using SDL_MAIN_HANDLED
-        ADS::Core::App *app = new ADS::Core::App();
+        auto *app = new ADS::Core::App();
 
         // Create window
-        ADS::UI::SDL_WINDOW_INFO *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
+        auto *sdlWindowInformation = new ADS::UI::SDL_WINDOW_INFO({
                 app->getTranslationsManager()->_t("APP_TITLE"),
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
@@ -86,7 +86,7 @@ int main()
                 System::DEFAULT_Y_WIN_SIZE,
         });
 
-        ADS::UI::SDL_FLAGS *flags = new ADS::UI::SDL_FLAGS();
+        auto *flags = new ADS::UI::SDL_FLAGS();
         ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
         pair<boost::uuids::uuid, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
         ADS::UI::Window *mainWindow = windowInfo.second;
