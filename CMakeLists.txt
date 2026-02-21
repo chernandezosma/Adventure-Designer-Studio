@@ -78,6 +78,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS uuid headers)
+find_package(nfd CONFIG REQUIRED)
 
 # ----------------------------------------------------------
 # --- Project directories
@@ -195,6 +196,9 @@ set(Sources
         src/classes/Entities/Character.h
         src/classes/Entities/Item.cpp
         src/classes/Entities/Item.h
+        # Core classes
+        src/classes/Core/Project.cpp
+        src/classes/Core/Project.h
 )
 
 # ----------------------------------------------------------
@@ -212,6 +216,7 @@ target_link_libraries(${ADSProject} PRIVATE
         fmt::fmt
         Boost::uuid
         Boost::headers
+        nfd::nfd
 )
 
 # ----------------------------------------------------------

@@ -35,7 +35,8 @@
     "nlohmann-json",
     "gtest",
     "boost-uuid",
-    "boost-container-hash"
+    "boost-container-hash",
+    "nativefiledialog-extended"
   ],
   "builtin-baseline": "c1ac7948cca9f5069d156cb454a3a9734994036d"
 }

@@ -1,0 +1,4 @@
+CompileFlags:
+  Add:
+    - -DSPDLOG_FMT_EXTERNAL
+    - -DSPDLOG_COMPILED_LIB
