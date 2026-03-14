@@ -13,11 +13,14 @@ The Adventure Designer Studio project has been migrated from git submodules to *
 
 The following dependencies are now managed by vcpkg:
 
+- **imgui** `1.91.8#2` (GUI with SDL2 bindings and docking — pinned; see note below)
+- **SDL2** (Graphics and input)
 - **nlohmann-json** (JSON library)
 - **spdlog** (Logging library)
-- **boost-uuid** (UUID generation - replaced crashoz/uuid_v4)
-- **imgui** (with SDL2 bindings and docking)
-- **SDL2** (Graphics and input)
+- **fmt** (String formatting, used by spdlog)
+- **boost-uuid** (UUID generation — replaced crashoz/uuid_v4)
+- **boost-container-hash** (Hash support for Boost types)
+- **nativefiledialog-extended** (Native OS file picker dialogs)
 - **gtest** (Testing framework)
 
 **Note:** `IconFontCppHeaders` remains as a git submodule since it's header-only.
@@ -49,17 +52,17 @@ These are required by vcpkg to build certain dependencies:
 
 **Linux (Debian/Ubuntu):**
 ```bash
-sudo apt install build-essential autoconf automake libtool pkg-config python3-jinja2
+sudo apt install build-essential autoconf autoconf-archive automake libtool pkg-config python3-jinja2
 ```
 
 **Linux (Fedora/RHEL):**
 ```bash
-sudo dnf install gcc-c++ autoconf automake libtool pkgconfig python3-jinja2
+sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig python3-jinja2
 ```
 
 **macOS:**
 ```bash
-brew install autoconf automake libtool pkg-config
+brew install autoconf autoconf-archive automake libtool pkg-config
 pip3 install jinja2
 ```
 
@@ -212,7 +215,18 @@ Adventure-Designer-Studio/
 
 ## Baseline Version
 
-Current vcpkg baseline: **84bab45af87c951d213f093450b1a1ec04777b93** (2025.12.12 release)
+Current vcpkg baseline: **e7d511847f12658e9bd196b29b223144e3f2f091** (updated March 2026 — required for GCC 14+/15 compatibility)
+
+> **Why was the baseline updated?**
+> The previous baseline included `libxcrypt@4.4.36` which fails to compile under GCC 14+ due to
+> stricter `-Wunterminated-string-initialization` enforcement. The new baseline ships
+> `libxcrypt@4.5.2` with `--disable-werror`, resolving the issue.
+
+## imgui Version Pin
+
+imgui is pinned to `1.91.8#2` via the `overrides` field in `vcpkg.json`. Starting with `1.91.8#3`,
+the vcpkg port dropped `sdl2-binding` and `sdl2-renderer-binding` in favour of SDL3-only bindings.
+Until the project migrates to SDL3, imgui must remain on this version.
 
 ## References
 

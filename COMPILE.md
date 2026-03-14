@@ -30,7 +30,7 @@ Imagine a teacher using such a tool to build a short adventure that re-creates t
 **1. Install C++ Compiler and Build Tools:**
 ```bash
 sudo apt update
-sudo apt install build-essential autoconf automake libtool pkg-config python3-jinja2
+sudo apt install build-essential autoconf autoconf-archive automake libtool pkg-config python3-jinja2
 ```
 This installs GCC, G++, Make, and other essential build tools.
 
@@ -66,7 +66,7 @@ git --version
 
 **1. Install C++ Compiler and Build Tools:**
 ```bash
-sudo dnf install gcc-c++ autoconf automake libtool pkgconfig python3-jinja2
+sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig python3-jinja2
 ```
 
 **2. Install CMake:**
@@ -103,7 +103,7 @@ xcode-select --install
 
 **3. Install CMake and Build Tools:**
 ```bash
-brew install cmake autoconf automake libtool pkg-config
+brew install cmake autoconf autoconf-archive automake libtool pkg-config
 pip3 install jinja2
 ```
 
@@ -256,11 +256,14 @@ Adventure_Designer_Studio.exe
 ### Project Dependencies
 
 Managed by vcpkg:
-- **imgui** - Immediate mode GUI library (with SDL2 bindings and docking)
+- **imgui** `1.91.8#2` - Immediate mode GUI library (with SDL2 bindings and docking; pinned — later versions dropped SDL2 support)
 - **SDL2** - Graphics, windowing, and input
 - **nlohmann-json** - JSON library
 - **spdlog** - Fast C++ logging library
+- **fmt** - String formatting library (used by spdlog)
 - **boost-uuid** - UUID generation
+- **boost-container-hash** - Hash support for Boost types
+- **nativefiledialog-extended** - Native OS file picker dialogs
 - **gtest** - Google Test framework
 
 Git submodule:

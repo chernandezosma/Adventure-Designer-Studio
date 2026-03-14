@@ -237,6 +237,12 @@ Designer** provides the tools and support you need to turn your vision into
 reality. Dive into the world of conversational adventures and start creating
 today!
 
+## Building from Source
+
+For step-by-step instructions on compiling Adventure Designer Studio, including required system packages, vcpkg setup, and build scripts, see [COMPILE.md](./COMPILE.md).
+
+For library dependency details and the vcpkg migration notes, see [LIBRARY_SETUP.md](./LIBRARY_SETUP.md) and [VCPKG_MIGRATION.md](./VCPKG_MIGRATION.md).
+
 ## Contributing
 
 Thank you for considering contributing to Adventure Studio Designer! Everyone

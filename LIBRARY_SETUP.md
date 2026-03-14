@@ -8,11 +8,14 @@ Adventure Designer Studio uses a hybrid approach for managing libraries:
 
 These are automatically downloaded and built by vcpkg:
 
+- **imgui** `1.91.8#2` - GUI library (with SDL2 bindings and docking; pinned — later versions dropped SDL2 support)
+- **SDL2** - Graphics and input
 - **nlohmann-json** - JSON library
 - **spdlog** - Logging library
+- **fmt** - String formatting (used by spdlog)
 - **boost-uuid** - UUID generation
-- **imgui** - GUI library (with SDL2 bindings)
-- **SDL2** - Graphics and input
+- **boost-container-hash** - Hash support for Boost types
+- **nativefiledialog-extended** - Native OS file picker dialogs
 - **gtest** - Testing framework
 
 ✅ **No manual setup needed** - just run `./build.sh` and vcpkg handles everything!
@@ -62,13 +65,13 @@ When you clone this repository:
 1. **Install system build tools** (one-time):
    ```bash
    # Linux (Debian/Ubuntu)
-   sudo apt install build-essential autoconf automake libtool pkg-config python3-jinja2
+   sudo apt install build-essential autoconf autoconf-archive automake libtool pkg-config python3-jinja2
 
    # Linux (Fedora/RHEL)
-   sudo dnf install gcc-c++ autoconf automake libtool pkgconfig python3-jinja2
+   sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig python3-jinja2
 
    # macOS
-   brew install autoconf automake libtool pkg-config
+   brew install autoconf autoconf-archive automake libtool pkg-config
    pip3 install jinja2
    ```
 
