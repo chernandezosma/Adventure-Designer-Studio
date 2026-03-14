@@ -38,5 +38,8 @@
     "boost-container-hash",
     "nativefiledialog-extended"
   ],
-  "builtin-baseline": "c1ac7948cca9f5069d156cb454a3a9734994036d"
+  "builtin-baseline": "e7d511847f12658e9bd196b29b223144e3f2f091",
+  "overrides": [
+    { "name": "imgui", "version": "1.91.8", "port-version": 2 }
+  ]
 }
