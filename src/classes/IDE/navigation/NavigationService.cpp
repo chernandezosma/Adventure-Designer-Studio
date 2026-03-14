@@ -83,20 +83,9 @@ namespace ADS::IDE {
     void NavigationService::fileOpenHandler()
     {
         spdlog::info("Call NavigationService::fileOpenHandler");
-
-        NFD::Guard guard;
-        NFD::UniquePath outPath;
-
-        nfdfilteritem_t filters[] = { { "ADS Project", "ads" } };
-        nfdresult_t result = NFD::OpenDialog(outPath, filters, 1);
-
-        if (result == NFD_OKAY) {
-            spdlog::info("NavigationService: open path selected — {}", outPath.get());
-            if (m_onOpenProject) m_onOpenProject(outPath.get());
-        } else if (result == NFD_ERROR) {
-            spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
-        }
-        // NFD_CANCEL: user dismissed the dialog — nothing to do
+        // Defer the NFD call to processPendingDialogs() so it runs after
+        // SDL_RenderPresent, preventing the gray-window artifact.
+        m_pendingOpenDialog = true;
     }
 
     /**
@@ -165,24 +154,12 @@ namespace ADS::IDE {
             ImGui::Spacing();
 
             if (ImGui::Button("Save", ImVec2(90, 0))) {
-                NFD::Guard guard;
-                NFD::UniquePath savePath;
-
-                nfdfilteritem_t filters[] = { { "ADS Project", "ads" } };
-                nfdresult_t result = NFD::SaveDialog(
-                    savePath, filters, 1, nullptr, "project.ads");
-
-                if (result == NFD_OKAY) {
-                    spdlog::info("NavigationService: save path selected — {}",
-                                 savePath.get());
-                    if (m_onSaveProject) m_onSaveProject(savePath.get());
-                    if (m_onNewProject)  m_onNewProject();
-                    ImGui::CloseCurrentPopup();
-                } else if (result == NFD_ERROR) {
-                    spdlog::error("NavigationService: NFD error — {}",
-                                  NFD::GetError());
-                }
-                // NFD_CANCEL: user dismissed the save dialog — stay in the modal
+                // Defer the NFD save dialog to processPendingDialogs().
+                // The confirm modal closes now so the compositor gets a clean
+                // frame before the blocking call.
+                m_pendingSaveDialog  = true;
+                m_pendingSaveAndNew  = true;
+                ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
 
@@ -197,6 +174,66 @@ namespace ADS::IDE {
             }
 
             ImGui::EndPopup();
+        }
+    }
+
+    /**
+     * @brief Execute any deferred native file dialogs
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Checks m_pendingOpenDialog and m_pendingSaveDialog. For each flag that
+     * is set it opens the corresponding NFD dialog synchronously, forwards the
+     * result to the registered callback, and resets the flag. Because this
+     * method is called after SDL_RenderPresent the compositor already holds a
+     * clean frame, so blocking the thread here does not produce a gray window.
+     *
+     * If a save dialog was triggered by the "New project" confirmation modal
+     * (m_pendingSaveAndNew is set) and the user confirms a path, m_onNewProject
+     * is called immediately after m_onSaveProject. If the user cancels the save
+     * dialog neither callback is invoked and no project is created.
+     */
+    void NavigationService::processPendingDialogs()
+    {
+        nfdfilteritem_t filters[] = { { "ADS Project", "ads" } };
+
+        if (m_pendingOpenDialog) {
+            m_pendingOpenDialog = false;
+
+            NFD::Guard guard;
+            NFD::UniquePath outPath;
+            nfdresult_t result = NFD::OpenDialog(outPath, filters, 1);
+
+            if (result == NFD_OKAY) {
+                spdlog::info("NavigationService: open path selected — {}",
+                             outPath.get());
+                if (m_onOpenProject) m_onOpenProject(outPath.get());
+            } else if (result == NFD_ERROR) {
+                spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
+            }
+            // NFD_CANCEL: user dismissed the dialog — nothing to do
+        }
+
+        if (m_pendingSaveDialog) {
+            m_pendingSaveDialog = false;
+            bool saveAndNew     = m_pendingSaveAndNew;
+            m_pendingSaveAndNew = false;
+
+            NFD::Guard guard;
+            NFD::UniquePath savePath;
+            nfdresult_t result = NFD::SaveDialog(
+                savePath, filters, 1, nullptr, "project.ads");
+
+            if (result == NFD_OKAY) {
+                spdlog::info("NavigationService: save path selected — {}",
+                             savePath.get());
+                if (m_onSaveProject) m_onSaveProject(savePath.get());
+                if (saveAndNew && m_onNewProject) m_onNewProject();
+            } else if (result == NFD_ERROR) {
+                spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
+            }
+            // NFD_CANCEL: user cancelled — neither save nor new-project proceeds
         }
     }
 

@@ -275,6 +275,10 @@ namespace ADS::Core {
             processEvents();
             update();
             render();
+            // Run any deferred native file dialogs AFTER SDL_RenderPresent.
+            // The compositor now holds a clean frame, so blocking here does
+            // not produce a gray window.
+            m_ideRenderer->processPendingDialogs();
         }
     }
 

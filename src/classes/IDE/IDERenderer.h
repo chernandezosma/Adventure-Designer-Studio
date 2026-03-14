@@ -185,6 +185,25 @@ namespace ADS::IDE {
         void render();
 
         /**
+         * @brief Execute any deferred native file dialogs
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Delegates to MenuBarRenderer::processPendingDialogs(). Must be called
+         * by App::run() immediately after render() returns (i.e. after
+         * SDL_RenderPresent) and before the next processEvents() call.
+         *
+         * This ordering guarantees that the compositor already holds a clean
+         * rendered frame when the blocking NFD dialog is shown, preventing the
+         * gray-window artifact caused by freezing the render loop mid-frame.
+         *
+         * @see MenuBarRenderer::processPendingDialogs()
+         * @see App::run()
+         */
+        void processPendingDialogs();
+
+        /**
          * @brief Get the status bar panel
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>

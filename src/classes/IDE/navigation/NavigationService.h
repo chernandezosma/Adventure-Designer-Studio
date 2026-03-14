@@ -71,12 +71,39 @@ namespace ADS::IDE {
         std::function<void(const std::string&)> m_onSaveProject;
 
         /**
-         * @brief Pending-dialog flag
+         * @brief Pending-dialog flag for the ImGui "New project" confirmation modal
          *
          * Set to true by fileNewHandler() when a confirmation dialog must be
          * shown. Consumed by renderDialogs() via ImGui::OpenPopup().
          */
         bool m_confirmNewDialogOpen = false;
+
+        /**
+         * @brief Deferred open-dialog flag
+         *
+         * Set by fileOpenHandler() instead of calling NFD inline.
+         * Consumed by processPendingDialogs() after the next SDL_RenderPresent,
+         * ensuring the compositor has a clean frame before the blocking call.
+         */
+        bool m_pendingOpenDialog = false;
+
+        /**
+         * @brief Deferred save-dialog flag
+         *
+         * Set by the Save button inside renderDialogs() instead of calling NFD
+         * inline. Consumed by processPendingDialogs() after the next
+         * SDL_RenderPresent.
+         */
+        bool m_pendingSaveDialog = false;
+
+        /**
+         * @brief Whether a pending save should also trigger a new project
+         *
+         * Set alongside m_pendingSaveDialog when the save originates from the
+         * "New project" confirmation modal. If the user confirms a save path,
+         * m_onNewProject is called after m_onSaveProject.
+         */
+        bool m_pendingSaveAndNew = false;
 
         /** ImGui popup identifier used for the "new project" confirmation modal */
         static constexpr const char* NEW_PROJECT_POPUP_ID = "New project##ads_confirm_new";
@@ -139,13 +166,13 @@ namespace ADS::IDE {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Feb 2026
          *
-         * Opens a native OS file picker filtered to ADS project files (.ads).
-         * If the user confirms a selection the path is forwarded to the onOpen
-         * callback registered via setFileCallbacks(). A cancelled dialog is
-         * silently ignored; an NFD error is logged via spdlog.
+         * Schedules a native OS file picker by setting an internal pending flag.
+         * The actual NFD call is deferred to processPendingDialogs(), which must
+         * be called after SDL_RenderPresent to avoid the gray-window artifact that
+         * occurs when the render loop is blocked mid-frame.
          *
-         * @note This call blocks until the native dialog is dismissed
-         * @see setFileCallbacks()
+         * @note Does not block; the dialog opens on the next processPendingDialogs() call
+         * @see processPendingDialogs(), setFileCallbacks()
          */
         void fileOpenHandler();
 
@@ -178,13 +205,34 @@ namespace ADS::IDE {
          * dialog that may have been scheduled by fileNewHandler().
          *
          * The dialog presents three choices:
-         * - **Save** — placeholder; will save then create (logs a warning for now)
+         * - **Save**    — schedules a native save dialog via processPendingDialogs()
          * - **Discard** — discards the current project and creates a new one
-         * - **Cancel** — aborts the action, leaving the current project unchanged
+         * - **Cancel**  — aborts the action, leaving the current project unchanged
          *
          * @note This method is a no-op when no dialog is pending
+         * @see processPendingDialogs()
          */
         void renderDialogs();
+
+        /**
+         * @brief Execute any deferred native file dialogs
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Must be called **after** SDL_RenderPresent (i.e. after render() returns)
+         * and **before** the next ImGui::NewFrame(). At that point the compositor
+         * already holds a clean frame so blocking the main thread with a native
+         * dialog does not produce a gray window.
+         *
+         * Consumes m_pendingOpenDialog and m_pendingSaveDialog. For each flag that
+         * is set it opens the corresponding NFD dialog, forwards the result to the
+         * registered callback, and resets the flag.
+         *
+         * @note This method is a no-op when no dialog is pending
+         * @see fileOpenHandler(), renderDialogs()
+         */
+        void processPendingDialogs();
     };
 } // ADS::IDE
 #endif //ADS_NAVIGATION_SERVICE_H

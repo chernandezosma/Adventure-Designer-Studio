@@ -77,13 +77,15 @@ namespace ADS::IDE {
 
         // Wire file I/O: receive paths selected by the native OS dialogs
         m_menuBarRenderer->setFileCallbacks(
-            [](const std::string& path) {
-                // TODO: implement project loading from path
+            [this](const std::string& path) {
+                // TODO: implement project deserialisation from path
                 spdlog::info("IDERenderer: open project requested — {}", path);
+                m_project->setFilePath(path);
             },
-            [](const std::string& path) {
+            [this](const std::string& path) {
                 // TODO: implement project serialisation to path
                 spdlog::info("IDERenderer: save project requested — {}", path);
+                m_project->setFilePath(path);
             }
         );
     }
@@ -153,12 +155,29 @@ namespace ADS::IDE {
      * @note Any unsaved data in the previous project is discarded
      * @see NavigationService::fileNewHandler()
      */
+    /**
+     * @brief Execute any deferred native file dialogs
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates to MenuBarRenderer::processPendingDialogs(). Called by App::run()
+     * after render() (i.e. after SDL_RenderPresent) so the compositor has a clean
+     * frame before the blocking NFD call freezes the main thread.
+     *
+     * @see MenuBarRenderer::processPendingDialogs()
+     */
+    void IDERenderer::processPendingDialogs()
+    {
+        m_menuBarRenderer->processPendingDialogs();
+    }
+
     void IDERenderer::newProject()
     {
         // Clear inspector before destroying the entities it might reference
         m_inspectorPanel->clearSelection();
 
-        // Replace the project
+        // Replace the project (new project starts with no file path)
         delete m_project;
         m_project = new Core::Project("New Project");
 
