@@ -1,6 +1,34 @@
 {
   "LANGUAGE": "Español ES",
-  "WIN_TITLE": "Estudio de Diseño de Aventura",
+  "APP_TITLE": "Estudio de Diseño de Aventuras",
+  "STATUS_BAR_DEFAULT": "Preparado | FPS: %.1f",
+
+  "ENTITIES": "Entidades",
+  "PROPERTIES": "Propiedades",
+  "INSPECTOR": "Inspector",
+  "WORKING_AREA": "Área de trabajo",
+
+  "ENTITIES_LIST": "Lista de entidades",
+  "CONTENT_OF_SCRIPT": "Contenido del script 2 -%s",
+  "CLICK_TO_ADD_NEW_SCRIPT": "Haz clic para añadir un nuevo script",
+  "MAIN_CONTENT_AREA": "Área principal de contenido",
+
+  "TREE_NODE_SCENE": "Escenas",
+  "TREE_NODE_SCENE_1": "Escenas 1",
+  "TREE_NODE_SCENE_2": "Escenas 2",
+  "TREE_NODE_SCENE_3": "Escenas 3",
+
+  "TREE_NODE_CHARACTERS": "Personajes",
+  "TREE_NODE_CHARACTER_HERO": "Héroe",
+  "TREE_NODE_CHARACTER_VILLAIN": "Villano",
+  "TREE_NODE_CHARACTER_NPC": "PNJ 1",
+
+  "TREE_NODE_ITEMS": "Objetos",
+  "TREE_NODE_ITEMS_SWORD": "Espada",
+  "TREE_NODE_ITEMS_KEY": "Llave",
+  "TREE_NODE_ITEMS_POTION": "Poción",
+
+
   "TITLES": {
     "TITLE_1": "El Señor de los anillos",
     "TITLE_2": "Matrix. La venganza"

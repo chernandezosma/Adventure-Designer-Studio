@@ -18,13 +18,11 @@
 #include "LayoutManager.h"
 #include "navigation/MenuBarRenderer.h"
 #include "navigation/ToolBarRenderer.h"
-#include "env/env.h"
-#include "i18n/i18n.h"
 #include "panels/StatusBarPanel.h"
 #include "panels/EntitiesPanel.h"
-#include "panels/PropertiesPanel.h"
 #include "panels/InspectorPanel.h"
 #include "panels/WorkingAreaPanel.h"
+#include "Core/Project.h"
 
 namespace ADS::IDE {
     /**
@@ -66,12 +64,7 @@ namespace ADS::IDE {
         Panels::EntitiesPanel *m_entitiesPanel;
 
         /**
-         * Properties panel on the right-top
-         */
-        Panels::PropertiesPanel *m_propertiesPanel;
-
-        /**
-         * Inspector panel on the right-bottom
+         * Inspector panel on the right
          */
         Panels::InspectorPanel *m_inspectorPanel;
 
@@ -79,6 +72,11 @@ namespace ADS::IDE {
          * Working area panel in the center
          */
         Panels::WorkingAreaPanel *m_workingAreaPanel;
+
+        /**
+         * Owning pointer to the active project (created in initializePanels)
+         */
+        Core::Project *m_project;
 
         /**
          * @brief Initialize all panels
@@ -95,6 +93,24 @@ namespace ADS::IDE {
          * @see IDERenderer()
          */
         void initializePanels();
+
+        /**
+         * @brief Create a fresh empty project, discarding the current one
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Replaces the active project with a new empty Core::Project instance.
+         * Clears the inspector selection and updates the entities panel data
+         * source so the UI reflects the empty state immediately.
+         *
+         * Called by the NavigationService callback registered in initializePanels()
+         * when the user confirms "New project" via the File > New dialog.
+         *
+         * @note The old project is deleted; any unsaved data is lost
+         * @see NavigationService::fileNewHandler()
+         */
+        void newProject();
 
         /**
          * @brief Render the main dockspace window
@@ -169,6 +185,25 @@ namespace ADS::IDE {
         void render();
 
         /**
+         * @brief Execute any deferred native file dialogs
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Delegates to MenuBarRenderer::processPendingDialogs(). Must be called
+         * by App::run() immediately after render() returns (i.e. after
+         * SDL_RenderPresent) and before the next processEvents() call.
+         *
+         * This ordering guarantees that the compositor already holds a clean
+         * rendered frame when the blocking NFD dialog is shown, preventing the
+         * gray-window artifact caused by freezing the render loop mid-frame.
+         *
+         * @see MenuBarRenderer::processPendingDialogs()
+         * @see App::run()
+         */
+        void processPendingDialogs();
+
+        /**
          * @brief Get the status bar panel
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -197,21 +232,6 @@ namespace ADS::IDE {
          * @note The returned pointer remains valid for the lifetime of the IDERenderer
          */
         Panels::EntitiesPanel *getEntitiesPanel() const;
-
-        /**
-         * @brief Get the properties panel
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Provides access to the properties panel instance for displaying and editing
-         * properties of the currently selected entity or object.
-         *
-         * @return Panels::PropertiesPanel* Pointer to the properties panel instance
-         *
-         * @note The returned pointer remains valid for the lifetime of the IDERenderer
-         */
-        Panels::PropertiesPanel *getPropertiesPanel() const;
 
         /**
          * @brief Get the inspector panel

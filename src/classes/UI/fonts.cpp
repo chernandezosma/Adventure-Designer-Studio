@@ -39,7 +39,7 @@ namespace ADS::UI {
             throw std::runtime_error("Cannot initialize Fonts with null ImGuiIO");
         }
 
-        spdlog::debug("Fonts manager initialized");
+        spdlog::info("Fonts manager initialized");
     }
 
     /**

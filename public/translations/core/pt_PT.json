@@ -1,6 +1,33 @@
 {
   "LANGUAGE": "Portuguese PT",
-  "WIN_TITLE": "Estúdio de Design de Aventuras",
+  "APP_TITLE": "Estúdio de Design de Aventuras",
+  "STATUS_BAR_DEFAULT": "Pronto | FPS: %.1f",
+
+  "ENTITIES": "Entidades",
+  "PROPERTIES": "Propriedades",
+  "INSPECTOR": "Inspetor",
+  "WORKING_AREA": "Área de trabalho",
+
+  "ENTITIES_LIST": "Lista de entidades",
+  "CONTENT_OF_SCRIPT": "Conteúdo do script 2 -%s",
+  "CLICK_TO_ADD_NEW_SCRIPT": "Clique para adicionar um novo script",
+  "MAIN_CONTENT_AREA": "Área principal de conteúdo",
+
+  "TREE_NODE_SCENE": "Cenas",
+  "TREE_NODE_SCENE_1": "Cenas 1",
+  "TREE_NODE_SCENE_2": "Cenas 2",
+  "TREE_NODE_SCENE_3": "Cenas 3",
+
+  "TREE_NODE_CHARACTERS": "Personagens",
+  "TREE_NODE_CHARACTER_HERO": "Herói",
+  "TREE_NODE_CHARACTER_VILLAIN": "Vilão",
+  "TREE_NODE_CHARACTER_NPC": "NPC 1",
+
+  "TREE_NODE_ITEMS": "Itens",
+  "TREE_NODE_ITEMS_SWORD": "Espada",
+  "TREE_NODE_ITEMS_KEY": "Chave",
+  "TREE_NODE_ITEMS_POTION": "Poção",
+
   "TITLES": {
     "TITLE_1": "O Senhor dos Anéis",
     "TITLE_2": "Matrix Revenge"

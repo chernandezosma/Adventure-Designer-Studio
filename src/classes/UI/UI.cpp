@@ -234,6 +234,21 @@ namespace ADS::UI {
         this->io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;     // Enable Gamepad Controls
         this->io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;        // Enable Docking
         this->io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;      // Enable Multi-Viewport / Platform Windows
+
+        // Configure tooltip hover delay from environment or use default
+        float tooltipDelay = Constants::System::DEFAULT_TOOLTIP_DELAY;
+        Environment* env = Core::App::getEnv();
+        if (env != nullptr) {
+            std::string delayStr = env->getOrDefault("TOOLTIP_DELAY", "");
+            if (!delayStr.empty()) {
+                try {
+                    tooltipDelay = std::stof(delayStr);
+                } catch (...) {
+                    // Use default if parsing fails
+                }
+            }
+        }
+        ImGui::GetStyle().HoverDelayNormal = tooltipDelay;
     }
 
     /**
