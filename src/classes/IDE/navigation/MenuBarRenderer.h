@@ -246,6 +246,21 @@ namespace ADS::IDE {
         void renderDialogs();
 
         /**
+         * @brief Execute any deferred native file dialogs
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Delegates to NavigationService::processPendingDialogs(). Must be
+         * called after SDL_RenderPresent and before the next ImGui::NewFrame()
+         * to ensure the compositor has a clean frame while the blocking NFD
+         * call is in progress.
+         *
+         * @see NavigationService::processPendingDialogs()
+         */
+        void processPendingDialogs();
+
+        /**
          * @brief Render the menu bar
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>

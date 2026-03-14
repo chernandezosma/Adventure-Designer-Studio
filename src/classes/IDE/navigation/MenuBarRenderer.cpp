@@ -337,6 +337,23 @@ namespace ADS::IDE {
     }
 
     /**
+     * @brief Execute any deferred native file dialogs
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates to NavigationService::processPendingDialogs(). Called by
+     * IDERenderer after SDL_RenderPresent so that blocking NFD calls do not
+     * freeze the render loop mid-frame.
+     *
+     * @see NavigationService::processPendingDialogs()
+     */
+    void MenuBarRenderer::processPendingDialogs()
+    {
+        m_navigationService->processPendingDialogs();
+    }
+
+    /**
      * @brief Render the menu bar
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>

@@ -69,6 +69,64 @@ namespace ADS::Core {
         m_name = name;
     }
 
+    // --- File path ---
+
+    /**
+     * @brief Check whether this project has been saved to disk
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates to std::optional::has_value() on the internal path member.
+     *
+     * @return bool True if a file path is stored, false otherwise
+     */
+    bool Project::isSaved() const {
+        return m_filePath.has_value();
+    }
+
+    /**
+     * @brief Get the path to the project file on disk
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Dereferences the internal optional. The caller must ensure isSaved()
+     * returns true before calling this method.
+     *
+     * @return const std::filesystem::path& Reference to the stored file path
+     */
+    const std::filesystem::path& Project::getFilePath() const {
+        return *m_filePath;
+    }
+
+    /**
+     * @brief Associate a filesystem path with this project
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Stores the path in the internal optional, making isSaved() return true.
+     *
+     * @param path Absolute or relative path to the project file
+     */
+    void Project::setFilePath(const std::filesystem::path& path) {
+        m_filePath = path;
+    }
+
+    /**
+     * @brief Remove the associated file path from this project
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Resets the internal optional to an empty state, making isSaved()
+     * return false again.
+     */
+    void Project::clearFilePath() {
+        m_filePath.reset();
+    }
+
     // --- Scene CRUD ---
 
     /**
