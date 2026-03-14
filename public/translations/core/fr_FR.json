@@ -1,6 +1,34 @@
 {
   "LANGUAGE": "French FR",
-  "WIN_TITLE": "Studio de Conception d’Aventures",
+  "APP_TITLE": "Studio de Conception d’Aventures",
+  "STATUS_BAR_DEFAULT": "Prêt | FPS: %.1f",
+
+  "ENTITIES": "Entités",
+  "PROPERTIES": "Propriétés",
+  "INSPECTOR": "Inspecteur",
+  "WORKING_AREA": "Zone de travail",
+
+
+  "ENTITIES_LIST": "Liste des entités",
+  "CONTENT_OF_SCRIPT": "Contenu du script 2 -%s",
+  "CLICK_TO_ADD_NEW_SCRIPT": "Cliquez pour ajouter un nouveau script",
+  "MAIN_CONTENT_AREA": "Zone principale de contenu",
+
+  "TREE_NODE_SCENE": "Scènes",
+  "TREE_NODE_SCENE_1": "Scènes 1",
+  "TREE_NODE_SCENE_2": "Scènes 2",
+  "TREE_NODE_SCENE_3": "Scènes 3",
+
+  "TREE_NODE_CHARACTERS": "Personnages",
+  "TREE_NODE_CHARACTER_HERO": "Héros",
+  "TREE_NODE_CHARACTER_VILLAIN": "Méchant",
+  "TREE_NODE_CHARACTER_NPC": "PNJ 1",
+
+  "TREE_NODE_ITEMS": "Objets",
+  "TREE_NODE_ITEMS_SWORD": "Épée",
+  "TREE_NODE_ITEMS_KEY": "Clé",
+  "TREE_NODE_ITEMS_POTION": "Potion",
+
   "TITLES": {
     "TITLE_1": "Le Seigneur des Anneaux",
     "TITLE_2": "Matrix: La Revanche"

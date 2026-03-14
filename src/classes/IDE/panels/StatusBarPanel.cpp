@@ -19,6 +19,8 @@
  */
 
 #include "StatusBarPanel.h"
+
+#include "System.h"
 #include "imgui.h"
 
 namespace ADS::IDE::Panels {
@@ -89,13 +91,19 @@ namespace ADS::IDE::Panels {
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 3.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::Begin(m_windowName.c_str(), nullptr, statusBarFlags);
+        ImGui::Begin(getImGuiLabel().c_str(), nullptr, statusBarFlags);
         ImGui::PopStyleVar(2);
 
-        ImGui::Text("Ready | Line: 1, Col: 1 | FPS: %.1f", ImGui::GetIO().Framerate);
-        ImGui::SameLine(ImGui::GetWindowWidth() - 150);
-        ImGui::Text("Text Adventure IDE");
+        ImGui::Text(this->getTranslationsManager()->_t("STATUS_BAR_DEFAULT").c_str(), ImGui::GetIO().Framerate);
 
+        const std::string message = this->getTranslationsManager()->_t("APP_TITLE");
+        // This is the way to calculate the string width (in pixesls).
+        ImVec2 textSize = ImGui::CalcTextSize(message.c_str());
+        float textWidth = textSize.x;
+        // float textHeight = textSize.y;
+
+        ImGui::SameLine(ImGui::GetWindowWidth() - (textWidth + Constants::System::DEFULT_TEXT_SPACER));
+        ImGui::Text("%s", message.c_str());
         ImGui::End();
     }
 

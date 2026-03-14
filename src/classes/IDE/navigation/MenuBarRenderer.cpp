@@ -37,7 +37,7 @@ namespace ADS::IDE {
     MenuBarRenderer::MenuBarRenderer(LayoutManager *layoutManager) :
         IDEBase(),
         m_layoutManager(layoutManager),
-        m_navigationService(),
+        m_navigationService(std::make_unique<NavigationService>()),
         m_translationManager(this->getTranslationManager())
     {
         // Locale is now managed in IDEBase
@@ -270,6 +270,87 @@ namespace ADS::IDE {
             LightTheme theme;
             theme.apply();
         }
+    }
+
+    /**
+     * @brief Register project-awareness callbacks on the NavigationService
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Forwards the callbacks directly to the owned NavigationService so it can
+     * detect an active project and trigger new-project creation without holding
+     * a direct reference to IDERenderer.
+     *
+     * @param hasProject   Predicate returning true when a project is open
+     * @param onNewProject Callable invoked to create a fresh project
+     * @see NavigationService::setProjectCallbacks()
+     */
+    void MenuBarRenderer::setNavigationCallbacks(
+        std::function<bool()> hasProject,
+        std::function<void()> onNewProject)
+    {
+        m_navigationService->setProjectCallbacks(
+            std::move(hasProject),
+            std::move(onNewProject)
+        );
+    }
+
+    /**
+     * @brief Register file I/O callbacks forwarded to the NavigationService
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates directly to NavigationService::setFileCallbacks(). See that
+     * method's documentation for the callback semantics.
+     *
+     * @param onOpen  Callable receiving the absolute path from the Open dialog
+     * @param onSave  Callable receiving the absolute path from the Save dialog
+     * @see NavigationService::setFileCallbacks()
+     */
+    void MenuBarRenderer::setFileCallbacks(
+        std::function<void(const std::string&)> onOpen,
+        std::function<void(const std::string&)> onSave)
+    {
+        m_navigationService->setFileCallbacks(
+            std::move(onOpen),
+            std::move(onSave)
+        );
+    }
+
+    /**
+     * @brief Render any pending modal dialogs from the NavigationService
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates to NavigationService::renderDialogs(). Called by IDERenderer
+     * once per frame after EndMenuBar but still within the MainDockSpace window,
+     * ensuring the correct ImGui window context for popup rendering.
+     *
+     * @see NavigationService::renderDialogs()
+     */
+    void MenuBarRenderer::renderDialogs()
+    {
+        m_navigationService->renderDialogs();
+    }
+
+    /**
+     * @brief Execute any deferred native file dialogs
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates to NavigationService::processPendingDialogs(). Called by
+     * IDERenderer after SDL_RenderPresent so that blocking NFD calls do not
+     * freeze the render loop mid-frame.
+     *
+     * @see NavigationService::processPendingDialogs()
+     */
+    void MenuBarRenderer::processPendingDialogs()
+    {
+        m_navigationService->processPendingDialogs();
     }
 
     /**

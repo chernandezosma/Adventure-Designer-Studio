@@ -31,25 +31,33 @@ namespace ADS::IDE::Panels {
      * Initializes the entities panel with name "Entities".
      */
     EntitiesPanel::EntitiesPanel()
-        : BasePanel("Entities") {
+        : BasePanel("hEntities") {
+        m_windowTitle = this->getTranslationsManager()->_t("ENTITIES");
     }
 
     /**
      * @brief Render the scenes tree node
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Feb 2026
      *
      * Displays a collapsible tree node containing all scene entities
-     * in the current project. Each scene is displayed as a bullet item.
+     * from the active project. Each scene is rendered as a selectable row;
+     * clicking one updates m_selectedEntity and fires m_onSelectionChanged.
      *
-     * @note Currently displays placeholder data
+     * @note Returns immediately if no project has been set via setProject()
+     * @see setProject(), setSelectionCallback()
      */
     void EntitiesPanel::renderSceneTree() {
-        if (ImGui::TreeNode("Scenes")) {
-            ImGui::BulletText("Scene 1");
-            ImGui::BulletText("Scene 2");
-            ImGui::BulletText("Scene 3");
+        if (!m_project) return;
+        if (ImGui::TreeNode(this->getTranslationsManager()->_t("TREE_NODE_SCENE").c_str())) {
+            for (const auto& scene : m_project->getScenes()) {
+                bool selected = (m_selectedEntity == scene.get());
+                if (ImGui::Selectable(scene->getDisplayName().c_str(), selected)) {
+                    m_selectedEntity = scene.get();
+                    if (m_onSelectionChanged) m_onSelectionChanged(m_selectedEntity);
+                }
+            }
             ImGui::TreePop();
         }
     }
@@ -58,18 +66,25 @@ namespace ADS::IDE::Panels {
      * @brief Render the characters tree node
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Feb 2026
      *
      * Displays a collapsible tree node containing all character entities
-     * in the current project. Each character is displayed as a bullet item.
+     * from the active project. Each character is rendered as a selectable row;
+     * clicking one updates m_selectedEntity and fires m_onSelectionChanged.
      *
-     * @note Currently displays placeholder data
+     * @note Returns immediately if no project has been set via setProject()
+     * @see setProject(), setSelectionCallback()
      */
     void EntitiesPanel::renderCharacterTree() {
-        if (ImGui::TreeNode("Characters")) {
-            ImGui::BulletText("Hero");
-            ImGui::BulletText("Villain");
-            ImGui::BulletText("NPC 1");
+        if (!m_project) return;
+        if (ImGui::TreeNode(this->getTranslationsManager()->_t("TREE_NODE_CHARACTERS").c_str())) {
+            for (const auto& character : m_project->getCharacters()) {
+                bool selected = (m_selectedEntity == character.get());
+                if (ImGui::Selectable(character->getDisplayName().c_str(), selected)) {
+                    m_selectedEntity = character.get();
+                    if (m_onSelectionChanged) m_onSelectionChanged(m_selectedEntity);
+                }
+            }
             ImGui::TreePop();
         }
     }
@@ -78,20 +93,63 @@ namespace ADS::IDE::Panels {
      * @brief Render the items tree node
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Feb 2026
      *
      * Displays a collapsible tree node containing all item entities
-     * in the current project. Each item is displayed as a bullet item.
+     * from the active project. Each item is rendered as a selectable row;
+     * clicking one updates m_selectedEntity and fires m_onSelectionChanged.
      *
-     * @note Currently displays placeholder data
+     * @note Returns immediately if no project has been set via setProject()
+     * @see setProject(), setSelectionCallback()
      */
     void EntitiesPanel::renderItemTree() {
-        if (ImGui::TreeNode("Items")) {
-            ImGui::BulletText("Sword");
-            ImGui::BulletText("Key");
-            ImGui::BulletText("Potion");
+        if (!m_project) return;
+        if (ImGui::TreeNode(this->getTranslationsManager()->_t("TREE_NODE_ITEMS").c_str())) {
+            for (const auto& item : m_project->getItems()) {
+                bool selected = (m_selectedEntity == item.get());
+                if (ImGui::Selectable(item->getDisplayName().c_str(), selected)) {
+                    m_selectedEntity = item.get();
+                    if (m_onSelectionChanged) m_onSelectionChanged(m_selectedEntity);
+                }
+            }
             ImGui::TreePop();
         }
+    }
+
+    /**
+     * @brief Set the project data source for the entities panel
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Provides the panel with a non-owning pointer to the active project.
+     * The panel will iterate the project's entity collections when rendering
+     * the scene, character, and item trees. Passing nullptr clears the data
+     * source and resets the current selection.
+     *
+     * @param project Non-owning pointer to the project (may be nullptr to clear)
+     * @see renderSceneTree(), renderCharacterTree(), renderItemTree()
+     */
+    void EntitiesPanel::setProject(Core::Project* project) {
+        m_project = project;
+        m_selectedEntity = nullptr;
+    }
+
+    /**
+     * @brief Set the callback invoked when the user selects an entity
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * The callback receives a non-owning pointer to the selected IInspectable.
+     * IDERenderer uses this to forward selection events to InspectorPanel
+     * without creating a direct dependency between the two panels.
+     * Passing an empty function clears any previously registered callback.
+     *
+     * @param callback Function called with the newly selected IInspectable*
+     */
+    void EntitiesPanel::setSelectionCallback(std::function<void(Inspector::IInspectable*)> callback) {
+        m_onSelectionChanged = std::move(callback);
     }
 
     /**
@@ -127,9 +185,9 @@ namespace ADS::IDE::Panels {
             return;
         }
 
-        ImGui::Begin(m_windowName.c_str());
+        ImGui::Begin(getImGuiLabel().c_str());
 
-        ImGui::Text("Entities List");
+        ImGui::Text("%s", this->getTranslationsManager()->_t("ENTITIES_LIST").c_str());
         ImGui::Separator();
 
         renderSceneTree();
@@ -137,7 +195,7 @@ namespace ADS::IDE::Panels {
         renderItemTree();
 
         ImGui::Separator();
-        if (ImGui::Button("Add New Entity")) {
+        if (ImGui::Button(this->getTranslationsManager()->_t("CLICK_TO_ADD_NEW_SCRIPT").c_str())) {
             handleAddEntity();
         }
 

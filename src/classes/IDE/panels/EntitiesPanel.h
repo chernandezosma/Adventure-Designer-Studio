@@ -15,6 +15,10 @@
 #define ADS_ENTITIES_PANEL_H
 
 #include "BasePanel.h"
+#include <functional>
+#include "Inspector/IInspectable.h"
+#include "Core/Project.h"
+
 
 namespace ADS::IDE::Panels {
     /**
@@ -28,6 +32,11 @@ namespace ADS::IDE::Panels {
      */
     class EntitiesPanel : public BasePanel {
     private:
+
+        Inspector::IInspectable* m_selectedEntity = nullptr;
+        Core::Project* m_project = nullptr;
+        std::function<void(Inspector::IInspectable*)> m_onSelectionChanged;
+
         /**
          * @brief Render the scenes tree node
          *
@@ -80,6 +89,7 @@ namespace ADS::IDE::Panels {
          */
         void handleAddEntity();
 
+
     public:
         /**
          * @brief Construct a new EntitiesPanel object
@@ -115,6 +125,34 @@ namespace ADS::IDE::Panels {
          * @see renderSceneTree(), renderCharacterTree(), renderItemTree()
          */
         void render() override;
+
+        /**
+         * @brief Set the project data source for the entities panel
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Provides the panel with a non-owning pointer to the active project.
+         * The panel will iterate the project's entity collections when rendering
+         * the scene, character, and item trees.
+         *
+         * @param project Non-owning pointer to the project (may be nullptr to clear)
+         */
+        void setProject(Core::Project* project);
+
+        /**
+         * @brief Set the callback invoked when the user selects an entity
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * The callback receives a non-owning pointer to the selected entity.
+         * IDERenderer uses this to forward selection events to InspectorPanel
+         * without creating a direct dependency between the two panels.
+         *
+         * @param callback Function called with the newly selected IInspectable*
+         */
+        void setSelectionCallback(std::function<void(Inspector::IInspectable*)> callback);
     };
 }
 

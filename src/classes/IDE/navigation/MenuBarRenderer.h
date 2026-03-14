@@ -17,6 +17,8 @@
 #include "NavigationService.h"
 #include "../LayoutManager.h"
 #include "i18n/i18n.h"
+#include <functional>
+#include <memory>
 
 namespace ADS::IDE {
     /**
@@ -189,6 +191,74 @@ namespace ADS::IDE {
          * through the unique_ptr.
          */
         ~MenuBarRenderer() = default;
+
+        /**
+         * @brief Register project-awareness callbacks on the NavigationService
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Forwards the two callbacks to the owned NavigationService so it can
+         * query whether a project is active and trigger new-project creation.
+         * Must be called after construction and before the first File > New action.
+         *
+         * @param hasProject   Predicate returning true when a project is open
+         * @param onNewProject Callable invoked to create a fresh project
+         * @see NavigationService::setProjectCallbacks()
+         */
+        void setNavigationCallbacks(
+            std::function<bool()> hasProject,
+            std::function<void()> onNewProject
+        );
+
+        /**
+         * @brief Register file I/O callbacks forwarded to the NavigationService
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Forwards the open and save path callbacks to the owned NavigationService
+         * so that native file dialog results reach the application layer. Must be
+         * called before the user can trigger File > Open or the Save action in the
+         * "New project" confirmation dialog.
+         *
+         * @param onOpen  Callable receiving the absolute path from the Open dialog
+         * @param onSave  Callable receiving the absolute path from the Save dialog
+         * @see NavigationService::setFileCallbacks()
+         */
+        void setFileCallbacks(
+            std::function<void(const std::string&)> onOpen,
+            std::function<void(const std::string&)> onSave
+        );
+
+        /**
+         * @brief Render any pending modal dialogs from the NavigationService
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Delegates to NavigationService::renderDialogs(). Must be called once
+         * per frame from within an active ImGui window, outside any
+         * BeginMenu / EndMenu scope (typically after EndMenuBar).
+         *
+         * @see NavigationService::renderDialogs()
+         */
+        void renderDialogs();
+
+        /**
+         * @brief Execute any deferred native file dialogs
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Feb 2026
+         *
+         * Delegates to NavigationService::processPendingDialogs(). Must be
+         * called after SDL_RenderPresent and before the next ImGui::NewFrame()
+         * to ensure the compositor has a clean frame while the blocking NFD
+         * call is in progress.
+         *
+         * @see NavigationService::processPendingDialogs()
+         */
+        void processPendingDialogs();
 
         /**
          * @brief Render the menu bar

@@ -13,8 +13,7 @@
 
 #include "IDERenderer.h"
 #include "imgui.h"
-#include "imgui_internal.h"
-#include <fmt/chrono.h>
+#include "spdlog/spdlog.h"
 
 namespace ADS::IDE {
     IDERenderer::IDERenderer() : IDEBase(),
@@ -23,9 +22,9 @@ namespace ADS::IDE {
         m_toolBarRenderer(nullptr),
         m_statusBarPanel(nullptr),
         m_entitiesPanel(nullptr),
-        m_propertiesPanel(nullptr),
         m_inspectorPanel(nullptr),
-        m_workingAreaPanel(nullptr)
+        m_workingAreaPanel(nullptr),
+        m_project(nullptr)
     {
         initializePanels();
     }
@@ -34,12 +33,12 @@ namespace ADS::IDE {
     {
         delete m_statusBarPanel;
         delete m_entitiesPanel;
-        delete m_propertiesPanel;
         delete m_inspectorPanel;
         delete m_workingAreaPanel;
         delete m_toolBarRenderer;
         delete m_menuBarRenderer;
         delete m_layoutManager;
+        delete m_project;
     }
 
     void IDERenderer::initializePanels()
@@ -52,9 +51,43 @@ namespace ADS::IDE {
         // Create all panels
         m_statusBarPanel = new Panels::StatusBarPanel();
         m_entitiesPanel = new Panels::EntitiesPanel();
-        m_propertiesPanel = new Panels::PropertiesPanel();
         m_inspectorPanel = new Panels::InspectorPanel();
         m_workingAreaPanel = new Panels::WorkingAreaPanel();
+
+        // Create project with demo entities
+        m_project = new Core::Project("Demo Project");
+        m_project->addScene("scene_1", "Forest Entrance");
+        m_project->addScene("scene_2", "Dark Cave");
+        m_project->addCharacter("char_1", "Hero");
+        m_project->addCharacter("char_2", "Merchant");
+        m_project->addItem("item_1", "Magic Sword");
+        m_project->addItem("item_2", "Health Potion");
+
+        // Wire panels: entity click → inspector update
+        m_entitiesPanel->setProject(m_project);
+        m_entitiesPanel->setSelectionCallback([this](Inspector::IInspectable* entity) {
+            m_inspectorPanel->setSelectedObject(entity);
+        });
+
+        // Wire navigation: File > New checks project state and can create a new one
+        m_menuBarRenderer->setNavigationCallbacks(
+            [this]() { return m_project != nullptr; },
+            [this]() { this->newProject(); }
+        );
+
+        // Wire file I/O: receive paths selected by the native OS dialogs
+        m_menuBarRenderer->setFileCallbacks(
+            [this](const std::string& path) {
+                // TODO: implement project deserialisation from path
+                spdlog::info("IDERenderer: open project requested — {}", path);
+                m_project->setFilePath(path);
+            },
+            [this](const std::string& path) {
+                // TODO: implement project serialisation to path
+                spdlog::info("IDERenderer: save project requested — {}", path);
+                m_project->setFilePath(path);
+            }
+        );
     }
 
     void IDERenderer::renderMainWindow()
@@ -90,19 +123,66 @@ namespace ADS::IDE {
             ImGui::EndMenuBar();
         }
 
+        // Render any pending navigation dialogs (e.g. "New project" confirmation)
+        // Must be called inside an ImGui window, outside any menu scope
+        m_menuBarRenderer->renderDialogs();
+
         // Render toolbar content inline (before DockSpace so it reserves space)
         m_toolBarRenderer->renderContent();
 
-        // Create the dockspace (will use remaining space after menu bar and toolbar)
+        // Setup docking layout before creating the DockSpace
         ImGuiID dockSpaceId = ImGui::GetID("MyDockSpace");
-        ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), dockSpaceFlags);
-
-        // Setup docking layout
         m_layoutManager->setDockSpaceId(dockSpaceId);
         m_layoutManager->setupDockingLayout();
 
+        // Create the dockspace (will use remaining space after menu bar and toolbar)
+        ImGuiDockNodeFlags dockSpaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+        ImGui::DockSpace(dockSpaceId, ImVec2(0.0f, 0.0f), dockSpaceFlags);
+
         ImGui::End();
+    }
+
+    /**
+     * @brief Create a fresh empty project, discarding the current one
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Replaces the active project with a new empty Core::Project instance.
+     * Clears the inspector selection and updates the entities panel data source
+     * so the UI reflects the empty state immediately. The old project is deleted.
+     *
+     * @note Any unsaved data in the previous project is discarded
+     * @see NavigationService::fileNewHandler()
+     */
+    /**
+     * @brief Execute any deferred native file dialogs
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Feb 2026
+     *
+     * Delegates to MenuBarRenderer::processPendingDialogs(). Called by App::run()
+     * after render() (i.e. after SDL_RenderPresent) so the compositor has a clean
+     * frame before the blocking NFD call freezes the main thread.
+     *
+     * @see MenuBarRenderer::processPendingDialogs()
+     */
+    void IDERenderer::processPendingDialogs()
+    {
+        m_menuBarRenderer->processPendingDialogs();
+    }
+
+    void IDERenderer::newProject()
+    {
+        // Clear inspector before destroying the entities it might reference
+        m_inspectorPanel->clearSelection();
+
+        // Replace the project (new project starts with no file path)
+        delete m_project;
+        m_project = new Core::Project("New Project");
+
+        // Refresh the entities panel with the empty project
+        m_entitiesPanel->setProject(m_project);
     }
 
     void IDERenderer::render()
@@ -115,7 +195,6 @@ namespace ADS::IDE {
 
         // Render all dockable panels
         m_entitiesPanel->render();
-        m_propertiesPanel->render();
         m_inspectorPanel->render();
         m_workingAreaPanel->render();
     }
@@ -128,11 +207,6 @@ namespace ADS::IDE {
     Panels::EntitiesPanel *IDERenderer::getEntitiesPanel() const
     {
         return m_entitiesPanel;
-    }
-
-    Panels::PropertiesPanel *IDERenderer::getPropertiesPanel() const
-    {
-        return m_propertiesPanel;
     }
 
     Panels::InspectorPanel *IDERenderer::getInspectorPanel() const

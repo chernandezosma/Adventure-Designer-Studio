@@ -1,6 +1,35 @@
 {
   "LANGUAGE": "Italian IT",
-  "WIN_TITLE": "Studio di Progettazione di Avventure",
+  "APP_TITLE": "Studio di Progettazione di Avventure",
+  "STATUS_BAR_DEFAULT": "Pronto | FPS: %.1f",
+
+  "ENTITIES": "Entità",
+  "PROPERTIES": "Proprietà",
+  "INSPECTOR": "Ispettore",
+  "WORKING_AREA": "Area di lavoro",
+
+
+  "ENTITIES_LIST": "Elenco delle entità",
+  "CONTENT_OF_SCRIPT": "Contenuto dello script 2 -%s",
+  "CLICK_TO_ADD_NEW_SCRIPT": "Clicca per aggiungere un nuovo script",
+  "MAIN_CONTENT_AREA": "Area principale del contenuto",
+
+  "TREE_NODE_SCENE": "Scene",
+  "TREE_NODE_SCENE_1": "Scene 1",
+  "TREE_NODE_SCENE_2": "Scene 2",
+  "TREE_NODE_SCENE_3": "Scene 3",
+
+  "TREE_NODE_CHARACTERS": "Personaggi",
+  "TREE_NODE_CHARACTER_HERO": "Eroe",
+  "TREE_NODE_CHARACTER_VILLAIN": "Cattivo",
+  "TREE_NODE_CHARACTER_NPC": "PNG 1",
+
+  "TREE_NODE_ITEMS": "Oggetti",
+  "TREE_NODE_ITEMS_SWORD": "Spada",
+  "TREE_NODE_ITEMS_KEY": "Chiave",
+  "TREE_NODE_ITEMS_POTION": "Pozione",
+
+
   "TITLES": {
     "TITLE_1": "Il Signore degli Anelli",
     "TITLE_2": "Matrix Revenge"

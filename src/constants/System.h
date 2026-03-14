@@ -92,6 +92,14 @@ namespace ADS::Constants {
          */
         static constexpr float MIN_WIDTH_40_PERCENTAGE = 0.4f;
 
+        /**
+         * Default delay in seconds before showing tooltips on hover.
+         * Can be overridden via TOOLTIP_DELAY environment variable.
+         */
+        static constexpr float DEFAULT_TOOLTIP_DELAY = 0.5f;
+
+        static constexpr float DEFULT_TEXT_SPACER = 10.0f;
+
         // #ifdef _WIN32
         //         static constexpr char DIRECTORY_SEPARATOR = std::string("\\");
         // #else

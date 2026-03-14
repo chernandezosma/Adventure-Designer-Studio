@@ -46,26 +46,15 @@ endif ()
 # ----------------------------------------------------------
 # --- Copy public resources
 # ----------------------------------------------------------
+# Copy at configure time so resources are available immediately
 message(STATUS "Copying the content of public folder: ${CMAKE_BUILD_TYPE}")
-file(GLOB_RECURSE PUBLIC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/public/*")
-add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/public DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+# Copy on every build to pick up changes in source public folder
+add_custom_target(copy_public_folder ALL
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/public
         ${CMAKE_CURRENT_BINARY_DIR}/public
-        COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/public/.stamp
-        DEPENDS ${PUBLIC_FILES}
-        COMMENT "Copying public folder to build directory"
-)
-
-# For multi-config generators (Visual Studio), copy to the config-specific directory
-# For single-config generators, copy to the binary directory
-add_custom_target(copy_public_folder ALL
-        COMMAND ${CMAKE_COMMAND} -E echo "Cleaning and copying public folder..."
-        COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/public
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_SOURCE_DIR}/public
-        ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/public
         COMMENT "Copying public folder to build directory"
 )
 
@@ -89,6 +78,7 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS uuid headers)
+find_package(nfd CONFIG REQUIRED)
 
 # ----------------------------------------------------------
 # --- Project directories
@@ -154,8 +144,6 @@ set(Sources
         src/classes/IDE/panels/StatusBarPanel.h
         src/classes/IDE/panels/EntitiesPanel.cpp
         src/classes/IDE/panels/EntitiesPanel.h
-        src/classes/IDE/panels/PropertiesPanel.cpp
-        src/classes/IDE/panels/PropertiesPanel.h
         src/classes/IDE/panels/InspectorPanel.cpp
         src/classes/IDE/panels/InspectorPanel.h
         src/classes/IDE/panels/WorkingAreaPanel.cpp
@@ -171,6 +159,46 @@ set(Sources
         src/classes/IDE/navigation/NavigationService.cpp
         src/classes/IDE/navigation/NavigationService.h
         src/classes/IDE/navigation/NavigationConstants.h
+        # Inspector system
+        src/classes/Inspector/PropertyConstraints.cpp
+        src/classes/Inspector/PropertyConstraints.h
+        src/classes/Inspector/PropertyDescriptor.cpp
+        src/classes/Inspector/PropertyDescriptor.h
+        src/classes/Inspector/PropertyEditorRegistry.cpp
+        src/classes/Inspector/PropertyEditorRegistry.h
+        src/classes/Inspector/PropertyEvent.cpp
+        src/classes/Inspector/PropertyEvent.h
+        src/classes/Inspector/PropertyType.h
+        src/classes/Inspector/PropertyValue.h
+        src/classes/Inspector/IInspectable.h
+        # Inspector editors
+        src/classes/Inspector/Editors/IPropertyEditor.h
+        src/classes/Inspector/Editors/StringEditor.cpp
+        src/classes/Inspector/Editors/StringEditor.h
+        src/classes/Inspector/Editors/IntEditor.cpp
+        src/classes/Inspector/Editors/IntEditor.h
+        src/classes/Inspector/Editors/FloatEditor.cpp
+        src/classes/Inspector/Editors/FloatEditor.h
+        src/classes/Inspector/Editors/BoolEditor.cpp
+        src/classes/Inspector/Editors/BoolEditor.h
+        src/classes/Inspector/Editors/EnumEditor.cpp
+        src/classes/Inspector/Editors/EnumEditor.h
+        src/classes/Inspector/Editors/ColorEditor.cpp
+        src/classes/Inspector/Editors/ColorEditor.h
+        src/classes/Inspector/Editors/Vector2Editor.cpp
+        src/classes/Inspector/Editors/Vector2Editor.h
+        # Entity classes
+        src/classes/Entities/BaseEntity.cpp
+        src/classes/Entities/BaseEntity.h
+        src/classes/Entities/Scene.cpp
+        src/classes/Entities/Scene.h
+        src/classes/Entities/Character.cpp
+        src/classes/Entities/Character.h
+        src/classes/Entities/Item.cpp
+        src/classes/Entities/Item.h
+        # Core classes
+        src/classes/Core/Project.cpp
+        src/classes/Core/Project.h
 )
 
 # ----------------------------------------------------------
@@ -188,6 +216,7 @@ target_link_libraries(${ADSProject} PRIVATE
         fmt::fmt
         Boost::uuid
         Boost::headers
+        nfd::nfd
 )
 
 # ----------------------------------------------------------
