@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
@@ -19,7 +23,7 @@
 #include "navigation/MenuBarRenderer.h"
 #include "navigation/ToolBarRenderer.h"
 #include "panels/StatusBarPanel.h"
-#include "panels/EntitiesPanel.h"
+#include "panels/ProjectTreePanel.h"
 #include "panels/InspectorPanel.h"
 #include "panels/WorkingAreaPanel.h"
 #include "Core/Project.h"
@@ -59,9 +63,9 @@ namespace ADS::IDE {
         Panels::StatusBarPanel *m_statusBarPanel;
 
         /**
-         * Entities panel on the left
+         * Project tree panel on the left
          */
-        Panels::EntitiesPanel *m_entitiesPanel;
+        Panels::ProjectTreePanel *m_projectTreePanel;
 
         /**
          * Inspector panel on the right
@@ -77,6 +81,13 @@ namespace ADS::IDE {
          * Owning pointer to the active project (created in initializePanels)
          */
         Core::Project *m_project;
+
+        /**
+         * True while the project has unsaved changes.
+         * Set by onPropertyChanged / onAddNode / newProject callbacks.
+         * Cleared after a successful save (future).
+         */
+        bool m_hasUnsavedChanges = false;
 
         /**
          * @brief Initialize all panels
@@ -219,19 +230,16 @@ namespace ADS::IDE {
         Panels::StatusBarPanel *getStatusBar() const;
 
         /**
-         * @brief Get the entities panel
+         * @brief Get the project tree panel.
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
+         * @version May 2026
          *
-         * Provides access to the entities panel instance for managing and displaying
-         * the hierarchy of game entities and scene objects.
+         * @return Panels::ProjectTreePanel* Pointer to the project tree panel instance.
          *
-         * @return Panels::EntitiesPanel* Pointer to the entities panel instance
-         *
-         * @note The returned pointer remains valid for the lifetime of the IDERenderer
+         * @note The returned pointer remains valid for the lifetime of the IDERenderer.
          */
-        Panels::EntitiesPanel *getEntitiesPanel() const;
+        Panels::ProjectTreePanel *getProjectTreePanel() const;
 
         /**
          * @brief Get the inspector panel

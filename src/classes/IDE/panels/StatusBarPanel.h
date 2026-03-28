@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
@@ -28,26 +32,6 @@ namespace ADS::IDE::Panels {
      * application name.
      */
     class StatusBarPanel : public BasePanel {
-    private:
-        /**
-         * Height of the status bar in pixels
-         */
-        float m_height;
-
-        /**
-         * @brief Calculate the height of the status bar
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Calculates the height based on ImGui frame height and spacing.
-         * This method should be called during rendering to update the
-         * height based on current ImGui style settings.
-         *
-         * @note This method updates the m_height member variable
-         */
-        void calculateHeight();
-
     public:
         /**
          * @brief Construct a new StatusBarPanel object
@@ -59,48 +43,97 @@ namespace ADS::IDE::Panels {
          * sets initial height to 0.0f. The actual height is calculated
          * dynamically during rendering.
          */
+        /**
+         * @brief Construct a new StatusBarPanel.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         */
         StatusBarPanel();
 
         /**
-         * @brief Destroy the StatusBarPanel object
+         * @brief Default destructor.
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Default destructor. No special cleanup required for this class.
+         * @version May 2026
          */
         ~StatusBarPanel() override = default;
 
         /**
-         * @brief Render the status bar
+         * @brief Render the status bar for the current frame.
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
+         * @version May 2026
          *
-         * Displays the status bar at the bottom of the viewport with
-         * status information, cursor position, and FPS counter. The bar
-         * is positioned as a fixed window at the bottom with no title bar,
-         * borders, or docking capabilities.
-         *
-         * @note Returns early if panel is not visible
-         * @see calculateHeight()
+         * Positions a fixed 22-px window at the bottom of the main viewport.
+         * Left side: version · project name · active file · cursor position.
+         * Right side: entity counts and error / warning counts.
          */
         void render() override;
 
         /**
-         * @brief Get the height of the status bar
+         * @brief Return the fixed height of the status bar in pixels.
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
+         * @version May 2026
          *
-         * Returns the current calculated height of the status bar. This
-         * value is used by other components to properly size and position
-         * their content relative to the status bar.
-         *
-         * @return float Height in pixels
-         * @note The height is calculated during each render() call
+         * @return float Always 22.0f as per the design specification.
          */
         float getHeight() const;
+
+        /**
+         * @brief Set the display name of the active project.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param name Project name shown in the status bar.
+         */
+        void setProjectName(const std::string& name);
+
+        /**
+         * @brief Set the name of the currently open file.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param filename File name (not full path) shown in the status bar.
+         */
+        void setActiveFile(const std::string& filename);
+
+        /**
+         * @brief Set the editor cursor position displayed in the status bar.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param line 1-based line number.
+         * @param col  1-based column number.
+         */
+        void setCursorPosition(int line, int col);
+
+        /**
+         * @brief Set the entity and diagnostic counts shown on the right side.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param scenes   Number of scenes in the project.
+         * @param npcs     Number of NPCs in the project.
+         * @param warnings Number of compiler / lint warnings.
+         * @param errors   Number of compiler / lint errors.
+         */
+        void setCounts(int scenes, int npcs, int warnings, int errors);
+
+    private:
+        std::string m_projectName  = "Sin proyecto";
+        std::string m_activeFile;
+        int         m_line         = 1;
+        int         m_col          = 1;
+        int         m_scenes       = 0;
+        int         m_npcs         = 0;
+        int         m_warnings     = 0;
+        int         m_errors       = 0;
     };
 }
 

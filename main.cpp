@@ -1,17 +1,21 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 #include <fstream>
 #define SDL_MAIN_HANDLED
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <random>
 
 #ifdef _WIN32
@@ -35,14 +39,11 @@
 #include <windows.h>        // SetProcessDPIAware()
 #endif
 
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
+#include "IDE/DesignTokens.h"
 #include "languages.h"
 #include "spdlog/spdlog.h"
-
-#if !SDL_VERSION_ATLEAST(2, 0, 17)
-#error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
-#endif
 
 using namespace std;
 using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
@@ -74,7 +75,6 @@ using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
 int main()
 {
     try {
-        SDL_SetMainReady();  // Required when using SDL_MAIN_HANDLED
         auto *app = new ADS::Core::App();
 
         // Create window
@@ -92,29 +92,57 @@ int main()
         ADS::UI::Window *mainWindow = windowInfo.second;
         app->setMainWindow(mainWindow);
 
-        // Load fonts
+        // Load fonts — must happen AFTER window creation so DPI scale is known.
         ADS::Environment *env = app->getEnv();
         ADS::UI::Fonts *fm = imguiObject.getFontManager();
-
-        // Set the font manager as static member in App for global access
         ADS::Core::App::setFontManager(fm);
 
-        fm->loadDefaultFonts();
-        fm->loadFontFromFile("lightFont", env->get("LIGHT_FONT")->data());
-        fm->loadFontFromFile("mediumFont", env->get("MEDIUM_FONT")->data());
-        fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data());
-        // Load icons AFTER other fonts so they merge with the regular font (which becomes default)
-        fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
+        // OS-level display scale (e.g. 150 %, 200 % in desktop settings).
+        // This is distinct from the physical pixel density that the ImGui
+        // SDLRenderer3 backend detects and handles via SDL_SetRenderScale.
+        float displayScale = SDL_GetWindowDisplayScale(mainWindow->getWindow());
+        if (displayScale < 1.0f) displayScale = 1.0f;
+
+        // Fallback: honour explicit DISPLAY_SCALE override from .env
+        if (displayScale <= 1.0f) {
+            std::string scaleOverride = env->getOrDefault("DISPLAY_SCALE", "");
+            if (!scaleOverride.empty()) {
+                try {
+                    float v = std::stof(scaleOverride);
+                    if (v > 0.0f) displayScale = v;
+                } catch (...) {}
+            }
+        }
+        spdlog::info("Font display scale: {:.2f}", displayScale);
+
+        const float BASE_FONT = 16.0f;
+        const float ICON_FONT = 13.0f;
+
+        spdlog::info("Loading Fonts...");
+        fm->loadFontFromFile("lightFont",   env->get("LIGHT_FONT")->data(),   BASE_FONT * displayScale);
+        fm->loadFontFromFile("mediumFont",  env->get("MEDIUM_FONT")->data(),  BASE_FONT * displayScale);
+        fm->loadFontFromFile("regularFont", env->get("REGULAR_FONT")->data(), BASE_FONT * displayScale);
+        // Icons merge into the regular font — same scale
+        fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf",  ICON_FONT * displayScale);
+        spdlog::info("Fonts loaded successfully");
+
+        // Use the DPI-scaled TTF font as ImGui's global default
+        imguiObject.getIO()->FontDefault = fm->getFont("regularFont");
 
         // Setup backends
-        ImGui_ImplSDL2_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
-        ImGui_ImplSDLRenderer2_Init(mainWindow->getRenderer());
+        ImGui_ImplSDL3_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
+        ImGui_ImplSDLRenderer3_Init(mainWindow->getRenderer());
         mainWindow->setStyle();
 
+        // Load colour tokens — after setStyle() so overrides land on top of the theme
+        ADS::IDE::Colors::loadFromFile("public/colors.ini");
+
         // Run the application
+        spdlog::info("Run the application");
         app->run();
 
         // Cleanup
+        spdlog::info("Shutdown the application");
         app->shutdown();
         delete app;
 

@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
@@ -49,30 +53,30 @@ namespace ADS::Core {
          * Application running state flag.
          * True when the application is running, false when it should exit.
          */
-        bool m_running;
+        bool m_running{};
 
         /**
          * Flag which indicate if the app is in DEBUG mode.
          */
-        bool m_isDebug;
+        bool m_isDebug{};
 
         /**
          * Pointer to the main application window.
          * Used for event handling and rendering operations.
          */
-        UI::Window *m_mainWindow;
+        UI::Window *m_mainWindow{};
 
         /**
          * SDL renderer for the main window.
          * Handles all rendering operations for the application.
          */
-        SDL_Renderer *m_renderer;
+        SDL_Renderer *m_renderer{};
 
         /**
          * IDE renderer for managing all IDE UI components.
          * Coordinates rendering of panels, layout, and menu bar.
          */
-        IDE::IDERenderer *m_ideRenderer;
+        IDE::IDERenderer *m_ideRenderer{};
 
         /**
          * @brief Initialize all internal App structures and systems
