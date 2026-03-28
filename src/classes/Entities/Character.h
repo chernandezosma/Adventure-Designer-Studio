@@ -1,47 +1,52 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 #ifndef ADS_CHARACTER_ENTITY_H
 #define ADS_CHARACTER_ENTITY_H
 
 #include "BaseEntity.h"
-#include "imgui.h"
+#include "Data/CharacterData.h"
 
 namespace ADS::Entities {
     /**
-     * @brief Character entity representing a game character (player, NPC, etc.)
+     * @brief Inspector adapter for a game character (player or NPC)
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Mar 2026
      *
-     * A character can be the player, an NPC, or any other interactive
-     * character in the game world.
+     * Character acts as the inspector adapter layer: it defines how character
+     * properties are presented in the inspector UI, validates incoming values,
+     * and delegates all persistent storage to the backing Data::CharacterData
+     * struct owned by Core::Project.
      */
     class Character : public BaseEntity {
     private:
-        std::string m_description;      ///< Character description/backstory
-        int m_health;                   ///< Current health points
-        int m_maxHealth;                ///< Maximum health points
-        bool m_isPlayer;                ///< Whether this is the player character
-        ImVec4 m_dialogColor;           ///< Color used for dialog text
+        Data::CharacterData* m_data; ///< Non-owning pointer to the backing CharacterData
 
     public:
         /**
-         * @brief Construct a new Character
+         * @brief Construct a new Character backed by the given CharacterData
          *
-         * @param id Unique identifier
-         * @param name Display name
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @param data Non-owning pointer to the CharacterData struct. Must not be
+         *             null and must outlive this entity.
          */
-        Character(const std::string& id, const std::string& name);
+        explicit Character(Data::CharacterData* data);
 
         // IInspectable interface
         std::string getTypeName() const override;
@@ -52,7 +57,7 @@ namespace ADS::Entities {
             const Inspector::PropertyValue& value
         ) override;
 
-        // Character-specific getters/setters
+        // Character-specific getters/setters (operate on DataObject)
         const std::string& getDescription() const;
         void setDescription(const std::string& desc);
 
@@ -65,8 +70,14 @@ namespace ADS::Entities {
         bool isPlayer() const;
         void setPlayer(bool isPlayer);
 
-        const ImVec4& getDialogColor() const;
-        void setDialogColor(const ImVec4& color);
+        const ADS::Types::Color& getDialogColor() const;
+        void setDialogColor(const ADS::Types::Color& color);
+
+        const std::string& getPortraitPath() const;
+        void setPortraitPath(const std::string& path);
+
+        const std::string& getStartingSceneId() const;
+        void setStartingSceneId(const std::string& sceneId);
     };
 }
 

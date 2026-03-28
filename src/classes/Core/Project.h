@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 #ifndef ADS_CORE_PROJECT_H
@@ -15,16 +19,23 @@
 
 /**
  * @file Project.h
- * @brief Top-level application data model that owns all game entities
+ * @brief Top-level application data model that owns all game DataObjects and entities
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Feb 2026
+ * @version Mar 2026
  *
  * The Project class is the runtime container for a game project. It owns
- * collections of Scene, Character, and Item entities and provides CRUD
- * operations for each. It is an application-level data model — not an entity
- * itself — and does NOT implement IInspectable.
+ * both the DataObject collections (SceneData, CharacterData, ItemData) and
+ * the corresponding entity adapters (Scene, Character, Item). Entities hold
+ * non-owning pointers into the DataObject collections.
  *
+ * DataObjects are the authoritative store for game data and will be
+ * serialised/deserialised as the .ads file format. Entities are inspector
+ * adapters that are rebuilt whenever the project loads.
+ *
+ * @see ADS::Data::SceneData
+ * @see ADS::Data::CharacterData
+ * @see ADS::Data::ItemData
  * @see ADS::Entities::Scene
  * @see ADS::Entities::Character
  * @see ADS::Entities::Item
@@ -36,6 +47,9 @@
 #include <string>
 #include <vector>
 
+#include "Data/SceneData.h"
+#include "Data/CharacterData.h"
+#include "Data/ItemData.h"
 #include "Entities/Scene.h"
 #include "Entities/Character.h"
 #include "Entities/Item.h"
@@ -43,33 +57,37 @@
 namespace ADS::Core {
 
     /**
-     * @brief Top-level container for all game entities in a project
+     * @brief Top-level container for all game DataObjects and entity adapters
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
+     * @version Mar 2026
      *
-     * Project owns the collections of Scene, Character, and Item instances
-     * via std::unique_ptr. Accessors return raw (non-owning) pointers to
-     * individual entities. The class is non-copyable because it holds
-     * unique ownership of its entities.
+     * Project owns DataObject collections (via std::unique_ptr) and the
+     * corresponding entity adapter collections. DataObject lifetime governs
+     * entity lifetime: entities must be destroyed before their DataObjects.
+     * The class is non-copyable.
      */
     class Project {
     private:
-        std::string m_name;                                             ///< Project display name
-        std::optional<std::filesystem::path> m_filePath;               ///< Path on disk — empty until first save
-        std::vector<std::unique_ptr<Entities::Scene>>     m_scenes;    ///< Owned scene collection
-        std::vector<std::unique_ptr<Entities::Character>> m_characters; ///< Owned character collection
-        std::vector<std::unique_ptr<Entities::Item>>      m_items;     ///< Owned item collection
+        std::string m_name;                                                      ///< Project display name
+        std::optional<std::filesystem::path> m_filePath;                         ///< Path on disk — empty until first save
+
+        // --- DataObject collections (owned, serialisable) ---
+        std::vector<std::unique_ptr<Data::SceneData>>      m_sceneData;          ///< Owned scene DataObjects
+        std::vector<std::unique_ptr<Data::CharacterData>>  m_characterData;      ///< Owned character DataObjects
+        std::vector<std::unique_ptr<Data::ItemData>>       m_itemData;           ///< Owned item DataObjects
+
+        // --- Entity adapter collections (owned, rebuilt on load) ---
+        std::vector<std::unique_ptr<Entities::Scene>>      m_scenes;             ///< Owned scene entity adapters
+        std::vector<std::unique_ptr<Entities::Character>>  m_characters;         ///< Owned character entity adapters
+        std::vector<std::unique_ptr<Entities::Item>>       m_items;              ///< Owned item entity adapters
 
     public:
         /**
          * @brief Construct a new Project with the given name
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Initializes the project with an empty entity collection and stores
-         * the provided human-readable name.
+         * @version Mar 2026
          *
          * @param name Human-readable display name for the project
          */
@@ -79,10 +97,7 @@ namespace ADS::Core {
          * @brief Destroy the Project object
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Default destructor. All entity collections are automatically released
-         * through their unique_ptr destructors.
+         * @version Mar 2026
          */
         ~Project() = default;
 
@@ -96,9 +111,7 @@ namespace ADS::Core {
          * @brief Get the project name
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Returns the human-readable display name of the project.
+         * @version Mar 2026
          *
          * @return const std::string& Reference to the internal project name string
          */
@@ -108,9 +121,7 @@ namespace ADS::Core {
          * @brief Set the project name
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Replaces the current display name of the project.
+         * @version Mar 2026
          *
          * @param name New human-readable display name
          */
@@ -122,11 +133,7 @@ namespace ADS::Core {
          * @brief Check whether this project has been saved to disk
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Returns true once a file path has been associated with the project
-         * via setFilePath(). A brand-new project that has never been saved
-         * returns false, and the first save should trigger a "Save As" dialog.
+         * @version Mar 2026
          *
          * @return bool True if a file path is set, false for an unsaved project
          * @see setFilePath()
@@ -137,11 +144,7 @@ namespace ADS::Core {
          * @brief Get the path to the project file on disk
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Returns the filesystem path where the project was last saved or
-         * loaded from. Call isSaved() before this method — the behaviour is
-         * undefined if no path has been set yet.
+         * @version Mar 2026
          *
          * @return const std::filesystem::path& Reference to the stored file path
          * @see isSaved(), setFilePath()
@@ -152,11 +155,7 @@ namespace ADS::Core {
          * @brief Associate a filesystem path with this project
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Stores the path where the project was saved or loaded from.
-         * After this call isSaved() returns true and subsequent plain "Save"
-         * operations can overwrite the same file without showing a dialog.
+         * @version Mar 2026
          *
          * @param path Absolute or relative path to the project file
          * @see isSaved(), getFilePath(), clearFilePath()
@@ -167,12 +166,7 @@ namespace ADS::Core {
          * @brief Remove the associated file path from this project
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Resets the project to an "unsaved" state by clearing the stored path.
-         * After this call isSaved() returns false and the next save will prompt
-         * the user to choose a location. Useful when duplicating a project or
-         * resetting it to a clean state.
+         * @version Mar 2026
          *
          * @see isSaved(), setFilePath()
          */
@@ -181,17 +175,14 @@ namespace ADS::Core {
         // --- Scene CRUD ---
 
         /**
-         * @brief Create and add a new Scene to the project
+         * @brief Create and add a new Scene (DataObject + entity adapter) to the project
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Constructs a Scene with the given id and name, takes ownership via
-         * unique_ptr, and appends it to the scene collection.
+         * @version Mar 2026
          *
          * @param id   Unique identifier for the scene
          * @param name Display name for the scene
-         * @return Entities::Scene* Non-owning pointer to the newly created scene,
+         * @return Entities::Scene* Non-owning pointer to the entity adapter,
          *         or nullptr if a scene with the same id already exists
          */
         Entities::Scene* addScene(const std::string& id, const std::string& name);
@@ -200,58 +191,58 @@ namespace ADS::Core {
          * @brief Remove the scene with the given id
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
+         * @version Mar 2026
          *
-         * Erases the scene whose id matches the argument from the collection.
-         * Does nothing if no matching scene is found.
+         * Erases from both the entity adapter collection and the DataObject
+         * collection. Does nothing if no matching scene is found.
          *
          * @param id Unique identifier of the scene to remove
          */
         void removeScene(const std::string& id);
 
         /**
-         * @brief Find a scene by id
+         * @brief Find a scene entity adapter by id
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Performs a linear search through the scene collection for an entry
-         * whose id matches the argument.
+         * @version Mar 2026
          *
          * @param id Unique identifier to search for
-         * @return Entities::Scene* Non-owning pointer to the scene,
-         *         or nullptr if not found
+         * @return Entities::Scene* Non-owning pointer, or nullptr if not found
          */
         [[nodiscard]] Entities::Scene* findScene(const std::string& id) const;
 
         /**
-         * @brief Get the full scene collection (read-only)
+         * @brief Get the full scene entity adapter collection (read-only)
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Provides read-only access to the owned scene vector for iteration.
+         * @version Mar 2026
          *
          * @return const std::vector<std::unique_ptr<Entities::Scene>>&
-         *         Reference to the owned scene collection
          */
         [[nodiscard]] const std::vector<std::unique_ptr<Entities::Scene>>& getScenes() const;
+
+        /**
+         * @brief Get the full scene DataObject collection (read-only, for serialisation)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return const std::vector<std::unique_ptr<Data::SceneData>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Data::SceneData>>& getSceneData() const;
 
         // --- Character CRUD ---
 
         /**
-         * @brief Create and add a new Character to the project
+         * @brief Create and add a new Character (DataObject + entity adapter) to the project
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Constructs a Character with the given id and name, takes ownership via
-         * unique_ptr, and appends it to the character collection.
+         * @version Mar 2026
          *
          * @param id   Unique identifier for the character
          * @param name Display name for the character
-         * @return Entities::Character* Non-owning pointer to the newly created
-         *         character, or nullptr if a character with the same id already exists
+         * @return Entities::Character* Non-owning pointer to the entity adapter,
+         *         or nullptr if a character with the same id already exists
          */
         Entities::Character* addCharacter(const std::string& id, const std::string& name);
 
@@ -259,57 +250,54 @@ namespace ADS::Core {
          * @brief Remove the character with the given id
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Erases the character whose id matches the argument from the collection.
-         * Does nothing if no matching character is found.
+         * @version Mar 2026
          *
          * @param id Unique identifier of the character to remove
          */
         void removeCharacter(const std::string& id);
 
         /**
-         * @brief Find a character by id
+         * @brief Find a character entity adapter by id
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Performs a linear search through the character collection for an entry
-         * whose id matches the argument.
+         * @version Mar 2026
          *
          * @param id Unique identifier to search for
-         * @return Entities::Character* Non-owning pointer to the character,
-         *         or nullptr if not found
+         * @return Entities::Character* Non-owning pointer, or nullptr if not found
          */
         [[nodiscard]] Entities::Character* findCharacter(const std::string& id) const;
 
         /**
-         * @brief Get the full character collection (read-only)
+         * @brief Get the full character entity adapter collection (read-only)
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Provides read-only access to the owned character vector for iteration.
+         * @version Mar 2026
          *
          * @return const std::vector<std::unique_ptr<Entities::Character>>&
-         *         Reference to the owned character collection
          */
         [[nodiscard]] const std::vector<std::unique_ptr<Entities::Character>>& getCharacters() const;
+
+        /**
+         * @brief Get the full character DataObject collection (read-only, for serialisation)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return const std::vector<std::unique_ptr<Data::CharacterData>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Data::CharacterData>>& getCharacterData() const;
 
         // --- Item CRUD ---
 
         /**
-         * @brief Create and add a new Item to the project
+         * @brief Create and add a new Item (DataObject + entity adapter) to the project
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Constructs an Item with the given id and name, takes ownership via
-         * unique_ptr, and appends it to the item collection.
+         * @version Mar 2026
          *
          * @param id   Unique identifier for the item
          * @param name Display name for the item
-         * @return Entities::Item* Non-owning pointer to the newly created item,
+         * @return Entities::Item* Non-owning pointer to the entity adapter,
          *         or nullptr if an item with the same id already exists
          */
         Entities::Item* addItem(const std::string& id, const std::string& name);
@@ -318,42 +306,42 @@ namespace ADS::Core {
          * @brief Remove the item with the given id
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Erases the item whose id matches the argument from the collection.
-         * Does nothing if no matching item is found.
+         * @version Mar 2026
          *
          * @param id Unique identifier of the item to remove
          */
         void removeItem(const std::string& id);
 
         /**
-         * @brief Find an item by id
+         * @brief Find an item entity adapter by id
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Performs a linear search through the item collection for an entry
-         * whose id matches the argument.
+         * @version Mar 2026
          *
          * @param id Unique identifier to search for
-         * @return Entities::Item* Non-owning pointer to the item,
-         *         or nullptr if not found
+         * @return Entities::Item* Non-owning pointer, or nullptr if not found
          */
         [[nodiscard]] Entities::Item* findItem(const std::string& id) const;
 
         /**
-         * @brief Get the full item collection (read-only)
+         * @brief Get the full item entity adapter collection (read-only)
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
-         *
-         * Provides read-only access to the owned item vector for iteration.
+         * @version Mar 2026
          *
          * @return const std::vector<std::unique_ptr<Entities::Item>>&
-         *         Reference to the owned item collection
          */
         [[nodiscard]] const std::vector<std::unique_ptr<Entities::Item>>& getItems() const;
+
+        /**
+         * @brief Get the full item DataObject collection (read-only, for serialisation)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return const std::vector<std::unique_ptr<Data::ItemData>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Data::ItemData>>& getItemData() const;
     };
 
 } // namespace ADS::Core

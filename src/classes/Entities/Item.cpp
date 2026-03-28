@@ -1,21 +1,25 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 /**
  * @file Item.cpp
- * @brief Implementation of the Item entity class
+ * @brief Implementation of the Item entity (inspector adapter)
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Jan 2026
+ * @version Mar 2026
  */
 
 #include "Item.h"
@@ -35,12 +39,8 @@ namespace ADS::Entities {
         return types;
     }
 
-    Item::Item(const std::string& id, const std::string& name)
-        : BaseEntity(id, name),
-          m_isPickable(true),
-          m_isUsable(false),
-          m_quantity(1),
-          m_itemType(0) {
+    Item::Item(Data::ItemData* data)
+        : BaseEntity(data), m_data(data) {
     }
 
     std::string Item::getTypeName() const {
@@ -66,6 +66,10 @@ namespace ADS::Entities {
                 .setDescription("The type/category of item")
                 .setConstraints(PropertyConstraints::enumeration(getItemTypes())),
 
+            PropertyDescriptor("startingSceneId", "Starting Scene", PropertyType::String)
+                .setCategory("General")
+                .setDescription("ID of the scene where this item starts"),
+
             // Behavior category
             PropertyDescriptor("isPickable", "Pickable", PropertyType::Bool)
                 .setCategory("Behavior")
@@ -80,6 +84,11 @@ namespace ADS::Entities {
                 .setDescription("Stack quantity")
                 .setConstraints(PropertyConstraints::numeric(1, 999, 1)),
 
+            // Appearance category
+            PropertyDescriptor("iconPath", "Icon", PropertyType::String)
+                .setCategory("Appearance")
+                .setDescription("Path to the item icon image"),
+
             // Info category (read-only)
             PropertyDescriptor("id", "ID", PropertyType::String)
                 .setCategory("Info")
@@ -89,14 +98,16 @@ namespace ADS::Entities {
     }
 
     Inspector::PropertyValue Item::getPropertyValue(const std::string& propertyId) const {
-        if (propertyId == "name") return m_name;
-        if (propertyId == "description") return m_description;
-        if (propertyId == "isPickable") return m_isPickable;
-        if (propertyId == "isUsable") return m_isUsable;
-        if (propertyId == "quantity") return m_quantity;
-        if (propertyId == "id") return m_id;
+        if (propertyId == "name")        return m_data->name;
+        if (propertyId == "description") return m_data->description;
+        if (propertyId == "isPickable")  return m_data->isPickable;
+        if (propertyId == "isUsable")    return m_data->isUsable;
+        if (propertyId == "quantity")    return m_data->quantity;
+        if (propertyId == "id")          return m_data->id;
+        if (propertyId == "iconPath")         return m_data->iconPath;
+        if (propertyId == "startingSceneId")  return m_data->startingSceneId;
         if (propertyId == "itemType") {
-            return Inspector::EnumValue(m_itemType, getItemTypes());
+            return Inspector::EnumValue(m_data->itemType, getItemTypes());
         }
 
         return std::monostate{};
@@ -142,76 +153,112 @@ namespace ADS::Entities {
                 return true;
             }
         }
+        else if (propertyId == "iconPath") {
+            if (auto* str = std::get_if<std::string>(&value)) {
+                setIconPath(*str);
+                return true;
+            }
+        }
+        else if (propertyId == "startingSceneId") {
+            if (auto* str = std::get_if<std::string>(&value)) {
+                setStartingSceneId(*str);
+                return true;
+            }
+        }
 
         return false;
     }
 
     const std::string& Item::getDescription() const {
-        return m_description;
+        return m_data->description;
     }
 
     void Item::setDescription(const std::string& desc) {
-        if (m_description != desc) {
-            std::string oldDesc = m_description;
-            m_description = desc;
-            notifyPropertyChanged("description", oldDesc, m_description);
+        if (m_data->description != desc) {
+            std::string oldDesc = m_data->description;
+            m_data->description = desc;
+            notifyPropertyChanged("description", oldDesc, m_data->description);
         }
     }
 
     bool Item::isPickable() const {
-        return m_isPickable;
+        return m_data->isPickable;
     }
 
     void Item::setPickable(bool pickable) {
-        if (m_isPickable != pickable) {
-            bool oldValue = m_isPickable;
-            m_isPickable = pickable;
-            notifyPropertyChanged("isPickable", oldValue, m_isPickable);
+        if (m_data->isPickable != pickable) {
+            bool oldValue = m_data->isPickable;
+            m_data->isPickable = pickable;
+            notifyPropertyChanged("isPickable", oldValue, m_data->isPickable);
         }
     }
 
     bool Item::isUsable() const {
-        return m_isUsable;
+        return m_data->isUsable;
     }
 
     void Item::setUsable(bool usable) {
-        if (m_isUsable != usable) {
-            bool oldValue = m_isUsable;
-            m_isUsable = usable;
-            notifyPropertyChanged("isUsable", oldValue, m_isUsable);
+        if (m_data->isUsable != usable) {
+            bool oldValue = m_data->isUsable;
+            m_data->isUsable = usable;
+            notifyPropertyChanged("isUsable", oldValue, m_data->isUsable);
         }
     }
 
     int Item::getQuantity() const {
-        return m_quantity;
+        return m_data->quantity;
     }
 
     void Item::setQuantity(int quantity) {
-        if (m_quantity != quantity) {
-            int oldQuantity = m_quantity;
-            m_quantity = quantity;
-            notifyPropertyChanged("quantity", oldQuantity, m_quantity);
+        if (m_data->quantity != quantity) {
+            int oldQuantity = m_data->quantity;
+            m_data->quantity = quantity;
+            notifyPropertyChanged("quantity", oldQuantity, m_data->quantity);
         }
     }
 
     int Item::getItemType() const {
-        return m_itemType;
+        return m_data->itemType;
     }
 
     void Item::setItemType(int type) {
-        if (m_itemType != type) {
-            int oldType = m_itemType;
-            m_itemType = type;
+        if (m_data->itemType != type) {
+            int oldType = m_data->itemType;
+            m_data->itemType = type;
             notifyPropertyChanged("itemType",
                 Inspector::EnumValue(oldType, getItemTypes()),
-                Inspector::EnumValue(m_itemType, getItemTypes()));
+                Inspector::EnumValue(m_data->itemType, getItemTypes()));
+        }
+    }
+
+    const std::string& Item::getIconPath() const {
+        return m_data->iconPath;
+    }
+
+    void Item::setIconPath(const std::string& path) {
+        if (m_data->iconPath != path) {
+            std::string oldPath = m_data->iconPath;
+            m_data->iconPath = path;
+            notifyPropertyChanged("iconPath", oldPath, m_data->iconPath);
+        }
+    }
+
+    const std::string& Item::getStartingSceneId() const {
+        return m_data->startingSceneId;
+    }
+
+    void Item::setStartingSceneId(const std::string& sceneId) {
+        if (m_data->startingSceneId != sceneId) {
+            std::string oldId = m_data->startingSceneId;
+            m_data->startingSceneId = sceneId;
+            notifyPropertyChanged("startingSceneId", oldId, m_data->startingSceneId);
         }
     }
 
     std::string Item::getItemTypeName() const {
         const auto& types = getItemTypes();
-        if (m_itemType >= 0 && m_itemType < static_cast<int>(types.size())) {
-            return types[m_itemType];
+        if (m_data->itemType >= 0 && m_data->itemType < static_cast<int>(types.size())) {
+            return types[m_data->itemType];
         }
         return "Unknown";
     }

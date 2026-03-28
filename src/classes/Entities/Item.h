@@ -1,49 +1,55 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 #ifndef ADS_ITEM_ENTITY_H
 #define ADS_ITEM_ENTITY_H
 
 #include "BaseEntity.h"
+#include "Data/ItemData.h"
 
 namespace ADS::Entities {
     /**
-     * @brief Item entity representing a game object/item
+     * @brief Inspector adapter for a game item
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Mar 2026
      *
-     * An item is an interactive object in the game world that can be
-     * picked up, used, or interacted with by the player.
+     * Item acts as the inspector adapter layer: it defines how item properties
+     * are presented in the inspector UI, validates incoming values, and delegates
+     * all persistent storage to the backing Data::ItemData struct owned by
+     * Core::Project.
      */
     class Item : public BaseEntity {
     private:
-        std::string m_description;      ///< Item description
-        bool m_isPickable;              ///< Whether the item can be picked up
-        bool m_isUsable;                ///< Whether the item can be used
-        int m_quantity;                 ///< Stack quantity
-        int m_itemType;                 ///< Item type index (Key, Weapon, Consumable, etc.)
+        Data::ItemData* m_data; ///< Non-owning pointer to the backing ItemData
 
     public:
         /// Available item types
         static const std::vector<std::string>& getItemTypes();
 
         /**
-         * @brief Construct a new Item
+         * @brief Construct a new Item backed by the given ItemData
          *
-         * @param id Unique identifier
-         * @param name Display name
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @param data Non-owning pointer to the ItemData struct. Must not be
+         *             null and must outlive this entity.
          */
-        Item(const std::string& id, const std::string& name);
+        explicit Item(Data::ItemData* data);
 
         // IInspectable interface
         std::string getTypeName() const override;
@@ -54,7 +60,7 @@ namespace ADS::Entities {
             const Inspector::PropertyValue& value
         ) override;
 
-        // Item-specific getters/setters
+        // Item-specific getters/setters (operate on DataObject)
         const std::string& getDescription() const;
         void setDescription(const std::string& desc);
 
@@ -70,8 +76,18 @@ namespace ADS::Entities {
         int getItemType() const;
         void setItemType(int type);
 
+        const std::string& getIconPath() const;
+        void setIconPath(const std::string& path);
+
+        const std::string& getStartingSceneId() const;
+        void setStartingSceneId(const std::string& sceneId);
+
         /**
          * @brief Get the item type name
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * @return std::string Human-readable type name
          */
         std::string getItemTypeName() const;

@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 /**
@@ -15,14 +19,14 @@
  * @brief Implementation of the BaseEntity class
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Jan 2026
+ * @version Mar 2026
  */
 
 #include "BaseEntity.h"
 
 namespace ADS::Entities {
-    BaseEntity::BaseEntity(const std::string& id, const std::string& name)
-        : m_id(id), m_name(name) {
+    BaseEntity::BaseEntity(Data::BaseData* data)
+        : m_baseData(data) {
     }
 
     void BaseEntity::notifyPropertyChanged(
@@ -35,7 +39,7 @@ namespace ADS::Entities {
     }
 
     std::string BaseEntity::getDisplayName() const {
-        return m_name;
+        return m_baseData->name;
     }
 
     Inspector::PropertyEventDispatcher& BaseEntity::getEventDispatcher() {
@@ -43,14 +47,14 @@ namespace ADS::Entities {
     }
 
     const std::string& BaseEntity::getId() const {
-        return m_id;
+        return m_baseData->id;
     }
 
     void BaseEntity::setName(const std::string& name) {
-        if (m_name != name) {
-            std::string oldName = m_name;
-            m_name = name;
-            notifyPropertyChanged("name", oldName, m_name);
+        if (m_baseData->name != name) {
+            std::string oldName = m_baseData->name;
+            m_baseData->name = name;
+            notifyPropertyChanged("name", oldName, m_baseData->name);
         }
     }
 }

@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 /**
@@ -15,7 +19,7 @@
  * @brief Implementation of the Project data model
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Feb 2026
+ * @version Mar 2026
  */
 
 #include "Project.h"
@@ -24,144 +28,56 @@
 
 namespace ADS::Core {
 
-    /**
-     * @brief Construct a new Project with the given name
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Initializes the project with an empty entity collection and stores
-     * the provided human-readable name.
-     *
-     * @param name Human-readable display name for the project
-     */
     Project::Project(const std::string& name)
         : m_name(name) {
     }
 
     // --- Project metadata ---
 
-    /**
-     * @brief Get the project name
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Returns the human-readable display name of the project.
-     *
-     * @return const std::string& Reference to the project name string
-     */
     const std::string& Project::getName() const {
         return m_name;
     }
 
-    /**
-     * @brief Set the project name
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Replaces the current display name of the project.
-     *
-     * @param name New human-readable display name
-     */
     void Project::setName(const std::string& name) {
         m_name = name;
     }
 
     // --- File path ---
 
-    /**
-     * @brief Check whether this project has been saved to disk
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Delegates to std::optional::has_value() on the internal path member.
-     *
-     * @return bool True if a file path is stored, false otherwise
-     */
     bool Project::isSaved() const {
         return m_filePath.has_value();
     }
 
-    /**
-     * @brief Get the path to the project file on disk
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Dereferences the internal optional. The caller must ensure isSaved()
-     * returns true before calling this method.
-     *
-     * @return const std::filesystem::path& Reference to the stored file path
-     */
     const std::filesystem::path& Project::getFilePath() const {
         return *m_filePath;
     }
 
-    /**
-     * @brief Associate a filesystem path with this project
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Stores the path in the internal optional, making isSaved() return true.
-     *
-     * @param path Absolute or relative path to the project file
-     */
     void Project::setFilePath(const std::filesystem::path& path) {
         m_filePath = path;
     }
 
-    /**
-     * @brief Remove the associated file path from this project
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Resets the internal optional to an empty state, making isSaved()
-     * return false again.
-     */
     void Project::clearFilePath() {
         m_filePath.reset();
     }
 
     // --- Scene CRUD ---
 
-    /**
-     * @brief Create and add a new Scene to the project
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Constructs a Scene with the given id and name, takes ownership via
-     * unique_ptr, and appends it to the scene collection.
-     *
-     * @param id   Unique identifier for the scene
-     * @param name Display name for the scene
-     * @return Entities::Scene* Non-owning pointer to the new scene,
-     *         or nullptr if a scene with the same id already exists
-     */
     Entities::Scene* Project::addScene(const std::string& id, const std::string& name) {
         if (findScene(id) != nullptr) {
             return nullptr;
         }
-        m_scenes.push_back(std::make_unique<Entities::Scene>(id, name));
-        return m_scenes.back().get();
+        auto data  = std::make_unique<Data::SceneData>();
+        data->id   = id;
+        data->name = name;
+        Data::SceneData* rawData = data.get();
+        m_sceneData.push_back(std::move(data));
+
+        auto entity     = std::make_unique<Entities::Scene>(rawData);
+        Entities::Scene* rawEntity = entity.get();
+        m_scenes.push_back(std::move(entity));
+        return rawEntity;
     }
 
-    /**
-     * @brief Remove the scene with the given id
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Erases the scene whose id matches the argument from the collection.
-     * Does nothing if no matching scene is found.
-     *
-     * @param id Unique identifier of the scene to remove
-     */
     void Project::removeScene(const std::string& id) {
         m_scenes.erase(
             std::remove_if(m_scenes.begin(), m_scenes.end(),
@@ -170,20 +86,15 @@ namespace ADS::Core {
                 }),
             m_scenes.end()
         );
+        m_sceneData.erase(
+            std::remove_if(m_sceneData.begin(), m_sceneData.end(),
+                [&id](const std::unique_ptr<Data::SceneData>& d) {
+                    return d->id == id;
+                }),
+            m_sceneData.end()
+        );
     }
 
-    /**
-     * @brief Find a scene by id
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Performs a linear search through the scene collection for an entry
-     * whose id matches the argument.
-     *
-     * @param id Unique identifier to search for
-     * @return Entities::Scene* Non-owning pointer to the scene, or nullptr if not found
-     */
     Entities::Scene* Project::findScene(const std::string& id) const {
         for (const auto& scene : m_scenes) {
             if (scene->getId() == id) {
@@ -193,55 +104,32 @@ namespace ADS::Core {
         return nullptr;
     }
 
-    /**
-     * @brief Get the full scene collection (read-only)
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Provides read-only access to the owned scene vector for iteration.
-     *
-     * @return const std::vector<std::unique_ptr<Entities::Scene>>& Owned scene vector
-     */
     const std::vector<std::unique_ptr<Entities::Scene>>& Project::getScenes() const {
         return m_scenes;
     }
 
+    const std::vector<std::unique_ptr<Data::SceneData>>& Project::getSceneData() const {
+        return m_sceneData;
+    }
+
     // --- Character CRUD ---
 
-    /**
-     * @brief Create and add a new Character to the project
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Constructs a Character with the given id and name, takes ownership via
-     * unique_ptr, and appends it to the character collection.
-     *
-     * @param id   Unique identifier for the character
-     * @param name Display name for the character
-     * @return Entities::Character* Non-owning pointer to the new character,
-     *         or nullptr if a character with the same id already exists
-     */
     Entities::Character* Project::addCharacter(const std::string& id, const std::string& name) {
         if (findCharacter(id) != nullptr) {
             return nullptr;
         }
-        m_characters.push_back(std::make_unique<Entities::Character>(id, name));
-        return m_characters.back().get();
+        auto data  = std::make_unique<Data::CharacterData>();
+        data->id   = id;
+        data->name = name;
+        Data::CharacterData* rawData = data.get();
+        m_characterData.push_back(std::move(data));
+
+        auto entity          = std::make_unique<Entities::Character>(rawData);
+        Entities::Character* rawEntity = entity.get();
+        m_characters.push_back(std::move(entity));
+        return rawEntity;
     }
 
-    /**
-     * @brief Remove the character with the given id
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Erases the character whose id matches the argument from the collection.
-     * Does nothing if no matching character is found.
-     *
-     * @param id Unique identifier of the character to remove
-     */
     void Project::removeCharacter(const std::string& id) {
         m_characters.erase(
             std::remove_if(m_characters.begin(), m_characters.end(),
@@ -250,20 +138,15 @@ namespace ADS::Core {
                 }),
             m_characters.end()
         );
+        m_characterData.erase(
+            std::remove_if(m_characterData.begin(), m_characterData.end(),
+                [&id](const std::unique_ptr<Data::CharacterData>& d) {
+                    return d->id == id;
+                }),
+            m_characterData.end()
+        );
     }
 
-    /**
-     * @brief Find a character by id
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Performs a linear search through the character collection for an entry
-     * whose id matches the argument.
-     *
-     * @param id Unique identifier to search for
-     * @return Entities::Character* Non-owning pointer to the character, or nullptr if not found
-     */
     Entities::Character* Project::findCharacter(const std::string& id) const {
         for (const auto& character : m_characters) {
             if (character->getId() == id) {
@@ -273,55 +156,32 @@ namespace ADS::Core {
         return nullptr;
     }
 
-    /**
-     * @brief Get the full character collection (read-only)
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Provides read-only access to the owned character vector for iteration.
-     *
-     * @return const std::vector<std::unique_ptr<Entities::Character>>& Owned character vector
-     */
     const std::vector<std::unique_ptr<Entities::Character>>& Project::getCharacters() const {
         return m_characters;
     }
 
+    const std::vector<std::unique_ptr<Data::CharacterData>>& Project::getCharacterData() const {
+        return m_characterData;
+    }
+
     // --- Item CRUD ---
 
-    /**
-     * @brief Create and add a new Item to the project
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Constructs an Item with the given id and name, takes ownership via
-     * unique_ptr, and appends it to the item collection.
-     *
-     * @param id   Unique identifier for the item
-     * @param name Display name for the item
-     * @return Entities::Item* Non-owning pointer to the new item,
-     *         or nullptr if an item with the same id already exists
-     */
     Entities::Item* Project::addItem(const std::string& id, const std::string& name) {
         if (findItem(id) != nullptr) {
             return nullptr;
         }
-        m_items.push_back(std::make_unique<Entities::Item>(id, name));
-        return m_items.back().get();
+        auto data  = std::make_unique<Data::ItemData>();
+        data->id   = id;
+        data->name = name;
+        Data::ItemData* rawData = data.get();
+        m_itemData.push_back(std::move(data));
+
+        auto entity      = std::make_unique<Entities::Item>(rawData);
+        Entities::Item* rawEntity = entity.get();
+        m_items.push_back(std::move(entity));
+        return rawEntity;
     }
 
-    /**
-     * @brief Remove the item with the given id
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Erases the item whose id matches the argument from the collection.
-     * Does nothing if no matching item is found.
-     *
-     * @param id Unique identifier of the item to remove
-     */
     void Project::removeItem(const std::string& id) {
         m_items.erase(
             std::remove_if(m_items.begin(), m_items.end(),
@@ -330,20 +190,15 @@ namespace ADS::Core {
                 }),
             m_items.end()
         );
+        m_itemData.erase(
+            std::remove_if(m_itemData.begin(), m_itemData.end(),
+                [&id](const std::unique_ptr<Data::ItemData>& d) {
+                    return d->id == id;
+                }),
+            m_itemData.end()
+        );
     }
 
-    /**
-     * @brief Find an item by id
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Performs a linear search through the item collection for an entry
-     * whose id matches the argument.
-     *
-     * @param id Unique identifier to search for
-     * @return Entities::Item* Non-owning pointer to the item, or nullptr if not found
-     */
     Entities::Item* Project::findItem(const std::string& id) const {
         for (const auto& item : m_items) {
             if (item->getId() == id) {
@@ -353,18 +208,12 @@ namespace ADS::Core {
         return nullptr;
     }
 
-    /**
-     * @brief Get the full item collection (read-only)
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
-     *
-     * Provides read-only access to the owned item vector for iteration.
-     *
-     * @return const std::vector<std::unique_ptr<Entities::Item>>& Owned item vector
-     */
     const std::vector<std::unique_ptr<Entities::Item>>& Project::getItems() const {
         return m_items;
+    }
+
+    const std::vector<std::unique_ptr<Data::ItemData>>& Project::getItemData() const {
+        return m_itemData;
     }
 
 } // namespace ADS::Core

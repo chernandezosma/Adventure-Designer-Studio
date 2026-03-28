@@ -1,32 +1,33 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 /**
  * @file Scene.cpp
- * @brief Implementation of the Scene entity class
+ * @brief Implementation of the Scene entity (inspector adapter)
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Jan 2026
+ * @version Mar 2026
  */
 
 #include "Scene.h"
+#include "imgui.h"
 
 namespace ADS::Entities {
-    Scene::Scene(const std::string& id, const std::string& name)
-        : BaseEntity(id, name),
-          m_isStartScene(false),
-          m_backgroundColor(0.2f, 0.2f, 0.2f, 1.0f),
-          m_width(800),
-          m_height(600) {
+    Scene::Scene(Data::SceneData* data)
+        : BaseEntity(data), m_data(data) {
     }
 
     std::string Scene::getTypeName() const {
@@ -56,6 +57,14 @@ namespace ADS::Entities {
                 .setCategory("Appearance")
                 .setDescription("Scene background color"),
 
+            PropertyDescriptor("backgroundImagePath", "Background Image", PropertyType::String)
+                .setCategory("Appearance")
+                .setDescription("Path to the background image asset"),
+
+            PropertyDescriptor("musicPath", "Music", PropertyType::String)
+                .setCategory("Appearance")
+                .setDescription("Path to the background music asset"),
+
             // Dimensions category
             PropertyDescriptor("width", "Width", PropertyType::Int)
                 .setCategory("Dimensions")
@@ -76,13 +85,18 @@ namespace ADS::Entities {
     }
 
     Inspector::PropertyValue Scene::getPropertyValue(const std::string& propertyId) const {
-        if (propertyId == "name") return m_name;
-        if (propertyId == "description") return m_description;
-        if (propertyId == "isStartScene") return m_isStartScene;
-        if (propertyId == "backgroundColor") return m_backgroundColor;
-        if (propertyId == "width") return m_width;
-        if (propertyId == "height") return m_height;
-        if (propertyId == "id") return m_id;
+        if (propertyId == "name")        return m_data->name;
+        if (propertyId == "description") return m_data->description;
+        if (propertyId == "isStartScene") return m_data->isStartScene;
+        if (propertyId == "backgroundColor") {
+            const auto& c = m_data->backgroundColor;
+            return ImVec4(c.r, c.g, c.b, c.a);
+        }
+        if (propertyId == "backgroundImagePath") return m_data->backgroundImagePath;
+        if (propertyId == "musicPath")           return m_data->musicPath;
+        if (propertyId == "width")               return m_data->width;
+        if (propertyId == "height")              return m_data->height;
+        if (propertyId == "id")                  return m_data->id;
 
         return std::monostate{};
     }
@@ -91,8 +105,6 @@ namespace ADS::Entities {
         const std::string& propertyId,
         const Inspector::PropertyValue& value
     ) {
-        using namespace Inspector;
-
         if (propertyId == "name") {
             if (auto* str = std::get_if<std::string>(&value)) {
                 setName(*str);
@@ -113,7 +125,19 @@ namespace ADS::Entities {
         }
         else if (propertyId == "backgroundColor") {
             if (auto* color = std::get_if<ImVec4>(&value)) {
-                setBackgroundColor(*color);
+                setBackgroundColor({color->x, color->y, color->z, color->w});
+                return true;
+            }
+        }
+        else if (propertyId == "backgroundImagePath") {
+            if (auto* str = std::get_if<std::string>(&value)) {
+                setBackgroundImagePath(*str);
+                return true;
+            }
+        }
+        else if (propertyId == "musicPath") {
+            if (auto* str = std::get_if<std::string>(&value)) {
+                setMusicPath(*str);
                 return true;
             }
         }
@@ -134,65 +158,88 @@ namespace ADS::Entities {
     }
 
     const std::string& Scene::getDescription() const {
-        return m_description;
+        return m_data->description;
     }
 
     void Scene::setDescription(const std::string& desc) {
-        if (m_description != desc) {
-            std::string oldDesc = m_description;
-            m_description = desc;
-            notifyPropertyChanged("description", oldDesc, m_description);
+        if (m_data->description != desc) {
+            std::string oldDesc = m_data->description;
+            m_data->description = desc;
+            notifyPropertyChanged("description", oldDesc, m_data->description);
         }
     }
 
     bool Scene::isStartScene() const {
-        return m_isStartScene;
+        return m_data->isStartScene;
     }
 
     void Scene::setStartScene(bool isStart) {
-        if (m_isStartScene != isStart) {
-            bool oldValue = m_isStartScene;
-            m_isStartScene = isStart;
-            notifyPropertyChanged("isStartScene", oldValue, m_isStartScene);
+        if (m_data->isStartScene != isStart) {
+            bool oldValue = m_data->isStartScene;
+            m_data->isStartScene = isStart;
+            notifyPropertyChanged("isStartScene", oldValue, m_data->isStartScene);
         }
     }
 
-    const ImVec4& Scene::getBackgroundColor() const {
-        return m_backgroundColor;
+    const ADS::Types::Color& Scene::getBackgroundColor() const {
+        return m_data->backgroundColor;
     }
 
-    void Scene::setBackgroundColor(const ImVec4& color) {
-        if (m_backgroundColor.x != color.x ||
-            m_backgroundColor.y != color.y ||
-            m_backgroundColor.z != color.z ||
-            m_backgroundColor.w != color.w) {
-            ImVec4 oldColor = m_backgroundColor;
-            m_backgroundColor = color;
-            notifyPropertyChanged("backgroundColor", oldColor, m_backgroundColor);
+    void Scene::setBackgroundColor(const ADS::Types::Color& color) {
+        if (m_data->backgroundColor != color) {
+            ImVec4 oldVec(m_data->backgroundColor.r, m_data->backgroundColor.g,
+                          m_data->backgroundColor.b, m_data->backgroundColor.a);
+            m_data->backgroundColor = color;
+            ImVec4 newVec(color.r, color.g, color.b, color.a);
+            notifyPropertyChanged("backgroundColor", oldVec, newVec);
         }
     }
 
     int Scene::getWidth() const {
-        return m_width;
+        return m_data->width;
     }
 
     void Scene::setWidth(int width) {
-        if (m_width != width) {
-            int oldWidth = m_width;
-            m_width = width;
-            notifyPropertyChanged("width", oldWidth, m_width);
+        if (m_data->width != width) {
+            int oldWidth = m_data->width;
+            m_data->width = width;
+            notifyPropertyChanged("width", oldWidth, m_data->width);
         }
     }
 
     int Scene::getHeight() const {
-        return m_height;
+        return m_data->height;
     }
 
     void Scene::setHeight(int height) {
-        if (m_height != height) {
-            int oldHeight = m_height;
-            m_height = height;
-            notifyPropertyChanged("height", oldHeight, m_height);
+        if (m_data->height != height) {
+            int oldHeight = m_data->height;
+            m_data->height = height;
+            notifyPropertyChanged("height", oldHeight, m_data->height);
+        }
+    }
+
+    const std::string& Scene::getBackgroundImagePath() const {
+        return m_data->backgroundImagePath;
+    }
+
+    void Scene::setBackgroundImagePath(const std::string& path) {
+        if (m_data->backgroundImagePath != path) {
+            std::string oldPath = m_data->backgroundImagePath;
+            m_data->backgroundImagePath = path;
+            notifyPropertyChanged("backgroundImagePath", oldPath, m_data->backgroundImagePath);
+        }
+    }
+
+    const std::string& Scene::getMusicPath() const {
+        return m_data->musicPath;
+    }
+
+    void Scene::setMusicPath(const std::string& path) {
+        if (m_data->musicPath != path) {
+            std::string oldPath = m_data->musicPath;
+            m_data->musicPath = path;
+            notifyPropertyChanged("musicPath", oldPath, m_data->musicPath);
         }
     }
 }

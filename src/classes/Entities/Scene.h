@@ -1,47 +1,52 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 #ifndef ADS_SCENE_ENTITY_H
 #define ADS_SCENE_ENTITY_H
 
 #include "BaseEntity.h"
-#include "imgui.h"
+#include "Data/SceneData.h"
 
 namespace ADS::Entities {
     /**
-     * @brief Scene entity representing a game location
+     * @brief Inspector adapter for a game scene
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Mar 2026
      *
-     * A scene is a location in the game world where the player can
-     * interact with characters, items, and other game elements.
+     * Scene acts as the inspector adapter layer: it defines how scene
+     * properties are presented in the inspector UI, validates incoming
+     * values, and delegates all persistent storage to the backing
+     * Data::SceneData struct owned by Core::Project.
      */
     class Scene : public BaseEntity {
     private:
-        std::string m_description;      ///< Scene description text
-        bool m_isStartScene;            ///< Whether this is the starting scene
-        ImVec4 m_backgroundColor;       ///< Background color for the scene
-        int m_width;                    ///< Scene width in pixels
-        int m_height;                   ///< Scene height in pixels
+        Data::SceneData* m_data; ///< Non-owning pointer to the backing SceneData
 
     public:
         /**
-         * @brief Construct a new Scene
+         * @brief Construct a new Scene backed by the given SceneData
          *
-         * @param id Unique identifier
-         * @param name Display name
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @param data Non-owning pointer to the SceneData struct. Must not be
+         *             null and must outlive this entity.
          */
-        Scene(const std::string& id, const std::string& name);
+        explicit Scene(Data::SceneData* data);
 
         // IInspectable interface
         std::string getTypeName() const override;
@@ -52,21 +57,27 @@ namespace ADS::Entities {
             const Inspector::PropertyValue& value
         ) override;
 
-        // Scene-specific getters/setters
+        // Scene-specific getters/setters (operate on DataObject)
         const std::string& getDescription() const;
         void setDescription(const std::string& desc);
 
         bool isStartScene() const;
         void setStartScene(bool isStart);
 
-        const ImVec4& getBackgroundColor() const;
-        void setBackgroundColor(const ImVec4& color);
+        const ADS::Types::Color& getBackgroundColor() const;
+        void setBackgroundColor(const ADS::Types::Color& color);
 
         int getWidth() const;
         void setWidth(int width);
 
         int getHeight() const;
         void setHeight(int height);
+
+        const std::string& getBackgroundImagePath() const;
+        void setBackgroundImagePath(const std::string& path);
+
+        const std::string& getMusicPath() const;
+        void setMusicPath(const std::string& path);
     };
 }
 

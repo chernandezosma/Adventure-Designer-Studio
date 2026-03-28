@@ -1,37 +1,43 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 #ifndef ADS_BASE_ENTITY_H
 #define ADS_BASE_ENTITY_H
 
 #include <string>
+#include "Data/BaseData.h"
 #include "Inspector/IInspectable.h"
 #include "Inspector/PropertyEvent.h"
 
 namespace ADS::Entities {
     /**
-     * @brief Base class for all game entities
+     * @brief Base class for all game entities (inspector adapter layer)
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Mar 2026
      *
      * Provides common implementation for IInspectable interface,
      * including event dispatcher management and property change
-     * notification helpers.
+     * notification helpers. Holds a non-owning pointer to a
+     * Data::BaseData struct, which is the authoritative storage for
+     * id and name. The DataObject is owned by Core::Project.
      */
     class BaseEntity : public Inspector::IInspectable {
     protected:
-        std::string m_id;       ///< Unique entity identifier
-        std::string m_name;     ///< Display name
+        Data::BaseData* m_baseData; ///< Non-owning pointer to the backing DataObject
 
         /// Event dispatcher for property changes
         Inspector::PropertyEventDispatcher m_eventDispatcher;
@@ -40,7 +46,7 @@ namespace ADS::Entities {
          * @brief Notify subscribers of a property change
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
+         * @version Mar 2026
          *
          * Helper method for derived classes to fire property change events.
          *
@@ -56,12 +62,15 @@ namespace ADS::Entities {
 
     public:
         /**
-         * @brief Construct a new BaseEntity
+         * @brief Construct a new BaseEntity backed by the given DataObject
          *
-         * @param id Unique identifier
-         * @param name Display name
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @param data Non-owning pointer to the BaseData struct. Must not be null
+         *             and must outlive this entity (Core::Project guarantees this).
          */
-        BaseEntity(const std::string& id, const std::string& name);
+        explicit BaseEntity(Data::BaseData* data);
 
         /**
          * @brief Virtual destructor
@@ -74,13 +83,24 @@ namespace ADS::Entities {
 
         /**
          * @brief Get the unique identifier
-         * @return const std::string& Entity ID
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return const std::string& Entity ID read from the backing DataObject
          */
         const std::string& getId() const;
 
         /**
          * @brief Set the display name
-         * @param name New name
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Writes the new name into the backing DataObject and fires a
+         * property-changed event if the value actually changed.
+         *
+         * @param name New display name
          */
         void setName(const std::string& name);
     };
