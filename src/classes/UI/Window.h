@@ -1,20 +1,24 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
 #ifndef ADS_IMGUI_WINDOW_H
 #define ADS_IMGUI_WINDOW_H
-#include <SDL_render.h>
-#include <SDL_video.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_video.h>
 #include <ratio>
 #include <string>
 
@@ -159,8 +163,8 @@ namespace ADS::UI {
         /**
          * Default flags
          */
-        static constexpr SDL_WindowFlags DEFAULT_FLAGS = static_cast<SDL_WindowFlags>(SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-        static constexpr Uint32 DEFAULT_RENDER_FLAGS = static_cast<SDL_RendererFlags>(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+        static constexpr SDL_WindowFlags DEFAULT_FLAGS = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+        static constexpr Uint32 DEFAULT_RENDER_FLAGS = 0;
         static constexpr int FIRST_AVAILABLE_DRIVER = -1;
         static constexpr int WINDOW_FLAGS = 1;
         static constexpr int RENDERER_FLAGS = 2;
@@ -262,17 +266,21 @@ namespace ADS::UI {
         /**
          * @brief Get the underlying SDL window pointer
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Returns the raw SDL_Window pointer for use with SDL and ImGui functions.
          * The window remains owned by this Window instance.
          *
          * @return SDL_Window* Pointer to the SDL window
-         *
-         * @note The returned pointer is valid only while this Window instance exists
          */
         SDL_Window *getWindow() const;
 
         /**
          * @brief Get the current window flags
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Returns the SDL window flags that were set during window creation,
          * including both default and custom flags.
@@ -397,6 +405,9 @@ namespace ADS::UI {
 
         /**
          * @brief Configure ImGui style settings for viewports
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Adjusts window rounding and background opacity when multi-viewport
          * mode is enabled to ensure platform windows look consistent with

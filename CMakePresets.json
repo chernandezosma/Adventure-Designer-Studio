@@ -1,0 +1,39 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21
+  },
+  "configurePresets": [
+    {
+      "name": "vcpkg-debug",
+      "displayName": "Debug (vcpkg)",
+      "description": "Debug build using vcpkg toolchain. Requires VCPKG_ROOT env var.",
+      "generator": "Ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "vcpkg-release",
+      "displayName": "Release (vcpkg)",
+      "description": "Release build using vcpkg toolchain. Requires VCPKG_ROOT env var.",
+      "generator": "Ninja",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "vcpkg-debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "vcpkg-release"
+    }
+  ]
+}

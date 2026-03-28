@@ -3,6 +3,29 @@ cmake_minimum_required(VERSION 3.14...3.31)
 set(ADSProject Adventure_Designer_Studio)
 set(HEADER_GUARD_PREFIX "ADS" CACHE STRING "Prefix for header guards")
 
+# Auto-detect vcpkg toolchain if not already provided (e.g. when opening directly in an IDE)
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT})
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "$ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    else()
+        message(WARNING "vcpkg not found. Set VCPKG_ROOT or pass -DCMAKE_TOOLCHAIN_FILE. "
+                        "See COMPILE.md for setup instructions.")
+    endif()
+endif()
+
 project(${ADSProject} CXX)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -72,7 +95,7 @@ add_custom_target(copy_env_file ALL
 # --- External dependencies (managed by vcpkg)
 # ----------------------------------------------------------
 find_package(OpenGL REQUIRED)
-find_package(SDL2 CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
@@ -138,12 +161,14 @@ set(Sources
         src/classes/IDE/navigation/MenuBarRenderer.h
         src/classes/IDE/navigation/ToolBarRenderer.cpp
         src/classes/IDE/navigation/ToolBarRenderer.h
+        src/classes/IDE/DesignTokens.h
+        src/classes/IDE/DesignTokens.cpp
         src/classes/IDE/panels/BasePanel.cpp
         src/classes/IDE/panels/BasePanel.h
         src/classes/IDE/panels/StatusBarPanel.cpp
         src/classes/IDE/panels/StatusBarPanel.h
-        src/classes/IDE/panels/EntitiesPanel.cpp
-        src/classes/IDE/panels/EntitiesPanel.h
+        src/classes/IDE/panels/ProjectTreePanel.cpp
+        src/classes/IDE/panels/ProjectTreePanel.h
         src/classes/IDE/panels/InspectorPanel.cpp
         src/classes/IDE/panels/InspectorPanel.h
         src/classes/IDE/panels/WorkingAreaPanel.cpp
@@ -187,7 +212,14 @@ set(Sources
         src/classes/Inspector/Editors/ColorEditor.h
         src/classes/Inspector/Editors/Vector2Editor.cpp
         src/classes/Inspector/Editors/Vector2Editor.h
-        # Entity classes
+        # Portable types (no rendering dependency)
+        src/classes/Types/Color.h
+        # DataObject layer (pure data, serialisable)
+        src/classes/Data/BaseData.h
+        src/classes/Data/SceneData.h
+        src/classes/Data/CharacterData.h
+        src/classes/Data/ItemData.h
+        # Entity classes (inspector adapters)
         src/classes/Entities/BaseEntity.cpp
         src/classes/Entities/BaseEntity.h
         src/classes/Entities/Scene.cpp
@@ -210,8 +242,7 @@ add_dependencies(${ADSProject} copy_public_folder copy_env_file)
 target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
         imgui::imgui
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2main>,SDL2::SDL2main,SDL2::SDL2main-static>
+        SDL3::SDL3
         spdlog::spdlog
         fmt::fmt
         Boost::uuid
