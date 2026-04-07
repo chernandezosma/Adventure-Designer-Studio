@@ -24,7 +24,7 @@ namespace ADS::Inspector::Editors {
      * @brief Property editor for enumeration values
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Mar 2026
      *
      * Renders a combo box (dropdown) for selecting from predefined
      * enum values. The available options are stored in the EnumValue
@@ -32,12 +32,45 @@ namespace ADS::Inspector::Editors {
      */
     class EnumEditor : public IPropertyEditor {
     public:
+        /**
+         * @brief Get the property types supported by this editor
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return std::vector<PropertyType> List containing PropertyType::Enum
+         */
         std::vector<PropertyType> getSupportedTypes() const override;
+
+        /**
+         * @brief Render the enum editor widget
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Renders an ImGui Combo (dropdown) populated from the EnumValue's
+         * option list. Returns an EditResult containing the new EnumValue
+         * if the user selected a different option.
+         *
+         * @param descriptor Property metadata (label, constraints)
+         * @param currentValue Current enum value (EnumValue)
+         * @param readOnly If true, the widget is displayed but not editable
+         * @return EditResult New value on change, empty result otherwise
+         */
         EditResult render(
             const PropertyDescriptor& descriptor,
             const PropertyValue& currentValue,
             bool readOnly
         ) override;
+
+        /**
+         * @brief Get the unique identifier for this editor
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return std::string Editor identifier string
+         */
         std::string getEditorId() const override;
     };
 }

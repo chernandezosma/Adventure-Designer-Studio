@@ -85,18 +85,18 @@ namespace ADS::Entities {
     }
 
     Inspector::PropertyValue Character::getPropertyValue(const std::string& propertyId) const {
-        if (propertyId == "name")        return m_data->name;
-        if (propertyId == "description") return m_data->description;
-        if (propertyId == "isPlayer")    return m_data->isPlayer;
-        if (propertyId == "health")      return m_data->health;
-        if (propertyId == "maxHealth")   return m_data->maxHealth;
+        if (propertyId == "name")        return m_data->getName();
+        if (propertyId == "description") return m_data->getDescription();
+        if (propertyId == "isPlayer")    return m_data->isPlayer();
+        if (propertyId == "health")      return m_data->getHealth();
+        if (propertyId == "maxHealth")   return m_data->getMaxHealth();
         if (propertyId == "dialogColor") {
-            const auto& c = m_data->dialogColor;
+            const auto& c = m_data->getDialogColor();
             return ImVec4(c.r, c.g, c.b, c.a);
         }
-        if (propertyId == "portraitPath")    return m_data->portraitPath;
-        if (propertyId == "startingSceneId") return m_data->startingSceneId;
-        if (propertyId == "id")              return m_data->id;
+        if (propertyId == "portraitPath")    return m_data->getPortraitPath();
+        if (propertyId == "startingSceneId") return m_data->getStartingSceneId();
+        if (propertyId == "id")              return m_data->getId();
 
         return std::monostate{};
     }
@@ -158,88 +158,82 @@ namespace ADS::Entities {
     }
 
     const std::string& Character::getDescription() const {
-        return m_data->description;
+        return m_data->getDescription();
     }
 
     void Character::setDescription(const std::string& desc) {
-        if (m_data->description != desc) {
-            std::string oldDesc = m_data->description;
-            m_data->description = desc;
-            notifyPropertyChanged("description", oldDesc, m_data->description);
-        }
+        setAndNotify("description",
+            [this]{ return m_data->getDescription(); },
+            [this](const std::string& v){ m_data->setDescription(v); },
+            desc);
     }
 
     int Character::getHealth() const {
-        return m_data->health;
+        return m_data->getHealth();
     }
 
     void Character::setHealth(int health) {
-        if (m_data->health != health) {
-            int oldHealth = m_data->health;
-            m_data->health = health;
-            notifyPropertyChanged("health", oldHealth, m_data->health);
-        }
+        setAndNotify("health",
+            [this]{ return m_data->getHealth(); },
+            [this](int v){ m_data->setHealth(v); },
+            health);
     }
 
     int Character::getMaxHealth() const {
-        return m_data->maxHealth;
+        return m_data->getMaxHealth();
     }
 
     void Character::setMaxHealth(int maxHealth) {
-        if (m_data->maxHealth != maxHealth) {
-            int oldMax = m_data->maxHealth;
-            m_data->maxHealth = maxHealth;
-            notifyPropertyChanged("maxHealth", oldMax, m_data->maxHealth);
-        }
+        setAndNotify("maxHealth",
+            [this]{ return m_data->getMaxHealth(); },
+            [this](int v){ m_data->setMaxHealth(v); },
+            maxHealth);
     }
 
     bool Character::isPlayer() const {
-        return m_data->isPlayer;
+        return m_data->isPlayer();
     }
 
     void Character::setPlayer(bool isPlayer) {
-        if (m_data->isPlayer != isPlayer) {
-            bool oldValue = m_data->isPlayer;
-            m_data->isPlayer = isPlayer;
-            notifyPropertyChanged("isPlayer", oldValue, m_data->isPlayer);
-        }
+        setAndNotify("isPlayer",
+            [this]{ return m_data->isPlayer(); },
+            [this](bool v){ m_data->setPlayer(v); },
+            isPlayer);
     }
 
     const ADS::Types::Color& Character::getDialogColor() const {
-        return m_data->dialogColor;
+        return m_data->getDialogColor();
     }
 
     void Character::setDialogColor(const ADS::Types::Color& color) {
-        if (m_data->dialogColor != color) {
-            ImVec4 oldVec(m_data->dialogColor.r, m_data->dialogColor.g,
-                          m_data->dialogColor.b, m_data->dialogColor.a);
-            m_data->dialogColor = color;
+        if (m_data->getDialogColor() != color) {
+            const auto& old = m_data->getDialogColor();
+            ImVec4 oldVec(old.r, old.g, old.b, old.a);
+            m_data->setDialogColor(color);
             ImVec4 newVec(color.r, color.g, color.b, color.a);
             notifyPropertyChanged("dialogColor", oldVec, newVec);
         }
     }
 
     const std::string& Character::getPortraitPath() const {
-        return m_data->portraitPath;
+        return m_data->getPortraitPath();
     }
 
     void Character::setPortraitPath(const std::string& path) {
-        if (m_data->portraitPath != path) {
-            std::string oldPath = m_data->portraitPath;
-            m_data->portraitPath = path;
-            notifyPropertyChanged("portraitPath", oldPath, m_data->portraitPath);
-        }
+        setAndNotify("portraitPath",
+            [this]{ return m_data->getPortraitPath(); },
+            [this](const std::string& v){ m_data->setPortraitPath(v); },
+            path);
     }
 
     const std::string& Character::getStartingSceneId() const {
-        return m_data->startingSceneId;
+        return m_data->getStartingSceneId();
     }
 
     void Character::setStartingSceneId(const std::string& sceneId) {
-        if (m_data->startingSceneId != sceneId) {
-            std::string oldId = m_data->startingSceneId;
-            m_data->startingSceneId = sceneId;
-            notifyPropertyChanged("startingSceneId", oldId, m_data->startingSceneId);
-        }
+        setAndNotify("startingSceneId",
+            [this]{ return m_data->getStartingSceneId(); },
+            [this](const std::string& v){ m_data->setStartingSceneId(v); },
+            sceneId);
     }
 }

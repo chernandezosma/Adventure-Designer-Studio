@@ -24,7 +24,7 @@ namespace ADS::Inspector::Editors {
      * @brief Property editor for floating-point values
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Mar 2026
      *
      * Renders a slider or drag control for editing float properties.
      * Uses SliderFloat when min/max constraints are specified, otherwise
@@ -32,12 +32,44 @@ namespace ADS::Inspector::Editors {
      */
     class FloatEditor : public IPropertyEditor {
     public:
+        /**
+         * @brief Get the property types supported by this editor
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return std::vector<PropertyType> List containing PropertyType::Float
+         */
         std::vector<PropertyType> getSupportedTypes() const override;
+
+        /**
+         * @brief Render the float editor widget
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Renders a SliderFloat if numeric constraints are set, otherwise a DragFloat.
+         * Returns an EditResult containing the new value if the user changed it.
+         *
+         * @param descriptor Property metadata (label, constraints)
+         * @param currentValue Current float value
+         * @param readOnly If true, the widget is displayed but not editable
+         * @return EditResult New value on change, empty result otherwise
+         */
         EditResult render(
             const PropertyDescriptor& descriptor,
             const PropertyValue& currentValue,
             bool readOnly
         ) override;
+
+        /**
+         * @brief Get the unique identifier for this editor
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return std::string Editor identifier string
+         */
         std::string getEditorId() const override;
     };
 }

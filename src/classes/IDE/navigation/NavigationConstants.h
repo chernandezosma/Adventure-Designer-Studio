@@ -15,6 +15,14 @@
  */
 
 
+/**
+ * @file NavigationConstants.h
+ * @brief String constants for menu and navigation action identifiers
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version Mar 2026
+ */
+
 #ifndef NAVIGATIONCONSTANTS_H
 #define NAVIGATIONCONSTANTS_H
 #include <string>

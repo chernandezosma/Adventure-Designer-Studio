@@ -89,21 +89,30 @@ namespace ADS::Inspector {
         /**
          * @brief Check if numeric constraints are defined
          *
-         * @return true if min or max values are set
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return bool True if min or max values are set
          */
         bool hasNumericConstraints() const;
 
         /**
          * @brief Check if string constraints are defined
          *
-         * @return true if maxLength is set
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return bool True if maxLength is set
          */
         bool hasStringConstraints() const;
 
         /**
          * @brief Check if enum constraints are defined
          *
-         * @return true if enumValues is not empty
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return bool True if enumValues is not empty
          */
         bool hasEnumConstraints() const;
     };

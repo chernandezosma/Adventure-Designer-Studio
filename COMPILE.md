@@ -34,7 +34,16 @@ sudo apt install build-essential autoconf autoconf-archive automake libtool pkg-
 ```
 This installs GCC, G++, Make, and other essential build tools.
 
-**2. Install CMake:**
+**2. Install SDL2 system graphics and input libraries:**
+
+vcpkg builds SDL2 from source but links against system graphics/input libraries:
+```bash
+sudo apt install libx11-dev libxft-dev libxext-dev \
+                 libwayland-dev libxkbcommon-dev \
+                 libegl1-mesa-dev libibus-1.0-dev
+```
+
+**3. Install CMake:**
 ```bash
 sudo apt install cmake
 ```
@@ -47,12 +56,12 @@ sudo apt update
 sudo apt install cmake
 ```
 
-**3. Install Git:**
+**4. Install Git:**
 ```bash
 sudo apt install git
 ```
 
-**4. Verify installations:**
+**5. Verify installations:**
 ```bash
 g++ --version      # Should show GCC 11+
 cmake --version    # Should show 3.21+
@@ -69,17 +78,24 @@ git --version
 sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig python3-jinja2
 ```
 
-**2. Install CMake:**
+**2. Install SDL2 system graphics and input libraries:**
+```bash
+sudo dnf install libX11-devel libXft-devel libXext-devel \
+                 wayland-devel libxkbcommon-devel \
+                 mesa-libEGL-devel ibus-devel
+```
+
+**3. Install CMake:**
 ```bash
 sudo dnf install cmake
 ```
 
-**3. Install Git:**
+**4. Install Git:**
 ```bash
 sudo dnf install git
 ```
 
-**4. Verify installations:**
+**5. Verify installations:**
 ```bash
 g++ --version      # Should show GCC 11+
 cmake --version    # Should show 3.21+
@@ -310,5 +326,20 @@ build.bat
 No. You can run `build.bat` from a regular Command Prompt or PowerShell. CMake automatically detects Visual Studio Build Tools. Just ensure:
 1. CMake is in your PATH
 2. Visual Studio Build Tools with "Desktop development with C++" is installed
+
+**vcpkg fails building `libsystemd` (GCC 15+)**
+
+GCC 15 promotes a warning in `errno-to-name.h` to an error (`-Werror=override-init`), breaking
+the vcpkg build of `libsystemd`, which is pulled in transitively by SDL2's DBus support.
+
+This repository includes a vcpkg overlay port at `vcpkg-overlays/libsystemd/` that fixes the
+issue. It is picked up automatically — no manual action required. If you see the error anyway,
+verify that `vcpkg-configuration.json` contains the `overlay-ports` entry:
+
+```json
+{
+  "overlay-ports": ["./vcpkg-overlays"]
+}
+```
 
 **For detailed migration information**, see [VCPKG_MIGRATION.md](./VCPKG_MIGRATION.md) and [LIBRARY_SETUP.md](./LIBRARY_SETUP.md).

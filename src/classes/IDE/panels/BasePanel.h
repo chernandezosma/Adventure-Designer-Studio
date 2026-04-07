@@ -147,6 +147,9 @@ namespace ADS::IDE::Panels {
         /**
          * @brief Get the ImGui window label combining title and stable ID
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Returns a string in the form "Translated Title###stable_id" so that
          * ImGui uses the stable ID for docking/identity while displaying the
          * translated title in the title bar.

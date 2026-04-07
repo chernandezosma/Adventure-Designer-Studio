@@ -113,6 +113,9 @@ namespace ADS::Inspector {
         /**
          * @brief Get the editor for a property type
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * @param type The property type
          * @return Editors::IPropertyEditor* Pointer to editor, or nullptr if not found
          */
@@ -147,8 +150,11 @@ namespace ADS::Inspector {
         /**
          * @brief Check if an editor exists for a property type
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * @param type The property type
-         * @return true if an editor is registered
+         * @return bool True if an editor is registered for this type
          */
         bool hasEditor(PropertyType type) const;
     };

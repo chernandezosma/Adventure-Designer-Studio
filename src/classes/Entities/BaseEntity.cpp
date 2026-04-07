@@ -39,7 +39,7 @@ namespace ADS::Entities {
     }
 
     std::string BaseEntity::getDisplayName() const {
-        return m_baseData->name;
+        return m_baseData->getName();
     }
 
     Inspector::PropertyEventDispatcher& BaseEntity::getEventDispatcher() {
@@ -47,14 +47,14 @@ namespace ADS::Entities {
     }
 
     const std::string& BaseEntity::getId() const {
-        return m_baseData->id;
+        return m_baseData->getId();
     }
 
     void BaseEntity::setName(const std::string& name) {
-        if (m_baseData->name != name) {
-            std::string oldName = m_baseData->name;
-            m_baseData->name = name;
-            notifyPropertyChanged("name", oldName, m_baseData->name);
+        if (m_baseData->getName() != name) {
+            std::string oldName = m_baseData->getName();
+            m_baseData->setName(name);
+            notifyPropertyChanged("name", oldName, m_baseData->getName());
         }
     }
 }

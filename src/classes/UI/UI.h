@@ -90,7 +90,10 @@ namespace ADS::UI {
 
     public:
         /**
-         * @brief Constructor for ImGuiManager class
+         * @brief Construct a new ImGuiManager
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Initializes the ImGui manager with empty font and window collections.
          * Sets up the internal data structures needed to manage multiple windows
@@ -101,23 +104,24 @@ namespace ADS::UI {
         /**
          * @brief Create a new window and add it to the managed windows collection
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Creates a new Window instance using the provided configuration and
          * registers it in the internal windows collection for lifecycle management.
          * The window is allocated on the heap and a unique UUID is generated for it.
          *
-         * @param windowInfo    Pointer to SDL window configuration structure containing
-         *                      title, position (x, y), and dimensions (width, height)
-         * @param flags         Flags to applied to the new window and its renderer handler
-         *
-         * @return std::pair<boost::uuids::uuid, Window*> Pair containing the generated UUID
-         *                                          and pointer to the newly created window
-         *
-         * @see Window, getWindowFromId()
+         * @param windowInfo Pointer to SDL window configuration structure
+         * @param flags Flags to apply to the new window and its renderer handler
+         * @return std::pair<boost::uuids::uuid, Window*> Generated UUID and pointer to the new window
          */
         std::pair<boost::uuids::uuid, Window*> newWindow(const SDL_WINDOW_INFO* windowInfo, SDL_FLAGS* flags);
 
         /**
          * @brief Retrieve a window from the collection by its UUID
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * @param uuid The unique identifier of the window to retrieve
          * @return Window* Pointer to the window if found, nullptr otherwise
@@ -126,6 +130,9 @@ namespace ADS::UI {
 
         /**
          * @brief Configure ImGui settings persistence
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Sets up the ImGui configuration file location and loads existing
          * settings if the file exists. This enables persistent UI state
@@ -136,6 +143,9 @@ namespace ADS::UI {
         /**
          * @brief Configure ImGui I/O flags for input and rendering features
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Enables keyboard navigation, gamepad support, docking functionality,
          * and multi-viewport rendering. These flags must be set before the
          * first frame is rendered.
@@ -145,6 +155,9 @@ namespace ADS::UI {
         /**
          * @brief Apply dark theme color scheme to ImGui
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Sets the internal theme flag and applies the dark color scheme
          * to all ImGui windows and widgets.
          */
@@ -152,6 +165,9 @@ namespace ADS::UI {
 
         /**
          * @brief Apply light theme color scheme to ImGui
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Sets the internal theme flag and applies the light color scheme
          * to all ImGui windows and widgets.
@@ -161,46 +177,46 @@ namespace ADS::UI {
         /**
          * @brief Set the active window by UUID
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Searches for a window with the given UUID and sets it as the
          * currently active window. If the UUID is not found, the active
          * window remains unchanged.
          *
          * @param uuid The unique identifier of the window to set as active
-         *
-         * @see getWindowFromId(), getActiveWindow()
          */
         void setActiveWindow(boost::uuids::uuid uuid);
 
         /**
-         * @brief Retrieve the currently active window
+         * @brief Get the currently active window
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Returns a pointer to the window that is currently set as active.
          * If no active window has been explicitly set, returns the first
          * window in the windows collection.
          *
          * @return Window* Pointer to the active window
-         *
-         * @see setActiveWindow()
          */
         Window* getActiveWindow();
 
         /**
          * @brief Get the font manager instance
          *
-         * Returns a pointer to the Fonts manager that handles all font
-         * loading and retrieval for the application.
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * @return Fonts* Pointer to the font manager
-         *
-         * @see Fonts
          */
         Fonts* getFontManager() const;
 
         /**
          * @brief Get the ImGui I/O context
          *
-         * Returns a pointer to the ImGui I/O context for direct access
-         * when needed (e.g., for rendering operations).
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * @return ImGuiIO* Pointer to the ImGui I/O context
          */

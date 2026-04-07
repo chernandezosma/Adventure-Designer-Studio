@@ -78,7 +78,30 @@ namespace ADS::Entities {
         ~BaseEntity() override = default;
 
         // IInspectable interface
+
+        /**
+         * @brief Get the display name of this entity
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Reads the name from the backing DataObject.
+         *
+         * @return std::string Human-readable display name
+         */
         std::string getDisplayName() const override;
+
+        /**
+         * @brief Get the property event dispatcher
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Returns a reference to the dispatcher used to subscribe to and
+         * fire property-changed events for this entity.
+         *
+         * @return Inspector::PropertyEventDispatcher& Reference to the event dispatcher
+         */
         Inspector::PropertyEventDispatcher& getEventDispatcher() override;
 
         /**
@@ -103,6 +126,38 @@ namespace ADS::Entities {
          * @param name New display name
          */
         void setName(const std::string& name);
+
+    protected:
+        /**
+         * @brief Set a DataObject field and fire a property-changed event
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Reads the current value via @p getter, compares it to @p newValue,
+         * and only writes and notifies if the value actually changed. Handles
+         * all scalar and string properties (bool, int, std::string). Color
+         * properties require manual handling due to the ADS::Types::Color ↔
+         * ImVec4 conversion needed for notifyPropertyChanged.
+         *
+         * @tparam T        Property value type (deduced from newValue)
+         * @tparam Getter   Callable returning T — reads from the DataObject
+         * @tparam Setter   Callable taking const T& — writes to the DataObject
+         * @param propertyId String key used for the change event
+         * @param getter     Lambda that returns the current value
+         * @param setter     Lambda that applies the new value
+         * @param newValue   The value to set
+         */
+        template<typename T, typename Getter, typename Setter>
+        void setAndNotify(const std::string& propertyId,
+                          Getter getter, Setter setter, const T& newValue)
+        {
+            T current = getter();
+            if (current != newValue) {
+                setter(newValue);
+                notifyPropertyChanged(propertyId, current, newValue);
+            }
+        }
     };
 }
 

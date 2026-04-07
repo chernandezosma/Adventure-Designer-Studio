@@ -266,17 +266,21 @@ namespace ADS::UI {
         /**
          * @brief Get the underlying SDL window pointer
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * Returns the raw SDL_Window pointer for use with SDL and ImGui functions.
          * The window remains owned by this Window instance.
          *
          * @return SDL_Window* Pointer to the SDL window
-         *
-         * @note The returned pointer is valid only while this Window instance exists
          */
         SDL_Window *getWindow() const;
 
         /**
          * @brief Get the current window flags
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Returns the SDL window flags that were set during window creation,
          * including both default and custom flags.
@@ -401,6 +405,9 @@ namespace ADS::UI {
 
         /**
          * @brief Configure ImGui style settings for viewports
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
          *
          * Adjusts window rounding and background opacity when multi-viewport
          * mode is enabled to ensure platform windows look consistent with

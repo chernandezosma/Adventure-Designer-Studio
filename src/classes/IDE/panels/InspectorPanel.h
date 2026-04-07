@@ -146,6 +146,9 @@ namespace ADS::IDE::Panels {
         /**
          * @brief Get the currently selected object
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * @return Inspector::IInspectable* Pointer to selected object, or nullptr
          */
         Inspector::IInspectable* getSelectedObject() const;

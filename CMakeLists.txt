@@ -187,7 +187,14 @@ set(Sources
         src/classes/Inspector/Editors/ColorEditor.h
         src/classes/Inspector/Editors/Vector2Editor.cpp
         src/classes/Inspector/Editors/Vector2Editor.h
-        # Entity classes
+        # Portable types (no rendering dependency)
+        src/classes/Types/Color.h
+        # DataObject layer (pure data, serialisable)
+        src/classes/Data/BaseData.h
+        src/classes/Data/SceneData.h
+        src/classes/Data/CharacterData.h
+        src/classes/Data/ItemData.h
+        # Entity classes (inspector adapters)
         src/classes/Entities/BaseEntity.cpp
         src/classes/Entities/BaseEntity.h
         src/classes/Entities/Scene.cpp

@@ -24,15 +24,29 @@ Use `[x]` for completed items and `[ ]` for pending ones.
 - [x] Character CRUD (`addCharacter`, `removeCharacter`, `findCharacter`, `getCharacters`)
 - [x] Item CRUD (`addItem`, `removeItem`, `findItem`, `getItems`)
 - [x] File path tracking (`isSaved`, `getFilePath`, `setFilePath`, `clearFilePath`)
+- [x] DataObject collections (`getSceneData`, `getCharacterData`, `getItemData`) for serialisation
 - [ ] Project serialisation — save project to `.ads` file
 - [ ] Project deserialisation — load project from `.ads` file
 
+### DataObject Layer
+
+- [x] `Types::Color` — portable RGBA color type (no ImGui dependency)
+- [x] `Data::BaseData` — common id + name base for all DataObjects
+- [x] `Data::SceneData` — pure data struct for scenes (exits, backgroundImagePath, musicPath, etc.)
+- [x] `Data::CharacterData` — pure data struct for characters (portraitPath, startingSceneId, etc.)
+- [x] `Data::ItemData` — pure data struct for items (iconPath, startingSceneId, etc.)
+- [x] DataObjects converted from `struct` (public members) to `class` (private members + public getters/setters with `[[nodiscard]]` and full Doxygen)
+- [x] `Project.cpp` updated to use DataObject accessors (`setId`, `setName`, `getId`) everywhere
+
 ### Entities
 
-- [x] `BaseEntity` — common id, name, description base class
-- [x] `Scene` entity — implements `IInspectable`, exposes properties via `PropertyDescriptor`
-- [x] `Character` entity — implements `IInspectable`, exposes properties via `PropertyDescriptor`
-- [x] `Item` entity — implements `IInspectable`, exposes properties via `PropertyDescriptor`
+- [x] `BaseEntity` — inspector adapter base; delegates id/name storage to `Data::BaseData`
+- [x] `Scene` entity — inspector adapter backed by `Data::SceneData`; adds backgroundImagePath, musicPath
+- [x] `Character` entity — inspector adapter backed by `Data::CharacterData`; adds portraitPath, startingSceneId
+- [x] `Item` entity — inspector adapter backed by `Data::ItemData`; adds iconPath, startingSceneId
+- [x] `BaseEntity::setAndNotify<T>` template — eliminates boilerplate from all typed property setters (bool, int, std::string); Color and EnumValue setters remain manual due to type conversion
+- [x] All entity typed setters (`setDescription`, `setWidth`, `setHealth`, etc.) refactored to use `setAndNotify`
+- [x] Full Doxygen comments applied to all public methods across all entity headers
 
 ### Inspector System
 
@@ -65,9 +79,10 @@ Use `[x]` for completed items and `[ ]` for pending ones.
 
 #### Inspector Panel — Per-Entity Implementation
 
-- [ ] Scene inspector — specific fields (background, music, transition type…)
-- [ ] Character inspector — specific fields (portrait, stats, dialogue tree…)
-- [ ] Item inspector — specific fields (icon, usable flag, quantity…)
+- [x] Scene inspector — backgroundImagePath, musicPath, backgroundColor, dimensions, isStartScene
+- [x] Character inspector — portraitPath, startingSceneId, health, maxHealth, dialogColor
+- [x] Item inspector — iconPath, startingSceneId, itemType, isPickable, isUsable, quantity
+- [ ] Complex list UI — exits (scene connections), inventory items, present characters/items per scene
 
 ### File Dialogs (NFD)
 

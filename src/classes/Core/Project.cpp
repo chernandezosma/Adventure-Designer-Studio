@@ -66,9 +66,9 @@ namespace ADS::Core {
         if (findScene(id) != nullptr) {
             return nullptr;
         }
-        auto data  = std::make_unique<Data::SceneData>();
-        data->id   = id;
-        data->name = name;
+        auto data = std::make_unique<Data::SceneData>();
+        data->setId(id);
+        data->setName(name);
         Data::SceneData* rawData = data.get();
         m_sceneData.push_back(std::move(data));
 
@@ -89,7 +89,7 @@ namespace ADS::Core {
         m_sceneData.erase(
             std::remove_if(m_sceneData.begin(), m_sceneData.end(),
                 [&id](const std::unique_ptr<Data::SceneData>& d) {
-                    return d->id == id;
+                    return d->getId() == id;
                 }),
             m_sceneData.end()
         );
@@ -118,9 +118,9 @@ namespace ADS::Core {
         if (findCharacter(id) != nullptr) {
             return nullptr;
         }
-        auto data  = std::make_unique<Data::CharacterData>();
-        data->id   = id;
-        data->name = name;
+        auto data = std::make_unique<Data::CharacterData>();
+        data->setId(id);
+        data->setName(name);
         Data::CharacterData* rawData = data.get();
         m_characterData.push_back(std::move(data));
 
@@ -141,7 +141,7 @@ namespace ADS::Core {
         m_characterData.erase(
             std::remove_if(m_characterData.begin(), m_characterData.end(),
                 [&id](const std::unique_ptr<Data::CharacterData>& d) {
-                    return d->id == id;
+                    return d->getId() == id;
                 }),
             m_characterData.end()
         );
@@ -170,9 +170,9 @@ namespace ADS::Core {
         if (findItem(id) != nullptr) {
             return nullptr;
         }
-        auto data  = std::make_unique<Data::ItemData>();
-        data->id   = id;
-        data->name = name;
+        auto data = std::make_unique<Data::ItemData>();
+        data->setId(id);
+        data->setName(name);
         Data::ItemData* rawData = data.get();
         m_itemData.push_back(std::move(data));
 
@@ -193,7 +193,7 @@ namespace ADS::Core {
         m_itemData.erase(
             std::remove_if(m_itemData.begin(), m_itemData.end(),
                 [&id](const std::unique_ptr<Data::ItemData>& d) {
-                    return d->id == id;
+                    return d->getId() == id;
                 }),
             m_itemData.end()
         );

@@ -98,16 +98,16 @@ namespace ADS::Entities {
     }
 
     Inspector::PropertyValue Item::getPropertyValue(const std::string& propertyId) const {
-        if (propertyId == "name")        return m_data->name;
-        if (propertyId == "description") return m_data->description;
-        if (propertyId == "isPickable")  return m_data->isPickable;
-        if (propertyId == "isUsable")    return m_data->isUsable;
-        if (propertyId == "quantity")    return m_data->quantity;
-        if (propertyId == "id")          return m_data->id;
-        if (propertyId == "iconPath")         return m_data->iconPath;
-        if (propertyId == "startingSceneId")  return m_data->startingSceneId;
+        if (propertyId == "name")        return m_data->getName();
+        if (propertyId == "description") return m_data->getDescription();
+        if (propertyId == "isPickable")  return m_data->isPickable();
+        if (propertyId == "isUsable")    return m_data->isUsable();
+        if (propertyId == "quantity")    return m_data->getQuantity();
+        if (propertyId == "id")          return m_data->getId();
+        if (propertyId == "iconPath")         return m_data->getIconPath();
+        if (propertyId == "startingSceneId")  return m_data->getStartingSceneId();
         if (propertyId == "itemType") {
-            return Inspector::EnumValue(m_data->itemType, getItemTypes());
+            return Inspector::EnumValue(m_data->getItemType(), getItemTypes());
         }
 
         return std::monostate{};
@@ -170,95 +170,90 @@ namespace ADS::Entities {
     }
 
     const std::string& Item::getDescription() const {
-        return m_data->description;
+        return m_data->getDescription();
     }
 
     void Item::setDescription(const std::string& desc) {
-        if (m_data->description != desc) {
-            std::string oldDesc = m_data->description;
-            m_data->description = desc;
-            notifyPropertyChanged("description", oldDesc, m_data->description);
-        }
+        setAndNotify("description",
+            [this]{ return m_data->getDescription(); },
+            [this](const std::string& v){ m_data->setDescription(v); },
+            desc);
     }
 
     bool Item::isPickable() const {
-        return m_data->isPickable;
+        return m_data->isPickable();
     }
 
     void Item::setPickable(bool pickable) {
-        if (m_data->isPickable != pickable) {
-            bool oldValue = m_data->isPickable;
-            m_data->isPickable = pickable;
-            notifyPropertyChanged("isPickable", oldValue, m_data->isPickable);
-        }
+        setAndNotify("isPickable",
+            [this]{ return m_data->isPickable(); },
+            [this](bool v){ m_data->setPickable(v); },
+            pickable);
     }
 
     bool Item::isUsable() const {
-        return m_data->isUsable;
+        return m_data->isUsable();
     }
 
     void Item::setUsable(bool usable) {
-        if (m_data->isUsable != usable) {
-            bool oldValue = m_data->isUsable;
-            m_data->isUsable = usable;
-            notifyPropertyChanged("isUsable", oldValue, m_data->isUsable);
-        }
+        setAndNotify("isUsable",
+            [this]{ return m_data->isUsable(); },
+            [this](bool v){ m_data->setUsable(v); },
+            usable);
     }
 
     int Item::getQuantity() const {
-        return m_data->quantity;
+        return m_data->getQuantity();
     }
 
     void Item::setQuantity(int quantity) {
-        if (m_data->quantity != quantity) {
-            int oldQuantity = m_data->quantity;
-            m_data->quantity = quantity;
-            notifyPropertyChanged("quantity", oldQuantity, m_data->quantity);
-        }
+        setAndNotify("quantity",
+            [this]{ return m_data->getQuantity(); },
+            [this](int v){ m_data->setQuantity(v); },
+            quantity);
     }
 
     int Item::getItemType() const {
-        return m_data->itemType;
+        return m_data->getItemType();
     }
 
     void Item::setItemType(int type) {
-        if (m_data->itemType != type) {
-            int oldType = m_data->itemType;
-            m_data->itemType = type;
+        if (m_data->getItemType() != type) {
+            int oldType = m_data->getItemType();
+            m_data->setItemType(type);
             notifyPropertyChanged("itemType",
                 Inspector::EnumValue(oldType, getItemTypes()),
-                Inspector::EnumValue(m_data->itemType, getItemTypes()));
+                Inspector::EnumValue(m_data->getItemType(), getItemTypes()));
         }
     }
 
     const std::string& Item::getIconPath() const {
-        return m_data->iconPath;
+        return m_data->getIconPath();
     }
 
     void Item::setIconPath(const std::string& path) {
-        if (m_data->iconPath != path) {
-            std::string oldPath = m_data->iconPath;
-            m_data->iconPath = path;
-            notifyPropertyChanged("iconPath", oldPath, m_data->iconPath);
-        }
+        setAndNotify("iconPath",
+            [this]{ return m_data->getIconPath(); },
+            [this](const std::string& v){ m_data->setIconPath(v); },
+            path);
     }
 
     const std::string& Item::getStartingSceneId() const {
-        return m_data->startingSceneId;
+        return m_data->getStartingSceneId();
     }
 
     void Item::setStartingSceneId(const std::string& sceneId) {
-        if (m_data->startingSceneId != sceneId) {
-            std::string oldId = m_data->startingSceneId;
-            m_data->startingSceneId = sceneId;
-            notifyPropertyChanged("startingSceneId", oldId, m_data->startingSceneId);
-        }
+        setAndNotify("startingSceneId",
+            [this]{ return m_data->getStartingSceneId(); },
+            [this](const std::string& v){ m_data->setStartingSceneId(v); },
+            sceneId);
     }
 
     std::string Item::getItemTypeName() const {
         const auto& types = getItemTypes();
-        if (m_data->itemType >= 0 && m_data->itemType < static_cast<int>(types.size())) {
-            return types[m_data->itemType];
+        const int type = m_data->getItemType();
+        if (type >= 0 && type < static_cast<int>(types.size())) {
+            return types[type];
         }
         return "Unknown";
     }
