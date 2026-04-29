@@ -17,8 +17,8 @@
 
 #ifndef ADS_IMGUI_WINDOW_H
 #define ADS_IMGUI_WINDOW_H
-#include <SDL_render.h>
-#include <SDL_video.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_video.h>
 #include <ratio>
 #include <string>
 
@@ -163,8 +163,8 @@ namespace ADS::UI {
         /**
          * Default flags
          */
-        static constexpr SDL_WindowFlags DEFAULT_FLAGS = static_cast<SDL_WindowFlags>(SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-        static constexpr Uint32 DEFAULT_RENDER_FLAGS = static_cast<SDL_RendererFlags>(SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
+        static constexpr SDL_WindowFlags DEFAULT_FLAGS = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
+        static constexpr Uint32 DEFAULT_RENDER_FLAGS = 0;
         static constexpr int FIRST_AVAILABLE_DRIVER = -1;
         static constexpr int WINDOW_FLAGS = 1;
         static constexpr int RENDERER_FLAGS = 2;

@@ -173,7 +173,7 @@ namespace ADS::Entities {
         return false;
     }
 
-    const bool Scene::getFakeProperty()
+    bool Scene::getFakeProperty()
     {
         return m_data->getFakeProperty();
     }

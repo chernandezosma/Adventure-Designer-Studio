@@ -7,28 +7,15 @@
   "license": "GPL-3.0",
   "dependencies": [
     {
-      "name": "imgui",
-      "features": [
-        "docking-experimental",
-        "sdl2-binding",
-        "sdl2-renderer-binding"
-      ]
-    },
-    {
-      "name": "sdl2",
-      "default-features": false,
-      "platform": "windows"
-    },
-    {
-      "name": "sdl2",
+      "name": "sdl3",
       "default-features": false,
       "features": ["x11", "wayland"],
       "platform": "linux"
     },
     {
-      "name": "sdl2",
+      "name": "sdl3",
       "default-features": false,
-      "platform": "osx"
+      "platform": "!linux"
     },
     "spdlog",
     "fmt",
@@ -38,8 +25,5 @@
     "boost-container-hash",
     "nativefiledialog-extended"
   ],
-  "builtin-baseline": "e7d511847f12658e9bd196b29b223144e3f2f091",
-  "overrides": [
-    { "name": "imgui", "version": "1.91.8", "port-version": 2 }
-  ]
+  "builtin-baseline": "e7d511847f12658e9bd196b29b223144e3f2f091"
 }

@@ -112,7 +112,7 @@ namespace ADS::Entities {
          *
          * @return bool Current value of the fake property
          */
-        const bool getFakeProperty();
+        bool getFakeProperty();
 
         /**
          * @brief Set the fake test property

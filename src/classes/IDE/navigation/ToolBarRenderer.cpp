@@ -72,7 +72,7 @@ namespace ADS::IDE {
 
         // Push the icon font if available, otherwise use default
         if (iconFont != nullptr) {
-            ImGui::PushFont(iconFont);
+            ImGui::PushFont(iconFont, iconFont->LegacySize);
         }
 
         bool clicked = ImGui::Button(icon);

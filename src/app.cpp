@@ -17,13 +17,13 @@
 
 #include "app.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "adsString.h"
 #include "i18nUtils.h"
 #include "Logger/logger.h"
 #include "imgui.h"
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 #include "System.h"
 
 namespace ADS::Core {
@@ -303,11 +303,10 @@ namespace ADS::Core {
     {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
-            if (event.type == SDL_QUIT)
+            ImGui_ImplSDL3_ProcessEvent(&event);
+            if (event.type == SDL_EVENT_QUIT)
                 m_running = false;
-            if (event.type == SDL_WINDOWEVENT &&
-                event.window.event == SDL_WINDOWEVENT_CLOSE &&
+            if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
                 event.window.windowID == SDL_GetWindowID(m_mainWindow->getWindow()))
                 m_running = false;
         }
@@ -349,8 +348,8 @@ namespace ADS::Core {
         ImGuiIO *io = m_imguiObject.getIO();
 
         // Start the Dear ImGui frame
-        ImGui_ImplSDLRenderer2_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
+        ImGui_ImplSDLRenderer3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
         // Render the IDE
@@ -358,10 +357,10 @@ namespace ADS::Core {
 
         // Rendering
         ImGui::Render();
-        SDL_RenderSetScale(m_renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
+        SDL_SetRenderScale(m_renderer, io->DisplayFramebufferScale.x, io->DisplayFramebufferScale.y);
         SDL_SetRenderDrawColor(m_renderer, 45, 45, 48, 255); // Dark gray background
         SDL_RenderClear(m_renderer);
-        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), m_renderer);
+        ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), m_renderer);
 
         // Update and Render additional Platform Windows
         if (io->ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
@@ -395,8 +394,8 @@ namespace ADS::Core {
         using namespace ADS::Constants;
 
         ImGui::SaveIniSettingsToDisk(System::CONFIG_FILE);
-        ImGui_ImplSDLRenderer2_Shutdown();
-        ImGui_ImplSDL2_Shutdown();
+        ImGui_ImplSDLRenderer3_Shutdown();
+        ImGui_ImplSDL3_Shutdown();
         ImGui::DestroyContext();
         SDL_DestroyRenderer(m_renderer);
         SDL_DestroyWindow(m_mainWindow->getWindow());

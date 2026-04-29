@@ -16,7 +16,7 @@
 
 
 #include "UI.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <filesystem>
 
 #include "System.h"
@@ -50,20 +50,14 @@ namespace ADS::UI {
 #ifdef _WIN32
         ::SetProcessDPIAware();
 #endif
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) !=
-            0) {
+        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
             auto message = std::format("{0}:{1} - Error: {2}", __FILE__, __LINE__,
                                        SDL_GetError());
             spdlog::error(message);
             throw Imgui::Exceptions::window_initialization_exception(message);
         }
 
-        // macOS - High resolution configuration
-#ifdef __APPLE__
-        SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
-#endif
-
-        // From 2.0.18: Enable native IME.
+        // Enable native IME.
 #ifdef SDL_HINT_IME_SHOW_UI
         SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 #endif

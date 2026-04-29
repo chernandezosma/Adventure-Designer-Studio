@@ -18,7 +18,7 @@
 #ifndef ADS_IM_GUI_H
 #define ADS_IM_GUI_H
 
-#include <SDL_render.h>
+#include <SDL3/SDL_render.h>
 #include <string>
 #include <unordered_map>
 #include <vector>

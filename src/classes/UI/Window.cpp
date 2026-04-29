@@ -17,10 +17,10 @@
 #include "Window.h"
 #include <string>
 
-#include "SDL_video.h"
+#include <SDL3/SDL_video.h>
 #include "app.h"
 
-#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdl3.h"
 #include "spdlog/spdlog.h"
 
 namespace ADS::UI {
@@ -53,10 +53,11 @@ namespace ADS::UI {
         this->flags = new SDL_FLAGS();
 
         this->flags->windowFlags = static_cast<SDL_WindowFlags>(Window::DEFAULT_FLAGS | flags->windowFlags);
-        // NOTE: ImGui_ImplSDL2_GetContentScaleForDisplay has been removed in ImGui 1.91+
-        // DPI scaling is now handled via SDL_GetDisplayDPI after window creation
         this->mainScale = 1.0f; // Temporary value, will be updated after window creation
-        this->window = SDL_CreateWindow(title.data(), x, y, width, height, this->flags->windowFlags);
+        this->window = SDL_CreateWindow(title.data(), width, height, this->flags->windowFlags);
+        if (this->window != nullptr) {
+            SDL_SetWindowPosition(this->window, x, y);
+        }
 
         if (this->window == nullptr) {
             string errorMessage = std::format("{}:{} Error: SDL_CreateWindow(): {}\n", __FILE__, __LINE__, SDL_GetError());
@@ -118,14 +119,14 @@ namespace ADS::UI {
      * @note This constructor uses constructor delegation (C++11 feature)
      * @see SDL_WINDOW_INFO, Window(std::string, float, float, float, float, SDL_WindowFlags)
      */
-    SDL_Renderer *Window::createRenderer(int index) const
+    SDL_Renderer *Window::createRenderer(int /*index*/) const
     {
-        SDL_Renderer *renderer = SDL_CreateRenderer(this->getWindow(), index, this->flags->rendererFlags);
+        SDL_Renderer *renderer = SDL_CreateRenderer(this->getWindow(), NULL);
         if (renderer == nullptr) {
             spdlog::error(std::format("{}:{} Error creating renderer: {}\n", __FILE__, __LINE__, SDL_GetError()));
             throw std::runtime_error(std::format("Failed to create renderer: {}", SDL_GetError()));
         }
-
+        SDL_SetRenderVSync(renderer, 1);
         return renderer;
     }
 
@@ -141,27 +142,7 @@ namespace ADS::UI {
      */
     Uint32 Window::getDefaultRenderFlags() const
     {
-        int availableDrivers = SDL_GetNumRenderDrivers();
-        SDL_RendererInfo info;
-        Uint32 flags = 0;
-
-        // Check all available drivers and prefer accelerated rendering with VSync
-        for (int i = 0; i < availableDrivers; i++) {
-            if (SDL_GetRenderDriverInfo(i, &info) == 0) {
-                if (info.flags & SDL_RENDERER_ACCELERATED) {
-                    flags |= SDL_RENDERER_ACCELERATED;
-                }
-                if (info.flags & SDL_RENDERER_PRESENTVSYNC) {
-                    flags |= SDL_RENDERER_PRESENTVSYNC;
-                }
-                // Only use software rendering as fallback if no accelerated option exists
-                if ((flags & SDL_RENDERER_ACCELERATED) == 0 && (info.flags & SDL_RENDERER_SOFTWARE)) {
-                    flags |= SDL_RENDERER_SOFTWARE;
-                }
-            }
-        }
-
-        return flags;
+        return 0; // SDL3: renderer flags unused; VSync is set via SDL_SetRenderVSync after creation
     }
 
     /**
@@ -296,27 +277,56 @@ namespace ADS::UI {
      * @brief Query and store the DPI scaling information for the window's display
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Dec 2025
+     * @version Apr 2026
      *
-     * This method performs the following steps:
-     * 1. Initializes the DPI scale to 1.0 (standard/fallback value)
-     * 2. Queries SDL for the display index where this window is located
-     * 3. Retrieves diagonal, horizontal, and vertical DPI from that display
-     * 4. Calculates the scale factor as diagonal DPI / 96.0 (standard baseline)
+     * Determines the DPI scale with a three-level cascade, so that 4K/HiDPI
+     * displays are handled correctly on all platforms:
      *
-     * If SDL_GetDisplayDPI fails (returns non-zero), the scale remains at 1.0.
-     * This ensures the application works even when DPI information is unavailable.
+     * 1. **OS content scale** — `SDL_GetWindowDisplayScale()`.  Returns >1.0 on
+     *    Wayland, macOS, Windows, and X11 sessions that have `Xft.dpi` configured.
+     * 2. **Physical pixel density** — `SDL_GetWindowPixelDensity()`.  Detects a
+     *    HiDPI framebuffer (physical pixels > logical pixels) even when the OS
+     *    scale is not exposed, which is the common case for X11 + KDE/GNOME on a
+     *    4K display without explicit DPI configuration.
+     * 3. **`DISPLAY_SCALE` env-var override** — allows the user to hard-code the
+     *    scale in `.env` (e.g. `DISPLAY_SCALE=2.0`) as a last resort for setups
+     *    where both SDL3 queries still return 1.0.
+     *
+     * After determining the scale the diagonal/horizontal/vertical DPI fields are
+     * synthesised for API compatibility with the rest of the codebase.
      *
      * @note Called automatically during window construction
      * @see getDPIScale(), DEFAULT_DPI_SCALE
      */
     void Window::setDPIScale()
     {
-        this->DPI.scale = 1.0f;
-        this->displayIndex = SDL_GetWindowDisplayIndex(this->window);
-        if (SDL_GetDisplayDPI(this->displayIndex, &this->DPI.diagonal, &this->DPI.horizontal, &this->DPI.vertical) == 0) {
-            this->DPI.scale = this->DPI.diagonal / this->DEFAULT_DPI_SCALE; // 96 DPI is the standard
+        float scale = SDL_GetWindowDisplayScale(this->window);
+
+        // Fallback: pixel density ratio detects HiDPI X11 framebuffers
+        if (scale <= 1.0f) {
+            float density = SDL_GetWindowPixelDensity(this->window);
+            if (density > 1.0f)
+                scale = density;
         }
+
+        // Final fallback: explicit override via DISPLAY_SCALE in .env
+        if (scale <= 1.0f) {
+            ADS::Environment *env = ADS::Core::App::getEnv();
+            if (env != nullptr) {
+                std::string override = env->getOrDefault("DISPLAY_SCALE", "");
+                if (!override.empty()) {
+                    try {
+                        float v = std::stof(override);
+                        if (v > 0.0f) scale = v;
+                    } catch (...) {}
+                }
+            }
+        }
+
+        this->DPI.scale      = (scale > 0.0f) ? scale : 1.0f;
+        this->DPI.diagonal   = this->DPI.scale * DEFAULT_DPI_SCALE;
+        this->DPI.horizontal = this->DPI.diagonal;
+        this->DPI.vertical   = this->DPI.diagonal;
     }
 
     /**

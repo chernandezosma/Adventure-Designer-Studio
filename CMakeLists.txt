@@ -72,13 +72,33 @@ add_custom_target(copy_env_file ALL
 # --- External dependencies (managed by vcpkg)
 # ----------------------------------------------------------
 find_package(OpenGL REQUIRED)
-find_package(SDL2 CONFIG REQUIRED)
-find_package(imgui CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Boost REQUIRED COMPONENTS uuid headers)
 find_package(nfd CONFIG REQUIRED)
+
+# ----------------------------------------------------------
+# --- ImGui (built from source, v1.92.7-docking)
+# ----------------------------------------------------------
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/lib/imgui)
+add_library(imgui_local STATIC
+        ${IMGUI_DIR}/imgui.cpp
+        ${IMGUI_DIR}/imgui_draw.cpp
+        ${IMGUI_DIR}/imgui_tables.cpp
+        ${IMGUI_DIR}/imgui_widgets.cpp
+        ${IMGUI_DIR}/imgui_demo.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+)
+target_include_directories(imgui_local PUBLIC
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
+)
+target_link_libraries(imgui_local PUBLIC
+        SDL3::SDL3
+)
 
 # ----------------------------------------------------------
 # --- Project directories
@@ -91,6 +111,8 @@ include_directories(
         src/utils
         src/include
         lib/IconFontCppHeaders
+        ${IMGUI_DIR}
+        ${IMGUI_DIR}/backends
 )
 
 # ----------------------------------------------------------
@@ -216,9 +238,8 @@ add_dependencies(${ADSProject} copy_public_folder copy_env_file)
 
 target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
-        imgui::imgui
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-        $<IF:$<TARGET_EXISTS:SDL2::SDL2main>,SDL2::SDL2main,SDL2::SDL2main-static>
+        imgui_local
+        SDL3::SDL3
         spdlog::spdlog
         fmt::fmt
         Boost::uuid

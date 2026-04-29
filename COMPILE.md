@@ -34,9 +34,9 @@ sudo apt install build-essential autoconf autoconf-archive automake libtool pkg-
 ```
 This installs GCC, G++, Make, and other essential build tools.
 
-**2. Install SDL2 system graphics and input libraries:**
+**2. Install SDL3 system graphics and input libraries:**
 
-vcpkg builds SDL2 from source but links against system graphics/input libraries:
+vcpkg builds SDL3 from source but links against system graphics/input libraries:
 ```bash
 sudo apt install libx11-dev libxft-dev libxext-dev \
                  libwayland-dev libxkbcommon-dev \
@@ -78,7 +78,7 @@ git --version
 sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig python3-jinja2
 ```
 
-**2. Install SDL2 system graphics and input libraries:**
+**2. Install SDL3 system graphics and input libraries:**
 ```bash
 sudo dnf install libX11-devel libXft-devel libXext-devel \
                  wayland-devel libxkbcommon-devel \
@@ -235,7 +235,11 @@ For code browsing in your IDE (not required for building):
 ./setup-reference-libs.sh
 ```
 
-This clones imgui, nlohmann_json, and spdlog to `lib/` for reference only. The build uses vcpkg versions.
+This clones nlohmann_json and spdlog to `lib/` for reference only. The build uses vcpkg versions for those.
+
+> **Note:** Dear ImGui is **not** a reference-only library. The project vendors ImGui 1.92.7-docking
+> directly in `lib/imgui/` and builds it as a static library (`imgui_local`) from CMakeLists.txt.
+> After cloning the repository run `git submodule update --init --recursive` to initialise it.
 
 #### 4. Build the Project
 
@@ -271,9 +275,11 @@ Adventure_Designer_Studio.exe
 
 ### Project Dependencies
 
+Vendored (built from source, not via vcpkg):
+- **Dear ImGui** `1.92.7-docking` — Immediate mode GUI library with docking support; vendored in `lib/imgui/` and built as `imgui_local` static library. Includes the SDL3 renderer and platform backends. Vendored because vcpkg 1.92.x dropped SDL2 bindings and SDL3 became the supported path.
+
 Managed by vcpkg:
-- **imgui** `1.91.8#2` - Immediate mode GUI library (with SDL2 bindings and docking; pinned — later versions dropped SDL2 support)
-- **SDL2** - Graphics, windowing, and input
+- **SDL3** - Graphics, windowing, and input (replaces SDL2 as of April 2026)
 - **nlohmann-json** - JSON library
 - **spdlog** - Fast C++ logging library
 - **fmt** - String formatting library (used by spdlog)
@@ -330,7 +336,7 @@ No. You can run `build.bat` from a regular Command Prompt or PowerShell. CMake a
 **vcpkg fails building `libsystemd` (GCC 15+)**
 
 GCC 15 promotes a warning in `errno-to-name.h` to an error (`-Werror=override-init`), breaking
-the vcpkg build of `libsystemd`, which is pulled in transitively by SDL2's DBus support.
+the vcpkg build of `libsystemd`, which is pulled in transitively by SDL3's DBus support.
 
 This repository includes a vcpkg overlay port at `vcpkg-overlays/libsystemd/` that fixes the
 issue. It is picked up automatically — no manual action required. If you see the error anyway,

@@ -13,7 +13,7 @@
 
 #include "MenuBarRenderer.h"
 #include "imgui.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "../themes/DarkTheme.h"
 #include "../themes/LightTheme.h"
 
@@ -241,8 +241,8 @@ namespace ADS::IDE {
      */
     void MenuBarRenderer::handleExit()
     {
-        SDL_Event quit_event;
-        quit_event.type = SDL_QUIT;
+        SDL_Event quit_event = {};
+        quit_event.type = SDL_EVENT_QUIT;
         SDL_PushEvent(&quit_event);
     }
 

@@ -15,7 +15,7 @@
  */
 #include <fstream>
 #define SDL_MAIN_HANDLED
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <random>
 
 #ifdef _WIN32
@@ -39,14 +39,10 @@
 #include <windows.h>        // SetProcessDPIAware()
 #endif
 
-#include "imgui_impl_sdl2.h"
-#include "imgui_impl_sdlrenderer2.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_sdlrenderer3.h"
 #include "languages.h"
 #include "spdlog/spdlog.h"
-
-#if !SDL_VERSION_ATLEAST(2, 0, 17)
-#error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
-#endif
 
 using namespace std;
 using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
@@ -78,7 +74,6 @@ using namespace ADS::Constants; // ADS::Constants::System::SystemConst;
 int main()
 {
     try {
-        SDL_SetMainReady();  // Required when using SDL_MAIN_HANDLED
         auto *app = new ADS::Core::App();
 
         // Create window
@@ -111,8 +106,8 @@ int main()
         fm->loadIconFont("public/fonts/FontAwesome/fontawesome-webfont.ttf", 13.0f);
 
         // Setup backends
-        ImGui_ImplSDL2_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
-        ImGui_ImplSDLRenderer2_Init(mainWindow->getRenderer());
+        ImGui_ImplSDL3_InitForSDLRenderer(mainWindow->getWindow(), mainWindow->getRenderer());
+        ImGui_ImplSDLRenderer3_Init(mainWindow->getRenderer());
         mainWindow->setStyle();
 
         // Run the application

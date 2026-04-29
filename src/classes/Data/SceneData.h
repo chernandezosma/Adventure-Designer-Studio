@@ -356,7 +356,7 @@ namespace ADS::Data {
             m_presentCharacterIds = ids;
         }
 
-        void setFakeProperty(bool fakePropertyValue) const
+        void setFakeProperty(bool fakePropertyValue)
         {
             m_fakeProperty = fakePropertyValue;
         }
