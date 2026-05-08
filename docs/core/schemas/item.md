@@ -37,7 +37,7 @@ This is the first approach for the item's schema:
             "sound_description": "<string> | max: 255"
         },
         "image": "<String> | Filename or string encoded",
-        "affordables": "<uint16_t>",
+        "affordances": "<uint16_t>",
         "state": "<uint8_t>",
         "interactions": "<uint16_t>",
         "weight": "<uint8_t>",
@@ -59,33 +59,33 @@ This is the first approach for the item's schema:
 ```
 ### Details
 
-Some of above entries needs to be explained a little bit, so there we go!
+Several of the entries above require further explanation; these are detailed below.
 
-- **id**: This is an unique value (byte) for each item's type. See [implementation](#Ids-implementation) section to see how to manage them.
-- **name**: This is the item's name. It will show in the game as name of the item. It will be a string with a max length of 128 bytes.
+- **id**: This is a unique value (byte) for each item's type. See [implementation](#Ids-implementation) section to see how to manage them.
+- **name**: This is the item's name. It will show in the game as the item's name. It will be a string with a max length of 128 bytes.
 - **descriptions**: This is the group of extra texts which will describe the item. 
-  - **description**": Text which describe briefly the item, it is a string with a max length of 128 bytes.
-  - **long_description**: Text which describe, in detail, the item, it is a string with a max length of 255 bytes.
-  - **odor_description**: Text which describe, in detail, how the item smells, it is a string with a max length of 255 bytes.
-  - **sound_description**: Text which describe, in detail, how the item sound, it is a string with a max length of 255 bytes. 
-- **image**: It wil be a filename or image encoding. It is a String.
+  - **description**": Text which describes the item briefly, it is a string with a max length of 128 bytes.
+  - **long_description**: Text which describes, in detail, the item; it is a string with a max length of 255 bytes.
+  - **odor_description**: Text which describes, in detail, how the item smells, it is a string with a max length of 255 bytes.
+  - **sound_description**: Text which describes, in detail, how the item sounds. It is a string with a max length of 255 bytes. 
+- **image**: It will be a filename or image encoding. It is a String.
 - **affordables**: This is a pointer to a <uint32_t> memory area with the structure defined at [Affordances](#Affordances-definition) section, and its implementation info at [Affordance implementation](affordance-impplementation).
-- **state**: It is a pointer to a <uint16_t> memory area where some affordances state will be stored. The detailed description is under [States](States) and its implementaion under [States implementation](states-implementation).
-- **interactions**: Pointer to the "<uint16_t>",
+- **state**: It is a pointer to a `<uint16_t>` memory area where some affordances state will be stored. The detailed description is in [States](States), and its implementation is in [States implementation](states-implementation).
+- **interactions**: Pointer to the `<uint16_t>`,
 - **weight**: What is the weight? It must be a <uint8_t> value from 0 lightest to 255 heaviest. Probably a 255 value implies that the object is neither  takeable nor, obviously, moveable.
 - **language**: 
-  - **synonyms**: Ponter (uint16_t), to the language structure where the words are in.
-  - **abbreviatures**: Pointer ("<uint16_t>), to abbreviatures structure where they are stored.  
+  - **synonyms**: Ponter (`uint16_t`), to the language structure where the words are in.
+  - **abbreviatures**: Pointer (`<uint16_t>`), to the abbreviatures structure where they are stored.  
 "**damage**": {
-  "**base**": "<uint8_t>",
-  "**critical_chance**": "<uint8_t>",
-  "**critical_multiplier**": "<uint8_t>"
+  "**base**": "`<uint8_t>`",
+  "**critical_chance**": "`<uint8_t>`",
+  "**critical_multiplier**": "`<uint8_t>`"
 },
-"**effectivity**": "<uint8_t>",
-"**container**": It is a pointer <uint16_t> to a list of object's id which are inside the current object.
-"**combinable_with**": "<uint16_t>"
+"**effectivity**": "`<uint8_t>`",
+"**container**": It is a pointer <uint16_t> to a list of objects' IDs that are inside the current object.
+"**combinable_with**": "`<uint16_t>`"
 
-## Affordances definition
+## Affordances definitions
 
 The affordances bitmap would be:
 ```
@@ -156,8 +156,8 @@ This is an approach to hold the object's attributes
 
 ## Implementation
 
-### Ids implementation
-The Ids will be implementated as follows
+### IDs implementation
+The IDs will be implemented as follows
 
 ```c++
     template<typename Tag>
@@ -167,7 +167,7 @@ The Ids will be implementated as follows
         bool operator==(const Id&) const = default;
     };
 
-    // In Project entity will store the ids for each type of entity
+    // In the Project entity, we will store the IDs for each type of entity
     struct RoomTag {};
     struct ObjectTag {};
     struct EventTag {};
@@ -179,7 +179,7 @@ The Ids will be implementated as follows
 
 ### Considerations
 
-To decode the `critical_chance` and `critical_multiplier` we will use the following code
+To decode the `critical_chance` and `critical_multiplier`, we will use the following code
 
 ```c++
 float decode(uint8_t b) {
@@ -187,4 +187,4 @@ float decode(uint8_t b) {
 }
 ```
 
-And we store the values as integers, that is, we remove the decimal point and store as is. As example a value as 8.3 will be stored as 83, that saves a lot of memory without use float data types.
+And we store the values as integers, that is, we remove the decimal point and store them as is. For example, a value of 8.3 will be stored as 83, which saves a lot of memory without using float data types.
