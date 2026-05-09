@@ -325,6 +325,94 @@ Decoder pseudocode (Z80):
 5. Serialise message_pool: each game message as a token ID array + 0x0000 EOL.
 ```
 
+#### vocab_table
+
+`vocab_table` is the binary structure produced by the Token Encoder and loaded
+into RAM on the 8-bit target. It contains only the entries where `role` has
+the `Input` bit set — the words the player can type. It is a subset of the
+full Lexicon.
+
+**Entry layout (6 bytes per row):**
+
+```
++------------+------------+------------+
+| form ptr   | TokenIndex | WordType   |
+| (2 bytes)  | (2 bytes)  | (2 bytes)  |
++------------+------------+------------+
+```
+
+`form ptr` — pointer to the ASCII surface form string in the companion string
+pool. The string is NUL-terminated.
+
+`TokenIndex` — compiled token assigned by frequency rank. Multiple inflected
+forms of the same word share the same `TokenIndex`.
+
+`WordType` — bitmask read by the parser to determine the grammatical role of
+the word. Set at compile time by the Token Encoder from the `LexEntry.types`
+field. Never modified at runtime.
+
+**What lives in vocab_table vs what does not:**
+
+| Entry type | In vocab_table? | Reason |
+|---|---|---|
+| `role = Both` (Output + Input) | Yes | Player can type it |
+| `role = Input` only | Yes | Player can type it |
+| `role = Output` only | No | Player never types it — saves RAM |
+| `WordType = Punctuation` | No | Filtered during Lexicon feed |
+| Direction words (NORTH, SOUTH…) | No | Resolved as direction constants, not tokens |
+
+**Where vocab_table is built:**
+
+The table is built in two stages in two different places:
+
+Stage 1 — **Content defined in the Lexicon (PC, design time).** As the author
+writes game text and defines parser vocabulary, `LexEntry` nodes accumulate.
+Every entry with the `Input` bit set is a candidate row. UDPipe generates
+inflected forms for morphologically rich languages, each becoming an
+additional row pointing to the same `TokenIndex`.
+
+Stage 2 — **Binary emitted by the Token Encoder (PC, compile time).** The
+`emit_vocab_table()` function:
+
+```
+1. Filters LexEntry nodes where role has Input bit set.
+2. Sorts by descending frequency.
+3. Assigns TokenIndex values (top-254 → 1-byte tokens).
+4. For each entry, writes one row per inflected form:
+       surface string → string pool (NUL-terminated)
+       (ptr, TokenIndex, WordType) → vocab_table[]
+5. Writes the completed binary block to the target RAM image.
+```
+
+The result is raw bytes in the target RAM image — not a C++ object, not JSON.
+On the C++ side it is a `std::vector<uint8_t>` produced by `emit_vocab_table()`
+and written directly to the binary output file.
+
+**End-to-end flow for a single word:**
+
+```
+IDE (design time)
+    Author writes "You see a rusty key on the floor."
+    UDPipe analyses → lemma="key", UPOS="NOUN"
+    LexEntry: { canonical="key", role=Both, types=Noun }
+    Author marks "key" as parser word → role Input bit confirmed
+         │
+Compiler (compile time)
+    Token Encoder filters entries with Input bit
+    "key" frequency rank → TokenIndex = 0x1A
+    Inflected forms (English): "key", "keys"
+    Emits to binary:
+        string pool : "key keys "
+        vocab_table : [(ptr_key,  0x1A, Noun),
+                       (ptr_keys, 0x1A, Noun)]
+         │
+Target RAM (runtime)
+    vocab_table[] at fixed address in RAM
+    Parser scans linearly on every player input
+    Finds "key"  → TokenIndex=0x1A, WordType=Noun → noun1_slot
+    Finds "keys" → TokenIndex=0x1A, WordType=Noun → noun1_slot
+```
+
 #### Inflected forms (morphologically rich languages)
 
 For languages with rich morphology (Russian, German), the compiler inserts
@@ -829,23 +917,3 @@ creator to understand parser internals.
 different binary profiles for each target (ZX Spectrum, CPC, MSX, C64, Atari
 ST), varying token encoding strategy and inflected form count according to
 available RAM. The authoring experience is identical regardless of target.
-
----
-
-## Open Decisions
-
-- [ ] Trigger delay units — definition of game time granularity (seconds,
-      turns, custom units) and the pending event queue architecture.
-- [ ] Vocabulary editor UI — exact IDE interface for the creator to define
-      and manage parser-accessible words.
-- [ ] System verb list — final enumeration of engine verbs and their default
-      affordance mappings.
-- [ ] Creator condact definition — visual rule editor design for custom
-      object triggers.
-- [ ] Phrase entry promotion — minimum frequency threshold for n-gram
-      elevation to `PhraseEntry`.
-- [ ] Compression profile per target — `vocab_limit`, `phrase_min_freq`,
-      Huffman tree emission for targets with spare RAM.
-- [ ] JSON input format — single file vs multiple files per game section.
-- [ ] Affix trie data — per-language affix table format and maintenance
-      strategy.
