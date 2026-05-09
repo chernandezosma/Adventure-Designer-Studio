@@ -10,15 +10,15 @@
 
 ## 1. What is Lexingine?
 
-Lexingine is the language processing engine of Adventure Designer Studio. Its
-responsibility is to bridge the gap between human-readable game text authored
-on a PC and the compact binary token representation that runs on severely
-memory-constrained 8-bit target platforms.
+Lexingine is the language processing engine at the heart of Adventure
+Designer Studio. Its core mission is to bridge the gap between
+human-readable game text, authored on a PC, and the compact binary token
+format required for severely memory-constrained 8-bit target platforms.
 
-The name reflects its dual nature: it is both a **lexicon** — a structured
-vocabulary of the game's words — and an **engine** — an active processing
-pipeline that analyses, classifies, compresses, and dispatches language at
-every stage of a game's lifecycle.
+The name reflects this dual nature: it serves as both a *lexicon*—a
+structured vocabulary of the game's words—and an *engine*—an active
+processing pipeline that analyses, classifies, compresses, and dispatches
+language at every stage of a game's lifecycle.
 
 Lexingine operates in two distinct environments:
 
@@ -86,59 +86,75 @@ language. This is its persistent JSON representation:
 
 ```json
 {
-  "id":           "<uint32_t>",
-  "lang":         "<string>",
-  "canonical":    "<string>",
-  "role":         "<uint8_t>",
-  "types":        "<uint16_t>",
-  "synonyms":     ["<uint32_t>", "..."],
-  "frequency":    "<float>",
-  "raw_count":    "<uint32_t>",
-  "synonym_meta": [
+  "id":             "<uint32_t>",
+  "lang":           "<string>",
+  "canonical":      "<string>",
+  "role":           "<uint8_t>",
+  "types":          "<uint16_t>",
+  "dominant_type":  "<uint16_t>",
+  "type_counts":    ["<uint32_t> x11"],
+  "upos_raw":       "<string>",
+  "feats":          "<string>",
+  "stem":           "<string>",
+  "synonyms":       ["<uint32_t>"],
+  "frequency":      "<float>",
+  "raw_count":      "<uint32_t>",
+  "synonym_meta":   [
     { "target": "<uint32_t>", "confidence": "<float>", "confirmed": "<bool>" }
   ]
 }
 ```
 
-| Field          | Type         | Description                                                     |
-|----------------|--------------|-----------------------------------------------------------------|
-| `id`           | `uint32_t`   | Stable design-time identifier. Never `0xFFFFFFFF` (reserved).   |
-| `lang`         | `string`     | BCP-47 with region. Max 8 chars.                                |
-| `canonical`    | `string`     | Normalised word form from UDPipe lemma. Max 32 chars.           |
-| `role` (1)     | `uint8_t`    | Bitmask: `0x01`=Output, `0x02`=Input, `0x03`=Both.              |
-| `types`        | `uint16_t`   | WordType bitmask — all grammatical categories observed.         |
-| `synonyms`     | `uint32_t[]` | IDs of equivalent entries. Forward references allowed.          |
-| `frequency`    | `float`      | Normalised ratio: `raw_count / total_corpus_tokens`.            |
-| `raw_count`    | `uint32_t`   | Absolute occurrence count. Never decremented.                   |
-| `synonym_meta` | array        | Confidence and confirmation state per synonym link.             |
+| Field           | Type          | Description                                                                                     |
+|-----------------|---------------|-------------------------------------------------------------------------------------------------|
+| `id`            | `uint32_t`    | Stable design-time identifier. Never `0xFFFFFFFF` (reserved).                                   |
+| `lang`          | `string`      | BCP-47 with region. Max 8 chars.                                                                |
+| `canonical`     | `string`      | Normalised word form from UDPipe lemma. Max 32 chars.                                           |
+| `role` (1)      | `uint8_t`     | Bitmask: `0x01`=Output, `0x02`=Input, `0x03`=Both.                                             |
+| `types`         | `uint16_t`    | WordType bitmask — all grammatical categories observed.                                         |
+| `dominant_type` | `uint16_t`    | Single WordType bit with highest observed count. Persisted to avoid recalculation on load.      |
+| `type_counts`   | `uint32_t[11]`| Per-bit occurrence count, indexed by bit position. Required for correct incremental updates.    |
+| `upos_raw`      | `string`      | Raw UPOS string from UDPipe (e.g. `"VERB"`). Diagnostic value. Empty string if unavailable.    |
+| `feats`         | `string`      | UD morphological features. Used by synonym pipeline on reload. Empty string if unavailable.     |
+| `stem`          | `string`      | Snowball stem. Populated only in fallback mode (no UDPipe model). Empty string otherwise.       |
+| `synonyms`      | `uint32_t[]`  | IDs of equivalent entries. Forward references allowed.                                          |
+| `frequency`     | `float`       | Normalised ratio: `raw_count / total_corpus_tokens`.                                            |
+| `raw_count`     | `uint32_t`    | Absolute occurrence count. Never decremented.                                                   |
+| `synonym_meta`  | object        | Confidence and confirmation state per synonym link.                                             |
 
-> (1)  
-> role — what the word is used for in the game
+> (1)
+> **role — what the word is used for in the game**
+>
 > A word in the Lexicon can serve two completely different purposes:
->  
-> - **Output** — it appears in text that the game shows to the player. For example, the word "dark" in "You are in a dark room." The player reads it but never types it.
-> - **Input** — it is a word the player can type and the parser will recognise. For example "take" or "key".
-> - **Both** — it appears in output text AND the player can type it. Most nouns fall here: "key" appears in descriptions AND the player types "take key".
->   
-> The role field is a bitmask because a word can belong to one or both categories independently:
->> 0x01 = 0b00000001 = Output only  
->> 0x02 = 0b00000010 = Input only  
->> 0x03 = 0b00000011 = Both (Output + Input)
-> 
-> In practice this matters at compile time. Words with the Input bit set go into vocab_table in RAM — the parser searches them at runtime. Words with only the Output bit skip vocab_table entirely, saving RAM. A word like "the" is Output only — the game text uses it but no sane player would type "take the the".
+>
+> - **Output** — it appears in text that the game shows to the player. For example, the word "dark"
+>   in "You are in a dark room." The player reads it but never types it.
+> - **Input** — it is a word the player can type and the parser will recognise. For example, "take"
+>   or "key".
+> - **Both** — it appears in output text AND the player can type it. Most nouns fall here: "key"
+>   appears in descriptions AND the player types "take key".
+>
+> The `role` field is a bitmask because a word can belong to one or both categories independently:
+>
+> ```
+> 0x01 = 0b00000001 = Output only
+> 0x02 = 0b00000010 = Input only
+> 0x03 = 0b00000011 = Both (Output + Input)
+> ```
+>
+> In practice, this matters at compile time. Words with the `Input` bit set are stored in
+> `vocab_table` — the parser searches them at runtime. Words with only the `Output` bit skip
+> `vocab_table` entirely, saving RAM. A word like "the" is Output-only — the game text uses it,
+> but no sane player would type "take the the".
 
-Fields not persisted to JSON (runtime or compile-time only): `dominant_type`, `type_counts`, `upos_raw`, `feats`, `stem`, `compiled_token`.
+#### Fields not persisted to JSON
 
-> Fields not persisted to JSON  
-> These are fields that exist in the LexEntry C++ class in memory during authoring and compilation, but are never written to the JSON file on disk. The reason differs per field:  
-> - **dominant_type** — this is derived from types and type_counts. It is the single WordType bit with the highest count. It can always be recalculated from the other two fields when the JSON is loaded back, so storing it would be redundant.
-> - **type_counts**[11] — the per-bit occurrence counts that track how many times each WordType was observed. These can be recalculated by replaying the corpus, or stored separately in a companion file if replay is too expensive. Not part of the core entry contract.
-> - **upos_raw** — the raw UPOS string that UDPipe returned ("VERB", "NOUN"...). This is diagnostic information — useful during development to verify UDPipe's output, but not needed once types is correctly populated.
-> - **feats** — the UD morphological features string ("Tense=Pres|Person=3"). Transient NLP metadata used by the synonym pipeline. Not needed after the Lexicon is fully built.
-> - **stem** — the Snowball stem, only populated when no UDPipe model is available as a fallback. When UDPipe is active, canonical (the lemma) supersedes it entirely. No point persisting it.
-> - **compiled_token** — the TokenIndex assigned by the compiler. This changes every time the game is compiled, because frequencies may have shifted and the ordering may be different. It is always regenerated from scratch at compile time, so persisting it would give a false sense of stability.
-> 
-> In short: if a field can be derived from other persisted fields, or if it is only meaningful during a transient phase (NLP analysis or compilation), it does not belong in the persistent JSON representation.
+`compiled_token` is the only field not persisted — it is regenerated on every
+compilation and persisting it would cause mismatches with the compiled binary.
+
+| Field             | Reason                                                                              |
+|-------------------|-------------------------------------------------------------------------------------|
+| `compiled_token`  | Compile-time assignment. Changes on every compilation. Persisting it would cause mismatches with the binary. |
 
 #### WordType bitmask
 
@@ -169,7 +185,7 @@ observation. The compiler emits a warning for ambiguous entries.
 
 ### 2.2 NLP Backend (UDPipe)
 
-Lexingine delegates all linguistic analysis to **UDPipe 1.x**(2), a C++-native
+Lexingine delegates all linguistic analysis to **UDPipe 1.x** (2), a C++-native
 NLP pipeline that performs tokenisation, lemmatisation, POS tagging, and
 dependency parsing for over 50 languages.
 
@@ -195,24 +211,25 @@ Fields not used: word.xpostag, word.misc
 
 **Confidence convention:**
 
-| Mode                       | Source                             | Confidence |
-|----------------------------|------------------------------------|------------|
-| Full UDPipe model loaded   | Lemmatiser + tagger active         | `1.0`      |
-| Fallback (no model)        | Snowball stemmer + rule tokeniser  | `0.6`      |
+| Mode                       | Source                            | Confidence |
+|----------------------------|-----------------------------------|------------|
+| Full UDPipe model loaded   | Lemmatiser + tagger active        | `1.0`      |
+| Fallback (no model)        | Snowball stemmer + rule tokeniser | `0.6`      |
 
 In fallback mode the `stem` field is populated instead of `lemma`, and
 `WordType` defaults to `Unknown` until the creator classifies the entry
 manually.
 
-> (2) Official Repository and related URLs
-> - [Repository (master branch = UDPipe 1.x)](https://github.com/ufal/udpipe)  
+> (2) **Official Repository and related URLs**
+>
+> - [Repository (master branch = UDPipe 1.x)](https://github.com/ufal/udpipe)
 > - [Official website and model downloads](https://ufal.mff.cuni.cz/udpipe/1)
 > - [API reference](https://ufal.mff.cuni.cz/udpipe/1/api-reference)
 > - [Releases page (latest stable is 1.3.0)](https://github.com/ufal/udpipe/releases)
-> 
-> For vcpkg integration, which is your dependency manager, UDPipe is available as a binary for 
-> Linux, Windows, and OS X, and as a library for C++ GitHub, so it should integrate cleanly 
-> into your CMakeLists. Worth checking if it is already in the vcpkg registry before adding it manually.
+>
+> For vcpkg integration, which is your dependency manager, UDPipe is available as a binary for
+> Linux, Windows, and OS X, and as a library for C++, so it should integrate cleanly into your
+> CMakeLists. Worth checking if it is already in the vcpkg registry before adding it manually.
 
 ---
 
@@ -317,7 +334,7 @@ The number of forms N per word is calculated automatically:
 
 ```
 N = clamp(
-      floor(ROM_available / (vocab_size × bytes_per_form)),
+      floor(RAM_available / (vocab_size × bytes_per_form)),
       N_min = 1,
       N_max = forms_available_from_UDPipe
     )
@@ -341,7 +358,7 @@ into `vocab_table`.
 
 #### ParsedCommand
 
-```c++
+```
 ParsedCommand {
     verb  : uint16_t    -- always present; 0x0000 if missing
     noun1 : uint16_t    -- primary object; 0x0000 if absent
@@ -358,7 +375,7 @@ vocabulary tokens — they are direction constants resolved directly against the
 current Room's exits. `GO NORTH` dispatches to the Room object with direction
 constant `NORTH`, requiring only one lookup instead of two.
 
-```c++
+```
 ParsedCommand for "GO NORTH":
     verb  = GO      (engine verb)
     noun1 = NORTH   (direction constant — high byte flags as direction)
@@ -467,11 +484,11 @@ game turn.
   +----------+  +---------+
   |  Look up |  | Discard |
   |  in      |  +---------+
-  |  Lexicon |       |
-  |  by      |       |
-  |  lemma   |       |
-  |  + lang  |       |
-  +----------+       |
+  |  Lexicon |
+  |  by      |
+  |  lemma   |
+  |  + lang  |
+  +----------+
          |           |
       found       not found
          |           |
@@ -619,8 +636,8 @@ game turn.
   +-----------+ +-------+
   | Look up   | | Exit  |
   | vocab_    | +-------+
-  | table     |      |
-  +-----------+      |
+  | table     |
+  +-----------+
          |           |
       found       not found
          |           |
@@ -745,7 +762,7 @@ ParsedCommand { verb=GO,      ──>  affordances: Navigable
                 noun1=NORTH}       exits:
                                      NORTH → Room #12
                                      SOUTH → (none)
-  
+
                               <──  exit exists: move player to Room #12
                                    exit absent: "You can't go that way."
 ```
@@ -812,3 +829,23 @@ creator to understand parser internals.
 different binary profiles for each target (ZX Spectrum, CPC, MSX, C64, Atari
 ST), varying token encoding strategy and inflected form count according to
 available RAM. The authoring experience is identical regardless of target.
+
+---
+
+## Open Decisions
+
+- [ ] Trigger delay units — definition of game time granularity (seconds,
+      turns, custom units) and the pending event queue architecture.
+- [ ] Vocabulary editor UI — exact IDE interface for the creator to define
+      and manage parser-accessible words.
+- [ ] System verb list — final enumeration of engine verbs and their default
+      affordance mappings.
+- [ ] Creator condact definition — visual rule editor design for custom
+      object triggers.
+- [ ] Phrase entry promotion — minimum frequency threshold for n-gram
+      elevation to `PhraseEntry`.
+- [ ] Compression profile per target — `vocab_limit`, `phrase_min_freq`,
+      Huffman tree emission for targets with spare RAM.
+- [ ] JSON input format — single file vs multiple files per game section.
+- [ ] Affix trie data — per-language affix table format and maintenance
+      strategy.
