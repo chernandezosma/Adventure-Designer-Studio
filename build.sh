@@ -6,7 +6,15 @@ set -e
 
 # Configuration
 BUILD_TYPE=${1:-Release}
-VCPKG_ROOT=${VCPKG_ROOT:-/opt/vcpkg}
+
+# Resolve VCPKG_ROOT: env var → /opt/vcpkg (Linux default) → ~/vcpkg (macOS default)
+if [ -z "$VCPKG_ROOT" ]; then
+    if [ -d "/opt/vcpkg" ]; then
+        VCPKG_ROOT="/opt/vcpkg"
+    elif [ -d "$HOME/vcpkg" ]; then
+        VCPKG_ROOT="$HOME/vcpkg"
+    fi
+fi
 
 echo "========================================="
 echo "Building Adventure Designer Studio"

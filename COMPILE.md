@@ -187,23 +187,38 @@ This should find the cl.exe compiler path if Visual Studio Build Tools is instal
 
 #### 1. Install vcpkg
 
-vcpkg manages all project dependencies automatically. Install it system-wide:
+vcpkg manages all project dependencies automatically.
 
-**Linux/macOS:**
+**Linux:**
 ```bash
-# Clone vcpkg to /opt
+# Clone vcpkg to /opt (system-wide)
 sudo git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg
-
-# Change ownership to your user
 sudo chown -R $USER:$USER /opt/vcpkg
 
 # Bootstrap vcpkg
 cd /opt/vcpkg
 ./bootstrap-vcpkg.sh
 
-# Set environment variable (add to ~/.bashrc or ~/.zshrc for persistence)
+# Set environment variable (add to ~/.bashrc for persistence)
 export VCPKG_ROOT=/opt/vcpkg
 echo 'export VCPKG_ROOT=/opt/vcpkg' >> ~/.bashrc
+```
+
+**macOS:**
+
+Install vcpkg in your home directory — this avoids `sudo` and the `chown` group issue (macOS uses `staff`, not a per-user group):
+```bash
+# Clone vcpkg to your home directory
+git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+
+# Bootstrap vcpkg
+cd ~/vcpkg
+./bootstrap-vcpkg.sh
+
+# Set environment variable (add to ~/.zshrc for persistence)
+export VCPKG_ROOT=~/vcpkg
+echo 'export VCPKG_ROOT=~/vcpkg' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 **Windows:**
@@ -291,15 +306,52 @@ Managed by vcpkg:
 Git submodule:
 - **IconFontCppHeaders** - Header-only icon font integration
 
+### IDE Setup (CLion, VS Code, etc.)
+
+When opening the project directly in an IDE, CMake is invoked without the vcpkg toolchain file, so dependencies like SDL3 won't be found. There are two ways to fix this:
+
+**Option A — Use a CMake Preset (recommended for CLion)**
+
+The project ships `CMakePresets.json` with `Debug (vcpkg)` and `Release (vcpkg)` presets. These require `VCPKG_ROOT` to be set:
+
+1. Set `VCPKG_ROOT` in CLion: **Settings → Build, Execution, Deployment → CMake → Environment** → add `VCPKG_ROOT=/opt/vcpkg` (or wherever you installed vcpkg).
+2. In the CMake profile, set **CMake preset** to `vcpkg-debug` or `vcpkg-release`.
+
+**Option B — Add the toolchain file to your CLion CMake profile**
+
+1. Open **Settings → Build, Execution, Deployment → CMake**.
+2. In your CMake profile, add to **CMake options**:
+   ```
+   -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
+   ```
+   (Replace `/opt/vcpkg` with your actual vcpkg path.)
+
+**Option C — Launch CLion from a terminal that has VCPKG_ROOT set**
+
+```bash
+export VCPKG_ROOT=/opt/vcpkg
+open /Users/<you>/Applications/CLion.app
+```
+
+This ensures CLion inherits the shell environment. You can add the `export` line to `~/.zshrc` and launch CLion from a new terminal session.
+
+---
+
 ### Build Troubleshooting
 
 **"Cannot find vcpkg"**
 
-*Linux/macOS:*
+*Linux:*
 ```bash
 echo $VCPKG_ROOT  # Should print /opt/vcpkg
 ```
-If empty, set it: `export VCPKG_ROOT=/opt/vcpkg`
+If empty: `export VCPKG_ROOT=/opt/vcpkg`
+
+*macOS:*
+```bash
+echo $VCPKG_ROOT  # Should print /Users/<you>/vcpkg
+```
+If empty: `export VCPKG_ROOT=~/vcpkg` (then add to `~/.zshrc` for persistence)
 
 *Windows:*
 ```batch

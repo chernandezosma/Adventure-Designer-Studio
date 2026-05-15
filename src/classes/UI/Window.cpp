@@ -72,10 +72,13 @@ namespace ADS::UI {
         // Update mainScale with the calculated DPI scale
         this->mainScale = this->DPI.scale;
 
-        // Apply DPI scaling to fonts globally
+        // SDL_SetRenderScale (called each frame in App::render) already maps ImGui
+        // logical coordinates to physical pixels using mainScale.  Setting
+        // FontGlobalScale to mainScale on top of that causes double-scaling, making
+        // text appear mainScale² larger than intended.  Leave it at 1.0 so that
+        // font sizes match logical-pixel coordinates as expected.
         if (this->io != nullptr) {
-            this->io->FontGlobalScale = this->mainScale;
-            // Set DisplayFramebufferScale for proper rendering on high-DPI displays
+            this->io->FontGlobalScale = 1.0f;
             this->io->DisplayFramebufferScale = ImVec2(this->mainScale, this->mainScale);
         }
     }

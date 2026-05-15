@@ -403,8 +403,6 @@ downloads/
 packages/
 
 # Reference libraries (for code browsing only, not tracked in git)
-# Use setup-reference-libs.sh to clone these locally
-lib/imgui/
 lib/nlohmann_json/
 lib/spdlog/
 

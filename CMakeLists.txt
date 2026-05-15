@@ -3,6 +3,29 @@ cmake_minimum_required(VERSION 3.14...3.31)
 set(ADSProject Adventure_Designer_Studio)
 set(HEADER_GUARD_PREFIX "ADS" CACHE STRING "Prefix for header guards")
 
+# Auto-detect vcpkg toolchain if not already provided (e.g. when opening directly in an IDE)
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT})
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "/opt/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "$ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    elseif(EXISTS "C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/src/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            CACHE STRING "Vcpkg toolchain file")
+    else()
+        message(WARNING "vcpkg not found. Set VCPKG_ROOT or pass -DCMAKE_TOOLCHAIN_FILE. "
+                        "See COMPILE.md for setup instructions.")
+    endif()
+endif()
+
 project(${ADSProject} CXX)
 
 set(CMAKE_CXX_STANDARD 23)

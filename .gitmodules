@@ -2,3 +2,6 @@
 	path = lib/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
 	branch = main
+[submodule "lib/imgui"]
+	path = lib/imgui
+	url = https://github.com/ocornut/imgui.git
