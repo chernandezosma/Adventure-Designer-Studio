@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
@@ -154,6 +158,7 @@ namespace ADS::IDE {
             ImGui::Spacing();
 
             if (ImGui::Button("Save", ImVec2(90, 0))) {
+                spdlog::info("NavigationService: confirm-new — user chose Save");
                 // Defer the NFD save dialog to processPendingDialogs().
                 // The confirm modal closes now so the compositor gets a clean
                 // frame before the blocking call.
@@ -164,12 +169,14 @@ namespace ADS::IDE {
             ImGui::SameLine();
 
             if (ImGui::Button("Discard", ImVec2(90, 0))) {
+                spdlog::info("NavigationService: confirm-new — user chose Discard");
                 if (m_onNewProject) m_onNewProject();
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
 
             if (ImGui::Button("Cancel", ImVec2(90, 0))) {
+                spdlog::info("NavigationService: confirm-new — user chose Cancel");
                 ImGui::CloseCurrentPopup();
             }
 
@@ -211,8 +218,9 @@ namespace ADS::IDE {
                 if (m_onOpenProject) m_onOpenProject(outPath.get());
             } else if (result == NFD_ERROR) {
                 spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
+            } else {
+                spdlog::info("NavigationService: open dialog cancelled by user");
             }
-            // NFD_CANCEL: user dismissed the dialog — nothing to do
         }
 
         if (m_pendingSaveDialog) {
@@ -232,8 +240,9 @@ namespace ADS::IDE {
                 if (saveAndNew && m_onNewProject) m_onNewProject();
             } else if (result == NFD_ERROR) {
                 spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
+            } else {
+                spdlog::info("NavigationService: save dialog cancelled by user");
             }
-            // NFD_CANCEL: user cancelled — neither save nor new-project proceeds
         }
     }
 

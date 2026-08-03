@@ -1,18 +1,22 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
 #include "UI.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <filesystem>
 
 #include "System.h"
@@ -46,20 +50,14 @@ namespace ADS::UI {
 #ifdef _WIN32
         ::SetProcessDPIAware();
 #endif
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) !=
-            0) {
+        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
             auto message = std::format("{0}:{1} - Error: {2}", __FILE__, __LINE__,
                                        SDL_GetError());
             spdlog::error(message);
             throw Imgui::Exceptions::window_initialization_exception(message);
         }
 
-        // macOS - High resolution configuration
-#ifdef __APPLE__
-        SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
-#endif
-
-        // From 2.0.18: Enable native IME.
+        // Enable native IME.
 #ifdef SDL_HINT_IME_SHOW_UI
         SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 #endif
@@ -72,8 +70,9 @@ namespace ADS::UI {
         this->io = &::ImGui::GetIO();
 
         // Initialize font manager after io is ready
+        // Fonts are loaded later in main() after the window is created,
+        // so the DPI scale is known and sizes can be multiplied correctly.
         this->fontManager = new Fonts(this->io);
-        this->fontManager->loadDefaultFonts();
 
         this->setIniConfiguration();
         this->setIOConfigFlags();
@@ -118,7 +117,6 @@ namespace ADS::UI {
         this->io = nullptr;
         this->fontManager = nullptr;
         this->currentTheme = nullptr;
-        this->init();
     }
 
     /**

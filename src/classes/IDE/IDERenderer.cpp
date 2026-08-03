@@ -1,17 +1,23 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 
 #include "IDERenderer.h"
+#include "DesignTokens.h"
+#include "IconsFontAwesome4.h"
 #include "imgui.h"
 #include "spdlog/spdlog.h"
 
@@ -21,7 +27,7 @@ namespace ADS::IDE {
         m_menuBarRenderer(nullptr),
         m_toolBarRenderer(nullptr),
         m_statusBarPanel(nullptr),
-        m_entitiesPanel(nullptr),
+        m_projectTreePanel(nullptr),
         m_inspectorPanel(nullptr),
         m_workingAreaPanel(nullptr),
         m_project(nullptr)
@@ -32,7 +38,7 @@ namespace ADS::IDE {
     IDERenderer::~IDERenderer()
     {
         delete m_statusBarPanel;
-        delete m_entitiesPanel;
+        delete m_projectTreePanel;
         delete m_inspectorPanel;
         delete m_workingAreaPanel;
         delete m_toolBarRenderer;
@@ -49,27 +55,81 @@ namespace ADS::IDE {
         m_toolBarRenderer = new ToolBarRenderer(m_layoutManager);
 
         // Create all panels
-        m_statusBarPanel = new Panels::StatusBarPanel();
-        m_entitiesPanel = new Panels::EntitiesPanel();
-        m_inspectorPanel = new Panels::InspectorPanel();
+        m_statusBarPanel   = new Panels::StatusBarPanel();
+        m_projectTreePanel = new Panels::ProjectTreePanel();
+        m_inspectorPanel   = new Panels::InspectorPanel();
         m_workingAreaPanel = new Panels::WorkingAreaPanel();
 
         // Create project with demo entities
-        m_project = new Core::Project("Demo Project");
-        m_project->addScene("scene_1", "Forest Entrance");
-        m_project->addScene("scene_2", "Dark Cave");
-        m_project->addCharacter("char_1", "Hero");
-        m_project->addCharacter("char_2", "Merchant");
-        m_project->addItem("item_1", "Magic Sword");
-        m_project->addItem("item_2", "Health Potion");
+        m_project = new Core::Project("La Cripta del Rey Olvidado");
+        m_project->addScene("intro",          "intro");
+        m_project->addScene("sala_entrada",   "sala_entrada");
+        m_project->addScene("pasillo_oscuro", "pasillo_oscuro");
+        m_project->addScene("camara_trampa",  "camara_trampa");
+        m_project->addScene("altar_final",    "altar_final");
+        m_project->addCharacter("guardian_sombra",  "guardian_sombra");
+        m_project->addCharacter("espectro_rey",     "espectro_rey");
+        m_project->addCharacter("mercader_sombras", "mercader_sombras");
+        m_project->addItem("llave_antigua", "llave_antigua");
+        m_project->addItem("antorcha",      "antorcha");
+        m_project->addItem("mapa_cripta",   "mapa_cripta");
 
-        // Wire panels: entity click → inspector update
-        m_entitiesPanel->setProject(m_project);
-        m_entitiesPanel->setSelectionCallback([this](Inspector::IInspectable* entity) {
-            m_inspectorPanel->setSelectedObject(entity);
-        });
+        // Wire project tree panel to inspector and status bar
+        m_projectTreePanel->setProject(m_project);
+        m_statusBarPanel->setProjectName(m_project->getName());
+        m_statusBarPanel->setCounts(
+            static_cast<int>(m_project->getScenes().size()),
+            static_cast<int>(m_project->getCharacters().size()),
+            0, 0);
 
-        // Wire navigation: File > New checks project state and can create a new one
+        m_projectTreePanel->onNodeSelected = [this](const std::string& id, Panels::NodeType) {
+            // Forward selection to inspector — search each vector by entity id
+            auto findById = [&id](const auto& vec) -> Inspector::IInspectable* {
+                for (const auto& e : vec)
+                    if (e->getId() == id) return e.get();
+                return nullptr;
+            };
+            if (auto* e = findById(m_project->getScenes()))     { m_inspectorPanel->setSelectedObject(e); return; }
+            if (auto* e = findById(m_project->getCharacters()))  { m_inspectorPanel->setSelectedObject(e); return; }
+            if (auto* e = findById(m_project->getItems()))       { m_inspectorPanel->setSelectedObject(e); }
+        };
+
+        m_projectTreePanel->onAddNode = [this](Panels::NodeType type) {
+            static int counter = 0;
+            ++counter;
+            switch (type) {
+                case Panels::NodeType::Scene:
+                    m_project->addScene(
+                        "scene_new_" + std::to_string(counter),
+                        "Nueva escena " + std::to_string(counter));
+                    break;
+                case Panels::NodeType::NPC:
+                    m_project->addCharacter(
+                        "npc_new_" + std::to_string(counter),
+                        "Nuevo personaje " + std::to_string(counter));
+                    break;
+                case Panels::NodeType::Item:
+                    m_project->addItem(
+                        "item_new_" + std::to_string(counter),
+                        "Nuevo objeto " + std::to_string(counter));
+                    break;
+                default: break;
+            }
+            m_projectTreePanel->rebuildFromProject();
+            m_statusBarPanel->setCounts(
+                static_cast<int>(m_project->getScenes().size()),
+                static_cast<int>(m_project->getCharacters().size()),
+                0, 0);
+            m_hasUnsavedChanges = true;
+        };
+
+        // When the inspector edits any property, refresh badges and mark dirty
+        m_inspectorPanel->onPropertyChanged = [this]() {
+            m_projectTreePanel->rebuildFromProject();
+            m_hasUnsavedChanges = true;
+        };
+
+        // Wire navigation callbacks
         m_menuBarRenderer->setNavigationCallbacks(
             [this]() { return m_project != nullptr; },
             [this]() { this->newProject(); }
@@ -130,6 +190,52 @@ namespace ADS::IDE {
         // Render toolbar content inline (before DockSpace so it reserves space)
         m_toolBarRenderer->renderContent();
 
+        // Project info bar — thin strip between toolbar and dockspace
+        {
+            using namespace ADS::IDE::Colors;
+            float barH = ImGui::GetFrameHeight() + 4.0f;
+
+            ImGui::PushStyleColor(ImGuiCol_ChildBg, BG2);
+            ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 0.0f);
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+
+            ImGui::BeginChild("##projectinfobar", ImVec2(0, barH), false,
+                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+            // Top/bottom border lines
+            ImDrawList* dl  = ImGui::GetWindowDrawList();
+            ImVec2      wp  = ImGui::GetWindowPos();
+            float       ww  = ImGui::GetWindowWidth();
+            ImU32       col = ImGui::ColorConvertFloat4ToU32(BORDER);
+            dl->AddLine({wp.x, wp.y},        {wp.x + ww, wp.y},        col, 1.0f);
+            dl->AddLine({wp.x, wp.y + barH}, {wp.x + ww, wp.y + barH}, col, 1.0f);
+
+            float textH = ImGui::GetTextLineHeight();
+            float posY  = (barH - textH) * 0.5f;
+
+            ImGui::SetCursorPos({10.0f, posY});
+
+            // Saved/unsaved dot indicator (ICON_FA_CIRCLE guaranteed in loaded icon font)
+            ImVec4 dotColor = m_hasUnsavedChanges ? C_WARN : C_OK;
+            ImGui::TextColored(dotColor, ICON_FA_CIRCLE);
+            ImGui::SameLine(0, 8);
+            ImGui::SetCursorPosY(posY);
+
+            // Project name
+            const char* name = (m_project ? m_project->getName().c_str() : "Sin proyecto");
+            ImGui::TextColored(TEXT0, "%s", name);
+
+            if (m_hasUnsavedChanges) {
+                ImGui::SameLine(0, 8);
+                ImGui::SetCursorPosY(posY);
+                ImGui::TextColored(TEXT2, "· sin guardar");
+            }
+
+            ImGui::EndChild();
+            ImGui::PopStyleVar(2);
+            ImGui::PopStyleColor();
+        }
+
         // Setup docking layout before creating the DockSpace
         ImGuiID dockSpaceId = ImGui::GetID("MyDockSpace");
         m_layoutManager->setDockSpaceId(dockSpaceId);
@@ -174,15 +280,15 @@ namespace ADS::IDE {
 
     void IDERenderer::newProject()
     {
-        // Clear inspector before destroying the entities it might reference
         m_inspectorPanel->clearSelection();
 
-        // Replace the project (new project starts with no file path)
         delete m_project;
-        m_project = new Core::Project("New Project");
+        m_project = new Core::Project("Nuevo proyecto");
+        spdlog::info("IDERenderer: new project created — '{}'", m_project->getName());
 
-        // Refresh the entities panel with the empty project
-        m_entitiesPanel->setProject(m_project);
+        m_projectTreePanel->setProject(m_project);
+        m_statusBarPanel->setProjectName(m_project->getName());
+        m_statusBarPanel->setCounts(0, 0, 0, 0);
     }
 
     void IDERenderer::render()
@@ -194,7 +300,7 @@ namespace ADS::IDE {
         m_statusBarPanel->render();
 
         // Render all dockable panels
-        m_entitiesPanel->render();
+        m_projectTreePanel->render();
         m_inspectorPanel->render();
         m_workingAreaPanel->render();
     }
@@ -204,9 +310,9 @@ namespace ADS::IDE {
         return m_statusBarPanel;
     }
 
-    Panels::EntitiesPanel *IDERenderer::getEntitiesPanel() const
+    Panels::ProjectTreePanel *IDERenderer::getProjectTreePanel() const
     {
-        return m_entitiesPanel;
+        return m_projectTreePanel;
     }
 
     Panels::InspectorPanel *IDERenderer::getInspectorPanel() const
