@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 /**
@@ -15,16 +19,37 @@
  * @brief Implementation of the BaseEntity class
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Jan 2026
+ * @version Mar 2026
  */
 
 #include "BaseEntity.h"
 
 namespace ADS::Entities {
-    BaseEntity::BaseEntity(const std::string& id, const std::string& name)
-        : m_id(id), m_name(name) {
+    /**
+     * @brief Construct a new BaseEntity backed by the given DataObject
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param data Non-owning pointer to the BaseData struct. Must not be null
+     *             and must outlive this entity (Core::Project guarantees this).
+     */
+    BaseEntity::BaseEntity(Data::BaseData* data)
+        : m_baseData(data) {
     }
 
+    /**
+     * @brief Notify subscribers of a property change
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Helper method for derived classes to fire property change events.
+     *
+     * @param propertyId The ID of the changed property
+     * @param oldValue The previous value
+     * @param newValue The new value
+     */
     void BaseEntity::notifyPropertyChanged(
         const std::string& propertyId,
         const Inspector::PropertyValue& oldValue,
@@ -34,23 +59,63 @@ namespace ADS::Entities {
         m_eventDispatcher.dispatch(event);
     }
 
+    /**
+     * @brief Get the display name of this entity
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Reads the name from the backing DataObject.
+     *
+     * @return std::string Human-readable display name
+     */
     std::string BaseEntity::getDisplayName() const {
-        return m_name;
+        return m_baseData->getName();
     }
 
+    /**
+     * @brief Get the property event dispatcher
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Returns a reference to the dispatcher used to subscribe to and
+     * fire property-changed events for this entity.
+     *
+     * @return Inspector::PropertyEventDispatcher& Reference to the event dispatcher
+     */
     Inspector::PropertyEventDispatcher& BaseEntity::getEventDispatcher() {
         return m_eventDispatcher;
     }
 
+    /**
+     * @brief Get the unique identifier
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return const std::string& Entity ID read from the backing DataObject
+     */
     const std::string& BaseEntity::getId() const {
-        return m_id;
+        return m_baseData->getId();
     }
 
+    /**
+     * @brief Set the display name
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Writes the new name into the backing DataObject and fires a
+     * property-changed event if the value actually changed.
+     *
+     * @param name New display name
+     */
     void BaseEntity::setName(const std::string& name) {
-        if (m_name != name) {
-            std::string oldName = m_name;
-            m_name = name;
-            notifyPropertyChanged("name", oldName, m_name);
+        if (m_baseData->getName() != name) {
+            std::string oldName = m_baseData->getName();
+            m_baseData->setName(name);
+            notifyPropertyChanged("name", oldName, m_baseData->getName());
         }
     }
 }

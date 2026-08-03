@@ -34,7 +34,16 @@ sudo apt install build-essential autoconf autoconf-archive automake libtool pkg-
 ```
 This installs GCC, G++, Make, and other essential build tools.
 
-**2. Install CMake:**
+**2. Install SDL3 system graphics and input libraries:**
+
+vcpkg builds SDL3 from source but links against system graphics/input libraries:
+```bash
+sudo apt install libx11-dev libxft-dev libxext-dev \
+                 libwayland-dev libxkbcommon-dev \
+                 libegl1-mesa-dev libibus-1.0-dev
+```
+
+**3. Install CMake:**
 ```bash
 sudo apt install cmake
 ```
@@ -47,12 +56,12 @@ sudo apt update
 sudo apt install cmake
 ```
 
-**3. Install Git:**
+**4. Install Git:**
 ```bash
 sudo apt install git
 ```
 
-**4. Verify installations:**
+**5. Verify installations:**
 ```bash
 g++ --version      # Should show GCC 11+
 cmake --version    # Should show 3.21+
@@ -69,17 +78,24 @@ git --version
 sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig python3-jinja2
 ```
 
-**2. Install CMake:**
+**2. Install SDL3 system graphics and input libraries:**
+```bash
+sudo dnf install libX11-devel libXft-devel libXext-devel \
+                 wayland-devel libxkbcommon-devel \
+                 mesa-libEGL-devel ibus-devel
+```
+
+**3. Install CMake:**
 ```bash
 sudo dnf install cmake
 ```
 
-**3. Install Git:**
+**4. Install Git:**
 ```bash
 sudo dnf install git
 ```
 
-**4. Verify installations:**
+**5. Verify installations:**
 ```bash
 g++ --version      # Should show GCC 11+
 cmake --version    # Should show 3.21+
@@ -171,23 +187,38 @@ This should find the cl.exe compiler path if Visual Studio Build Tools is instal
 
 #### 1. Install vcpkg
 
-vcpkg manages all project dependencies automatically. Install it system-wide:
+vcpkg manages all project dependencies automatically.
 
-**Linux/macOS:**
+**Linux:**
 ```bash
-# Clone vcpkg to /opt
+# Clone vcpkg to /opt (system-wide)
 sudo git clone https://github.com/microsoft/vcpkg.git /opt/vcpkg
-
-# Change ownership to your user
 sudo chown -R $USER:$USER /opt/vcpkg
 
 # Bootstrap vcpkg
 cd /opt/vcpkg
 ./bootstrap-vcpkg.sh
 
-# Set environment variable (add to ~/.bashrc or ~/.zshrc for persistence)
+# Set environment variable (add to ~/.bashrc for persistence)
 export VCPKG_ROOT=/opt/vcpkg
 echo 'export VCPKG_ROOT=/opt/vcpkg' >> ~/.bashrc
+```
+
+**macOS:**
+
+Install vcpkg in your home directory — this avoids `sudo` and the `chown` group issue (macOS uses `staff`, not a per-user group):
+```bash
+# Clone vcpkg to your home directory
+git clone https://github.com/microsoft/vcpkg.git ~/vcpkg
+
+# Bootstrap vcpkg
+cd ~/vcpkg
+./bootstrap-vcpkg.sh
+
+# Set environment variable (add to ~/.zshrc for persistence)
+export VCPKG_ROOT=~/vcpkg
+echo 'export VCPKG_ROOT=~/vcpkg' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 **Windows:**
@@ -219,7 +250,11 @@ For code browsing in your IDE (not required for building):
 ./setup-reference-libs.sh
 ```
 
-This clones imgui, nlohmann_json, and spdlog to `lib/` for reference only. The build uses vcpkg versions.
+This clones nlohmann_json and spdlog to `lib/` for reference only. The build uses vcpkg versions for those.
+
+> **Note:** Dear ImGui is **not** a reference-only library. The project vendors ImGui 1.92.7-docking
+> directly in `lib/imgui/` and builds it as a static library (`imgui_local`) from CMakeLists.txt.
+> After cloning the repository run `git submodule update --init --recursive` to initialise it.
 
 #### 4. Build the Project
 
@@ -255,9 +290,11 @@ Adventure_Designer_Studio.exe
 
 ### Project Dependencies
 
+Vendored (built from source, not via vcpkg):
+- **Dear ImGui** `1.92.7-docking` — Immediate mode GUI library with docking support; vendored in `lib/imgui/` and built as `imgui_local` static library. Includes the SDL3 renderer and platform backends. Vendored because vcpkg 1.92.x dropped SDL2 bindings and SDL3 became the supported path.
+
 Managed by vcpkg:
-- **imgui** `1.91.8#2` - Immediate mode GUI library (with SDL2 bindings and docking; pinned — later versions dropped SDL2 support)
-- **SDL2** - Graphics, windowing, and input
+- **SDL3** - Graphics, windowing, and input (replaces SDL2 as of April 2026)
 - **nlohmann-json** - JSON library
 - **spdlog** - Fast C++ logging library
 - **fmt** - String formatting library (used by spdlog)
@@ -269,15 +306,52 @@ Managed by vcpkg:
 Git submodule:
 - **IconFontCppHeaders** - Header-only icon font integration
 
+### IDE Setup (CLion, VS Code, etc.)
+
+When opening the project directly in an IDE, CMake is invoked without the vcpkg toolchain file, so dependencies like SDL3 won't be found. There are two ways to fix this:
+
+**Option A — Use a CMake Preset (recommended for CLion)**
+
+The project ships `CMakePresets.json` with `Debug (vcpkg)` and `Release (vcpkg)` presets. These require `VCPKG_ROOT` to be set:
+
+1. Set `VCPKG_ROOT` in CLion: **Settings → Build, Execution, Deployment → CMake → Environment** → add `VCPKG_ROOT=/opt/vcpkg` (or wherever you installed vcpkg).
+2. In the CMake profile, set **CMake preset** to `vcpkg-debug` or `vcpkg-release`.
+
+**Option B — Add the toolchain file to your CLion CMake profile**
+
+1. Open **Settings → Build, Execution, Deployment → CMake**.
+2. In your CMake profile, add to **CMake options**:
+   ```
+   -DCMAKE_TOOLCHAIN_FILE=/opt/vcpkg/scripts/buildsystems/vcpkg.cmake
+   ```
+   (Replace `/opt/vcpkg` with your actual vcpkg path.)
+
+**Option C — Launch CLion from a terminal that has VCPKG_ROOT set**
+
+```bash
+export VCPKG_ROOT=/opt/vcpkg
+open /Users/<you>/Applications/CLion.app
+```
+
+This ensures CLion inherits the shell environment. You can add the `export` line to `~/.zshrc` and launch CLion from a new terminal session.
+
+---
+
 ### Build Troubleshooting
 
 **"Cannot find vcpkg"**
 
-*Linux/macOS:*
+*Linux:*
 ```bash
 echo $VCPKG_ROOT  # Should print /opt/vcpkg
 ```
-If empty, set it: `export VCPKG_ROOT=/opt/vcpkg`
+If empty: `export VCPKG_ROOT=/opt/vcpkg`
+
+*macOS:*
+```bash
+echo $VCPKG_ROOT  # Should print /Users/<you>/vcpkg
+```
+If empty: `export VCPKG_ROOT=~/vcpkg` (then add to `~/.zshrc` for persistence)
 
 *Windows:*
 ```batch
@@ -310,5 +384,20 @@ build.bat
 No. You can run `build.bat` from a regular Command Prompt or PowerShell. CMake automatically detects Visual Studio Build Tools. Just ensure:
 1. CMake is in your PATH
 2. Visual Studio Build Tools with "Desktop development with C++" is installed
+
+**vcpkg fails building `libsystemd` (GCC 15+)**
+
+GCC 15 promotes a warning in `errno-to-name.h` to an error (`-Werror=override-init`), breaking
+the vcpkg build of `libsystemd`, which is pulled in transitively by SDL3's DBus support.
+
+This repository includes a vcpkg overlay port at `vcpkg-overlays/libsystemd/` that fixes the
+issue. It is picked up automatically — no manual action required. If you see the error anyway,
+verify that `vcpkg-configuration.json` contains the `overlay-ports` entry:
+
+```json
+{
+  "overlay-ports": ["./vcpkg-overlays"]
+}
+```
 
 **For detailed migration information**, see [VCPKG_MIGRATION.md](./VCPKG_MIGRATION.md) and [LIBRARY_SETUP.md](./LIBRARY_SETUP.md).

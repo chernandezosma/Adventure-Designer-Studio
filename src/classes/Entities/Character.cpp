@@ -1,38 +1,67 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 /**
  * @file Character.cpp
- * @brief Implementation of the Character entity class
+ * @brief Implementation of the Character entity (inspector adapter)
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
- * @version Jan 2026
+ * @version Mar 2026
  */
 
 #include "Character.h"
+#include "imgui.h"
 
 namespace ADS::Entities {
-    Character::Character(const std::string& id, const std::string& name)
-        : BaseEntity(id, name),
-          m_health(100),
-          m_maxHealth(100),
-          m_isPlayer(false),
-          m_dialogColor(1.0f, 1.0f, 1.0f, 1.0f) {
+    /**
+     * @brief Construct a new Character backed by the given CharacterData
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param data Non-owning pointer to the CharacterData struct. Must not be
+     *             null and must outlive this entity.
+     */
+    Character::Character(Data::CharacterData* data)
+        : BaseEntity(data), m_data(data) {
     }
 
+    /**
+     * @brief Get the type name of this entity
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return std::string Always returns "Character"
+     */
     std::string Character::getTypeName() const {
         return "Character";
     }
 
+    /**
+     * @brief Get the list of property descriptors for this character
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Returns metadata for all editable character properties, organised by
+     * category, for use by the inspector panel.
+     *
+     * @return std::vector<Inspector::PropertyDescriptor> Property descriptors
+     */
     std::vector<Inspector::PropertyDescriptor> Character::getPropertyDescriptors() const {
         using namespace Inspector;
 
@@ -51,6 +80,10 @@ namespace ADS::Entities {
                 .setCategory("General")
                 .setDescription("Set as the player-controlled character"),
 
+            PropertyDescriptor("startingSceneId", "Starting Scene", PropertyType::String)
+                .setCategory("General")
+                .setDescription("ID of the scene where this character starts"),
+
             // Stats category
             PropertyDescriptor("health", "Health", PropertyType::Int)
                 .setCategory("Stats")
@@ -67,6 +100,10 @@ namespace ADS::Entities {
                 .setCategory("Appearance")
                 .setDescription("Color used for this character's dialog text"),
 
+            PropertyDescriptor("portraitPath", "Portrait", PropertyType::String)
+                .setCategory("Appearance")
+                .setDescription("Path to the character portrait image"),
+
             // Info category (read-only)
             PropertyDescriptor("id", "ID", PropertyType::String)
                 .setCategory("Info")
@@ -75,18 +112,45 @@ namespace ADS::Entities {
         };
     }
 
+    /**
+     * @brief Get the current value of a property by ID
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param propertyId The unique property identifier string
+     * @return Inspector::PropertyValue Current value, or std::monostate if unknown
+     */
     Inspector::PropertyValue Character::getPropertyValue(const std::string& propertyId) const {
-        if (propertyId == "name") return m_name;
-        if (propertyId == "description") return m_description;
-        if (propertyId == "isPlayer") return m_isPlayer;
-        if (propertyId == "health") return m_health;
-        if (propertyId == "maxHealth") return m_maxHealth;
-        if (propertyId == "dialogColor") return m_dialogColor;
-        if (propertyId == "id") return m_id;
+        if (propertyId == "name")        return m_data->getName();
+        if (propertyId == "description") return m_data->getDescription();
+        if (propertyId == "isPlayer")    return m_data->isPlayer();
+        if (propertyId == "health")      return m_data->getHealth();
+        if (propertyId == "maxHealth")   return m_data->getMaxHealth();
+        if (propertyId == "dialogColor") {
+            const auto& c = m_data->getDialogColor();
+            return ImVec4(c.r, c.g, c.b, c.a);
+        }
+        if (propertyId == "portraitPath")    return m_data->getPortraitPath();
+        if (propertyId == "startingSceneId") return m_data->getStartingSceneId();
+        if (propertyId == "id")              return m_data->getId();
 
         return std::monostate{};
     }
 
+    /**
+     * @brief Set the value of a property by ID
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Validates the type of @p value against the expected type for
+     * @p propertyId before writing. Fires a property-changed event on success.
+     *
+     * @param propertyId The unique property identifier string
+     * @param value The new value (must match the property's expected type)
+     * @return bool True if the value was accepted and written, false otherwise
+     */
     bool Character::setPropertyValue(
         const std::string& propertyId,
         const Inspector::PropertyValue& value
@@ -123,7 +187,19 @@ namespace ADS::Entities {
         }
         else if (propertyId == "dialogColor") {
             if (auto* color = std::get_if<ImVec4>(&value)) {
-                setDialogColor(*color);
+                setDialogColor({color->x, color->y, color->z, color->w});
+                return true;
+            }
+        }
+        else if (propertyId == "portraitPath") {
+            if (auto* str = std::get_if<std::string>(&value)) {
+                setPortraitPath(*str);
+                return true;
+            }
+        }
+        else if (propertyId == "startingSceneId") {
+            if (auto* str = std::get_if<std::string>(&value)) {
+                setStartingSceneId(*str);
                 return true;
             }
         }
@@ -131,66 +207,209 @@ namespace ADS::Entities {
         return false;
     }
 
+    /**
+     * @brief Get the character's backstory and description text
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return const std::string& Backstory and description text
+     */
     const std::string& Character::getDescription() const {
-        return m_description;
+        return m_data->getDescription();
     }
 
+    /**
+     * @brief Set the character's backstory and description text
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event if the value actually changed.
+     *
+     * @param desc The new description text
+     */
     void Character::setDescription(const std::string& desc) {
-        if (m_description != desc) {
-            std::string oldDesc = m_description;
-            m_description = desc;
-            notifyPropertyChanged("description", oldDesc, m_description);
-        }
+        setAndNotify("description",
+            [this]{ return m_data->getDescription(); },
+            [this](const std::string& v){ m_data->setDescription(v); },
+            desc);
     }
 
+    /**
+     * @brief Get the current health points
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return int Current health point value
+     */
     int Character::getHealth() const {
-        return m_health;
+        return m_data->getHealth();
     }
 
+    /**
+     * @brief Set the current health points
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event if the value actually changed.
+     *
+     * @param health The new health point value
+     */
     void Character::setHealth(int health) {
-        if (m_health != health) {
-            int oldHealth = m_health;
-            m_health = health;
-            notifyPropertyChanged("health", oldHealth, m_health);
-        }
+        setAndNotify("health",
+            [this]{ return m_data->getHealth(); },
+            [this](int v){ m_data->setHealth(v); },
+            health);
     }
 
+    /**
+     * @brief Get the maximum health points
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return int Maximum health point value
+     */
     int Character::getMaxHealth() const {
-        return m_maxHealth;
+        return m_data->getMaxHealth();
     }
 
+    /**
+     * @brief Set the maximum health points
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event if the value actually changed.
+     *
+     * @param maxHealth The new maximum health point value
+     */
     void Character::setMaxHealth(int maxHealth) {
-        if (m_maxHealth != maxHealth) {
-            int oldMax = m_maxHealth;
-            m_maxHealth = maxHealth;
-            notifyPropertyChanged("maxHealth", oldMax, m_maxHealth);
-        }
+        setAndNotify("maxHealth",
+            [this]{ return m_data->getMaxHealth(); },
+            [this](int v){ m_data->setMaxHealth(v); },
+            maxHealth);
     }
 
+    /**
+     * @brief Check whether this character is the player character
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return bool True if this is the player-controlled character
+     */
     bool Character::isPlayer() const {
-        return m_isPlayer;
+        return m_data->isPlayer();
     }
 
+    /**
+     * @brief Set whether this character is the player character
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event if the value actually changed.
+     *
+     * @param isPlayer True to mark this as the player character
+     */
     void Character::setPlayer(bool isPlayer) {
-        if (m_isPlayer != isPlayer) {
-            bool oldValue = m_isPlayer;
-            m_isPlayer = isPlayer;
-            notifyPropertyChanged("isPlayer", oldValue, m_isPlayer);
+        setAndNotify("isPlayer",
+            [this]{ return m_data->isPlayer(); },
+            [this](bool v){ m_data->setPlayer(v); },
+            isPlayer);
+    }
+
+    /**
+     * @brief Get the color used for this character's dialog text
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return const ADS::Types::Color& Dialog text color
+     */
+    const ADS::Types::Color& Character::getDialogColor() const {
+        return m_data->getDialogColor();
+    }
+
+    /**
+     * @brief Set the color used for this character's dialog text
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event (as ImVec4) if the value actually changed.
+     *
+     * @param color The new dialog text color
+     */
+    void Character::setDialogColor(const ADS::Types::Color& color) {
+        if (m_data->getDialogColor() != color) {
+            const auto& old = m_data->getDialogColor();
+            ImVec4 oldVec(old.r, old.g, old.b, old.a);
+            m_data->setDialogColor(color);
+            ImVec4 newVec(color.r, color.g, color.b, color.a);
+            notifyPropertyChanged("dialogColor", oldVec, newVec);
         }
     }
 
-    const ImVec4& Character::getDialogColor() const {
-        return m_dialogColor;
+    /**
+     * @brief Get the path to the character portrait image
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return const std::string& File path to the portrait image
+     */
+    const std::string& Character::getPortraitPath() const {
+        return m_data->getPortraitPath();
     }
 
-    void Character::setDialogColor(const ImVec4& color) {
-        if (m_dialogColor.x != color.x ||
-            m_dialogColor.y != color.y ||
-            m_dialogColor.z != color.z ||
-            m_dialogColor.w != color.w) {
-            ImVec4 oldColor = m_dialogColor;
-            m_dialogColor = color;
-            notifyPropertyChanged("dialogColor", oldColor, m_dialogColor);
-        }
+    /**
+     * @brief Set the path to the character portrait image
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event if the value actually changed.
+     *
+     * @param path The new portrait image file path
+     */
+    void Character::setPortraitPath(const std::string& path) {
+        setAndNotify("portraitPath",
+            [this]{ return m_data->getPortraitPath(); },
+            [this](const std::string& v){ m_data->setPortraitPath(v); },
+            path);
+    }
+
+    /**
+     * @brief Get the ID of the scene where this character starts
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return const std::string& Starting scene ID
+     */
+    const std::string& Character::getStartingSceneId() const {
+        return m_data->getStartingSceneId();
+    }
+
+    /**
+     * @brief Set the ID of the scene where this character starts
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Fires a property-changed event if the value actually changed.
+     *
+     * @param sceneId The new starting scene ID
+     */
+    void Character::setStartingSceneId(const std::string& sceneId) {
+        setAndNotify("startingSceneId",
+            [this]{ return m_data->getStartingSceneId(); },
+            [this](const std::string& v){ m_data->setStartingSceneId(v); },
+            sceneId);
     }
 }

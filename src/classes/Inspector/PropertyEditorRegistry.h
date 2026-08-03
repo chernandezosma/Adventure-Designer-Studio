@@ -1,13 +1,17 @@
-/*
- * Adventure Designer Studio
+/**
  * Copyright (c) 2025 Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  *
- * This file is licensed under the GNU General Public License version 3 (GPLv3).
- * See LICENSE.md and COPYING for full license details.
+ * This file is part of this project.
  *
- * This software includes an additional requirement for visible attribution:
- * The original author's name must be displayed in any user interface or
- * promotional material.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License v3.0.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ * See the GNU General Public License for more details:
+ * https://www.gnu.org/licenses/
  */
 
 #ifndef ADS_PROPERTY_EDITOR_REGISTRY_H
@@ -109,6 +113,9 @@ namespace ADS::Inspector {
         /**
          * @brief Get the editor for a property type
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * @param type The property type
          * @return Editors::IPropertyEditor* Pointer to editor, or nullptr if not found
          */
@@ -143,8 +150,11 @@ namespace ADS::Inspector {
         /**
          * @brief Check if an editor exists for a property type
          *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
          * @param type The property type
-         * @return true if an editor is registered
+         * @return bool True if an editor is registered for this type
          */
         bool hasEditor(PropertyType type) const;
     };
