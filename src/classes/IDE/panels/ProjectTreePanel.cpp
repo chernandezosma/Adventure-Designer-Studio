@@ -82,19 +82,6 @@ static const char* iconForType(NodeType type)
     }
 }
 
-static ImVec4 colorForType(NodeType type)
-{
-    switch (type) {
-        case NodeType::Scene:            return C_SCENE;
-        case NodeType::NPC:              return C_NPC;
-        case NodeType::Item:             return C_ITEM;
-        case NodeType::Puzzle:           return C_PUZZLE;
-        case NodeType::Variable:         return C_VAR;
-        case NodeType::Audio:            return C_AUDIO;
-        default:                         return TEXT2;
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Construction
 // ---------------------------------------------------------------------------
@@ -434,7 +421,7 @@ void ProjectTreePanel::renderNode(TreeNode& node, bool isLast)
     rowLabel += "##node_" + node.id;
 
     ImGuiSelectableFlags selFlags = ImGuiSelectableFlags_AllowDoubleClick
-                                  | ImGuiSelectableFlags_SpanAvailWidth;
+                                  | static_cast<ImGuiSelectableFlags>(ImGuiSelectableFlags_SpanAvailWidth);
     bool clicked = ImGui::Selectable(rowLabel.c_str(), selected, selFlags, ImVec2(0, 0));
 
     ImGui::PopStyleColor(3);
