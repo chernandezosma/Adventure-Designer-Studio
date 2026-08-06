@@ -61,5 +61,49 @@
 
     "HELP_HEADER": "Aide",
     "HELP_ABOUT": "À propos"
+  },
+
+  "BADGE": {
+    "START": "début",
+    "END": "fin",
+    "WIN": "victoire",
+    "CONDITIONAL": "conditionnel",
+    "LOCKED": "verrouillé",
+    "KEY": "clé",
+    "USABLE": "utilisable",
+    "MISSION": "mission",
+    "SECRET": "secret",
+    "ERROR": "err",
+    "WARNING": "attn"
+  },
+  "TREE": {
+    "WINDOW_TITLE": "Projet",
+    "SEARCH_PLACEHOLDER": "Rechercher...",
+    "SECTION_SCENES": "SCÈNES",
+    "SECTION_CHARACTERS": "PERSONNAGES",
+    "SECTION_ITEMS": "OBJETS",
+    "SECTION_PUZZLES": "PUZZLES",
+    "SECTION_VARIABLES": "VARIABLES",
+    "SECTION_AUDIO": "AUDIO",
+    "STAT_SCENES": "scè",
+    "STAT_CHARACTERS": "pnj",
+    "STAT_ITEMS": "obj",
+    "STAT_PUZZLES": "puz",
+    "STAT_VARIABLES": "var",
+    "STAT_AUDIO": "aud",
+    "NODE_DESCRIPTION": "description",
+    "NODE_OPTIONS": "options",
+    "NODE_DIALOGS": "dialogues",
+    "CONTEXT_EDIT": "Modifier",
+    "CONTEXT_DUPLICATE": "Dupliquer",
+    "CONTEXT_DELETE": "Supprimer",
+    "FOOTER_NEW_SCENE": "+ Nouvelle scène",
+    "FOOTER_ADD": "Ajouter...",
+    "ADD_SCENE": "Scène",
+    "ADD_CHARACTER": "Personnage",
+    "ADD_ITEM": "Objet",
+    "ADD_PUZZLE": "Puzzle",
+    "ADD_VARIABLE": "Variable",
+    "ADD_AUDIO": "Audio"
   }
 }

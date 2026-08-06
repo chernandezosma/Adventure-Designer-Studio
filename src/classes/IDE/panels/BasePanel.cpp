@@ -110,7 +110,7 @@ namespace ADS::IDE::Panels {
     };
 
     std::string BasePanel::getImGuiLabel() const {
-        return m_windowTitle;
+        return m_windowTitle + "###" + m_windowName;
     }
 
 }

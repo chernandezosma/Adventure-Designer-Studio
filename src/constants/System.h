@@ -49,7 +49,9 @@ namespace ADS::Constants {
         /**
          * Path to the ImGui configuration file for persistent UI state.
          */
-        static constexpr auto CONFIG_FILE = "imgui.ini";
+        static constexpr auto CONFIG_FILE = "public/ads.ini";
+
+        static constexpr auto COLORS_INI_FILE = "public/colors.ini";
 
         /**
          * Default main window width in pixels.

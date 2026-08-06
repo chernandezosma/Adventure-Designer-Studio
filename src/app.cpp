@@ -310,6 +310,9 @@ namespace ADS::Core {
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
                 event.window.windowID == SDL_GetWindowID(m_mainWindow->getWindow()))
                 m_running = false;
+            if (event.type == SDL_EVENT_WINDOW_RESIZED &&
+                event.window.windowID == SDL_GetWindowID(m_mainWindow->getWindow()))
+                m_ideRenderer->notifyWindowResized();
         }
     }
 

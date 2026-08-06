@@ -24,7 +24,7 @@
 
 namespace ADS::IDE {
     LayoutManager::LayoutManager(): IDEBase(),
-        m_isDockingSetup(false), m_dockSpaceId(0) {
+        m_isDockingSetup(false), m_dockSpaceId(0), m_forceRebuild(false) {
     }
 
     bool LayoutManager::hasSavedLayout() {
@@ -41,22 +41,37 @@ namespace ADS::IDE {
         ImGui::DockBuilderAddNode(m_dockSpaceId, ImGuiDockNodeFlags_DockSpace);
         ImGui::DockBuilderSetNodeSize(m_dockSpaceId, ImGui::GetMainViewport()->Size);
 
-        // Split the dockspace into left, center, and right
+        // Split the dockspace into left, center, and right.
+        // NOTE: DockBuilderSplitNode's ratio is relative to the *remaining* area at
+        // each step, not the total width. To make both side panels exactly 20% of
+        // the TOTAL screen width:
+        //   left  = 0.20                -> 20% of the full width
+        //   right = target / (1 - left) -> 0.20 / 0.80 = 0.25, applied to the
+        //                                  remaining 80%, so right = 0.25 * 0.80
+        //                                  = 20% of the full width too
         ImGuiID dock_main_id = m_dockSpaceId;
         ImGuiID dock_left_id  = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left,  0.20f, nullptr, &dock_main_id);
         ImGuiID dock_right_id = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.25f, nullptr, &dock_main_id);
 
-        // Dock windows to their respective areas using the same translated titles the panels use
-        auto* tm = getTranslationManager();
-        ImGui::DockBuilderDockWindow("Proyecto",                      dock_left_id);
-        ImGui::DockBuilderDockWindow(tm->_t("INSPECTOR").c_str(),    dock_right_id);
-        ImGui::DockBuilderDockWindow(tm->_t("WORKING_AREA").c_str(), dock_main_id);
+        // Dock windows by their stable IDs (see BasePanel::getImGuiLabel()) —
+        // independent of the translated title text shown in each window's tab.
+        ImGui::DockBuilderDockWindow("###Proyecto",     dock_left_id);
+        ImGui::DockBuilderDockWindow("###hInspector",   dock_right_id);
+        ImGui::DockBuilderDockWindow("###hWorkingArea", dock_main_id);
 
         // Finalize the docking layout
         ImGui::DockBuilderFinish(m_dockSpaceId);
     }
 
     void LayoutManager::setupDockingLayout() {
+        // Forced rebuild (window resize, or an explicit reset) bypasses
+        // hasSavedLayout() entirely and always re-splits at the default ratios.
+        if (m_forceRebuild) {
+            m_forceRebuild = false;
+            createDefaultLayout();
+            return;
+        }
+
         // Only setup once
         if (m_isDockingSetup) {
             return;
@@ -76,6 +91,11 @@ namespace ADS::IDE {
 
     void LayoutManager::resetLayout() {
         m_isDockingSetup = false;
+        m_forceRebuild = true;
+    }
+
+    void LayoutManager::onWindowResized() {
+        m_forceRebuild = true;
     }
 
     void LayoutManager::setDockSpaceId(ImGuiID dockSpaceId) {

@@ -215,6 +215,20 @@ namespace ADS::IDE {
         void processPendingDialogs();
 
         /**
+         * @brief Notify the IDE that the main window was resized
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Forwards to LayoutManager::onWindowResized() so the Project/Inspector/
+         * Working Area panels are re-split at their default width ratios against
+         * the new window size on the next frame.
+         *
+         * @see LayoutManager::onWindowResized()
+         */
+        void notifyWindowResized();
+
+        /**
          * @brief Get the status bar panel
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
