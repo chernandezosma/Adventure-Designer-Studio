@@ -87,6 +87,7 @@ int main()
         });
 
         auto *flags = new ADS::UI::SDL_FLAGS();
+        flags->windowFlags = SDL_WINDOW_MAXIMIZED;
         ADS::UI::ImGuiManager &imguiObject = app->getImGuiObject();
         pair<boost::uuids::uuid, ADS::UI::Window *> windowInfo = imguiObject.newWindow(sdlWindowInformation, flags);
         ADS::UI::Window *mainWindow = windowInfo.second;
@@ -135,7 +136,8 @@ int main()
         mainWindow->setStyle();
 
         // Load colour tokens — after setStyle() so overrides land on top of the theme
-        ADS::IDE::Colors::loadFromFile("public/colors.ini");
+        // ADS::IDE::Colors::loadFromFile("public/colors.ini");
+        ADS::IDE::Colors::loadFromFile(System::COLORS_INI_FILE);
 
         // Run the application
         spdlog::info("Run the application");

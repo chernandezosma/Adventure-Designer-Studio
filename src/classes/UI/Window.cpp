@@ -18,6 +18,7 @@
 #include <string>
 
 #include <SDL3/SDL_video.h>
+#include <SDL3/SDL_surface.h>
 #include "app.h"
 
 #include "imgui_impl_sdl3.h"
@@ -63,6 +64,14 @@ namespace ADS::UI {
             string errorMessage = std::format("{}:{} Error: SDL_CreateWindow(): {}\n", __FILE__, __LINE__, SDL_GetError());
             spdlog::error(errorMessage);
             throw std::runtime_error(std::format("Failed to create window: {}", errorMessage));
+        }
+
+        SDL_Surface *iconSurface = SDL_LoadBMP("public/assets/icon.bmp");
+        if (iconSurface != nullptr) {
+            SDL_SetWindowIcon(this->window, iconSurface);
+            SDL_DestroySurface(iconSurface);
+        } else {
+            spdlog::warn("Window: could not load 'public/assets/icon.bmp': {}", SDL_GetError());
         }
 
         this->flags->rendererFlags = this->getDefaultRenderFlags() | flags->rendererFlags;

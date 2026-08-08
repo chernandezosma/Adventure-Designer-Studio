@@ -278,6 +278,11 @@ namespace ADS::IDE {
         m_menuBarRenderer->processPendingDialogs();
     }
 
+    void IDERenderer::notifyWindowResized()
+    {
+        m_layoutManager->onWindowResized();
+    }
+
     void IDERenderer::newProject()
     {
         m_inspectorPanel->clearSelection();

@@ -29,6 +29,7 @@
 #include "../IDE/themes/Theme.h"
 #include "../IDE/themes/DarkTheme.h"
 #include "../IDE/themes/LightTheme.h"
+#include "../IDE/DesignTokens.h"
 
 namespace ADS::UI {
     /**
@@ -76,6 +77,8 @@ namespace ADS::UI {
 
         this->setIniConfiguration();
         this->setIOConfigFlags();
+
+        ADS::IDE::Colors::loadFromFile("public/colors.ini");
 
         // Initialize theme based on preference
         if (this->darkTheme) {

@@ -46,6 +46,13 @@ namespace ADS::IDE {
         ImGuiID m_dockSpaceId;
 
         /**
+         * When true, the next setupDockingLayout() call rebuilds the default
+         * layout unconditionally, bypassing hasSavedLayout(). Set by
+         * onWindowResized() and resetLayout().
+         */
+        bool m_forceRebuild;
+
+        /**
          * @brief Create the default docking layout
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -166,6 +173,24 @@ namespace ADS::IDE {
          * @see setupDockingLayout(), createDefaultLayout()
          */
         void resetLayout();
+
+        /**
+         * @brief Notify the layout manager that the main window was resized
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Marks the default layout for an unconditional rebuild on the next
+         * setupDockingLayout() call, so the Project/Inspector/Working Area
+         * panels are re-split at their default width ratios against the new
+         * window size. This overrides any manual panel-width adjustments the
+         * user made by dragging a splitter.
+         *
+         * @note Actual DockBuilder calls happen later, inside
+         *       setupDockingLayout(), since they must run within an ImGui frame.
+         * @see setupDockingLayout(), createDefaultLayout()
+         */
+        void onWindowResized();
 
         /**
          * @brief Set the dockspace ID

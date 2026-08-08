@@ -61,5 +61,49 @@
 
     "HELP_HEADER": "Ayuda",
     "HELP_ABOUT": "Acerca de"
+  },
+
+  "BADGE": {
+    "START": "inicio",
+    "END": "fin",
+    "WIN": "victoria",
+    "CONDITIONAL": "condicional",
+    "LOCKED": "bloqueado",
+    "KEY": "llave",
+    "USABLE": "usable",
+    "MISSION": "misión",
+    "SECRET": "secreto",
+    "ERROR": "err",
+    "WARNING": "warn"
+  },
+  "TREE": {
+    "WINDOW_TITLE": "Proyecto",
+    "SEARCH_PLACEHOLDER": "Buscar...",
+    "SECTION_SCENES": "ESCENAS",
+    "SECTION_CHARACTERS": "PERSONAJES",
+    "SECTION_ITEMS": "OBJETOS",
+    "SECTION_PUZZLES": "PUZZLES",
+    "SECTION_VARIABLES": "VARIABLES",
+    "SECTION_AUDIO": "AUDIO",
+    "STAT_SCENES": "esc",
+    "STAT_CHARACTERS": "npc",
+    "STAT_ITEMS": "obj",
+    "STAT_PUZZLES": "puz",
+    "STAT_VARIABLES": "var",
+    "STAT_AUDIO": "aud",
+    "NODE_DESCRIPTION": "descripción",
+    "NODE_OPTIONS": "opciones",
+    "NODE_DIALOGS": "diálogos",
+    "CONTEXT_EDIT": "Editar",
+    "CONTEXT_DUPLICATE": "Duplicar",
+    "CONTEXT_DELETE": "Eliminar",
+    "FOOTER_NEW_SCENE": "+ Nueva escena",
+    "FOOTER_ADD": "Añadir...",
+    "ADD_SCENE": "Escena",
+    "ADD_CHARACTER": "Personaje",
+    "ADD_ITEM": "Objeto",
+    "ADD_PUZZLE": "Puzzle",
+    "ADD_VARIABLE": "Variable",
+    "ADD_AUDIO": "Audio"
   }
 }

@@ -22,6 +22,7 @@
 #include "IconsFontAwesome4.h"
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "app.h"
 
 #include <algorithm>
 #include <cctype>
@@ -38,24 +39,25 @@ using namespace ADS::IDE::Colors;
 struct BadgeStyle {
     ImVec4      textColor;
     ImVec4      bgColor;
-    const char* label;
+    std::string label;
 };
 
 static BadgeStyle getBadgeStyle(NodeBadge badge)
 {
+    const i18n::i18n* t = Core::App::getTranslationsManager();
     switch (badge) {
-        case NodeBadge::Start:       return {C_ITEM,   withAlpha(C_ITEM,   0.15f), "inicio"};
-        case NodeBadge::End:         return {C_ERROR,  withAlpha(C_ERROR,  0.15f), "fin"};
-        case NodeBadge::Win:         return {C_OK,     withAlpha(C_OK,     0.20f), "victoria"};
-        case NodeBadge::Conditional: return {C_PUZZLE, withAlpha(C_PUZZLE, 0.15f), "condicional"};
-        case NodeBadge::Locked:      return {C_VAR,    withAlpha(C_VAR,    0.15f), "bloqueado"};
-        case NodeBadge::Key:         return {C_SCENE,  withAlpha(C_SCENE,  0.15f), "llave"};
-        case NodeBadge::Usable:      return {C_PUZZLE, withAlpha(C_PUZZLE, 0.12f), "usable"};
-        case NodeBadge::Mission:     return {C_PUZZLE, withAlpha(C_PUZZLE, 0.15f), "misión"};
-        case NodeBadge::Secret:      return {C_VAR,    withAlpha(C_VAR,    0.15f), "secreto"};
-        case NodeBadge::Error:       return {C_ERROR,  withAlpha(C_ERROR,  0.15f), "err"};
-        case NodeBadge::Warning:     return {C_WARN,   withAlpha(C_WARN,   0.15f), "warn"};
-        default:                     return {{}, {}, nullptr};
+        case NodeBadge::Start:       return {C_ITEM,   withAlpha(C_ITEM,   0.15f), t->_t("BADGE.START")};
+        case NodeBadge::End:         return {C_ERROR,  withAlpha(C_ERROR,  0.15f), t->_t("BADGE.END")};
+        case NodeBadge::Win:         return {C_OK,     withAlpha(C_OK,     0.20f), t->_t("BADGE.WIN")};
+        case NodeBadge::Conditional: return {C_PUZZLE, withAlpha(C_PUZZLE, 0.15f), t->_t("BADGE.CONDITIONAL")};
+        case NodeBadge::Locked:      return {C_VAR,    withAlpha(C_VAR,    0.15f), t->_t("BADGE.LOCKED")};
+        case NodeBadge::Key:         return {C_SCENE,  withAlpha(C_SCENE,  0.15f), t->_t("BADGE.KEY")};
+        case NodeBadge::Usable:      return {C_PUZZLE, withAlpha(C_PUZZLE, 0.12f), t->_t("BADGE.USABLE")};
+        case NodeBadge::Mission:     return {C_PUZZLE, withAlpha(C_PUZZLE, 0.15f), t->_t("BADGE.MISSION")};
+        case NodeBadge::Secret:      return {C_VAR,    withAlpha(C_VAR,    0.15f), t->_t("BADGE.SECRET")};
+        case NodeBadge::Error:       return {C_ERROR,  withAlpha(C_ERROR,  0.15f), t->_t("BADGE.ERROR")};
+        case NodeBadge::Warning:     return {C_WARN,   withAlpha(C_WARN,   0.15f), t->_t("BADGE.WARNING")};
+        default:                     return {{}, {}, ""};
     }
 }
 
@@ -88,7 +90,9 @@ static const char* iconForType(NodeType type)
 
 ProjectTreePanel::ProjectTreePanel()
     : BasePanel("Proyecto")
-{}
+{
+    m_windowTitle = getTranslationsManager()->_t("TREE.WINDOW_TITLE");
+}
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -136,14 +140,14 @@ void ProjectTreePanel::rebuildFromProject()
 
         TreeNode desc;
         desc.id    = id + "_desc";
-        desc.label = "descripción";
+        desc.label = getTranslationsManager()->_t("TREE.NODE_DESCRIPTION");
         desc.type  = NodeType::SceneDescription;
         desc.depth = 1;
         node.children.push_back(desc);
 
         TreeNode opts;
         opts.id    = id + "_opts";
-        opts.label = "opciones";
+        opts.label = getTranslationsManager()->_t("TREE.NODE_OPTIONS");
         opts.type  = NodeType::SceneOptions;
         opts.depth = 1;
         node.children.push_back(opts);
@@ -167,7 +171,7 @@ void ProjectTreePanel::rebuildFromProject()
 
         TreeNode dialogs;
         dialogs.id    = id + "_dialogs";
-        dialogs.label = "diálogos";
+        dialogs.label = getTranslationsManager()->_t("TREE.NODE_DIALOGS");
         dialogs.type  = NodeType::NPCDialogs;
         dialogs.depth = 1;
         node.children.push_back(dialogs);
@@ -223,12 +227,12 @@ void ProjectTreePanel::render()
     float footerH = btnH + ImGui::GetStyle().ItemSpacing.y * 2.0f + 4.0f;
     ImGui::BeginChild("##tree_scroll", ImVec2(0.0f, -footerH));
 
-    renderSection("ESCENAS",    C_SCENE,  ICON_FA_MAP_MARKER,  m_scenes,    m_secScenes);
-    renderSection("PERSONAJES", C_NPC,    ICON_FA_USER,         m_npcs,      m_secNPCs);
-    renderSection("OBJETOS",    C_ITEM,   ICON_FA_CUBE,         m_items,     m_secItems);
-    renderSection("PUZZLES",    C_PUZZLE, ICON_FA_PUZZLE_PIECE, m_puzzles,   m_secPuzzles);
-    renderSection("VARIABLES",  C_VAR,    ICON_FA_CODE,         m_variables, m_secVars);
-    renderSection("AUDIO",      C_AUDIO,  ICON_FA_MUSIC,        m_audio,     m_secAudio);
+    renderSection(getTranslationsManager()->_t("TREE.SECTION_SCENES").c_str(),     C_SCENE,  ICON_FA_MAP_MARKER,  m_scenes,    m_secScenes);
+    renderSection(getTranslationsManager()->_t("TREE.SECTION_CHARACTERS").c_str(), C_NPC,    ICON_FA_USER,         m_npcs,      m_secNPCs);
+    renderSection(getTranslationsManager()->_t("TREE.SECTION_ITEMS").c_str(),      C_ITEM,   ICON_FA_CUBE,         m_items,     m_secItems);
+    renderSection(getTranslationsManager()->_t("TREE.SECTION_PUZZLES").c_str(),    C_PUZZLE, ICON_FA_PUZZLE_PIECE, m_puzzles,   m_secPuzzles);
+    renderSection(getTranslationsManager()->_t("TREE.SECTION_VARIABLES").c_str(),  C_VAR,    ICON_FA_CODE,         m_variables, m_secVars);
+    renderSection(getTranslationsManager()->_t("TREE.SECTION_AUDIO").c_str(),      C_AUDIO,  ICON_FA_MUSIC,        m_audio,     m_secAudio);
 
     ImGui::EndChild();
 
@@ -247,7 +251,7 @@ void ProjectTreePanel::renderSearchBar()
     ImGui::PushStyleColor(ImGuiCol_Text,           TEXT0);
 
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 8.0f);
-    ImGui::InputTextWithHint("##search", "Buscar...", m_searchBuf, sizeof(m_searchBuf));
+    ImGui::InputTextWithHint("##search", getTranslationsManager()->_t("TREE.SEARCH_PLACEHOLDER").c_str(), m_searchBuf, sizeof(m_searchBuf));
 
     ImGui::PopStyleColor(3);
 }
@@ -258,14 +262,14 @@ void ProjectTreePanel::renderSearchBar()
 
 void ProjectTreePanel::renderStatsStrip()
 {
-    struct Stat { ImVec4 color; int count; const char* label; };
+    struct Stat { ImVec4 color; int count; std::string label; };
     Stat stats[] = {
-        {C_SCENE,  static_cast<int>(m_scenes.size()),    "esc"},
-        {C_NPC,    static_cast<int>(m_npcs.size()),      "npc"},
-        {C_ITEM,   static_cast<int>(m_items.size()),     "obj"},
-        {C_PUZZLE, static_cast<int>(m_puzzles.size()),   "puz"},
-        {C_VAR,    static_cast<int>(m_variables.size()), "var"},
-        {C_AUDIO,  static_cast<int>(m_audio.size()),     "aud"},
+        {C_SCENE,  static_cast<int>(m_scenes.size()),    getTranslationsManager()->_t("TREE.STAT_SCENES")},
+        {C_NPC,    static_cast<int>(m_npcs.size()),      getTranslationsManager()->_t("TREE.STAT_CHARACTERS")},
+        {C_ITEM,   static_cast<int>(m_items.size()),     getTranslationsManager()->_t("TREE.STAT_ITEMS")},
+        {C_PUZZLE, static_cast<int>(m_puzzles.size()),   getTranslationsManager()->_t("TREE.STAT_PUZZLES")},
+        {C_VAR,    static_cast<int>(m_variables.size()), getTranslationsManager()->_t("TREE.STAT_VARIABLES")},
+        {C_AUDIO,  static_cast<int>(m_audio.size()),     getTranslationsManager()->_t("TREE.STAT_AUDIO")},
     };
 
     for (auto& s : stats) {
@@ -277,7 +281,7 @@ void ProjectTreePanel::renderStatsStrip()
         ImGui::SameLine(0, 2);
         ImGui::TextColored(TEXT0, "%d", s.count);
         ImGui::SameLine(0, 2);
-        ImGui::TextColored(TEXT2, "%s", s.label);
+        ImGui::TextColored(TEXT2, "%s", s.label.c_str());
         ImGui::SameLine(0, 8);
     }
     ImGui::NewLine();
@@ -360,18 +364,18 @@ void ProjectTreePanel::drawIndentLines(int depth, bool isLast, ImVec2 nodePos)
 static float badgePillWidth(NodeBadge badge)
 {
     BadgeStyle s = getBadgeStyle(badge);
-    if (!s.label) return 0.0f;
+    if (s.label.empty()) return 0.0f;
     const float padX = 4.0f;
-    return ImGui::CalcTextSize(s.label).x + padX * 2.0f;
+    return ImGui::CalcTextSize(s.label.c_str()).x + padX * 2.0f;
 }
 
 void ProjectTreePanel::drawBadgeAt(NodeBadge badge, ImVec2 pos)
 {
     BadgeStyle s = getBadgeStyle(badge);
-    if (!s.label)
+    if (s.label.empty())
         return;
 
-    ImVec2 textSz = ImGui::CalcTextSize(s.label);
+    ImVec2 textSz = ImGui::CalcTextSize(s.label.c_str());
     const float padX = 4.0f, padY = 1.0f, rounding = 7.0f;
     ImVec2 bMax = {pos.x + textSz.x + padX * 2.0f,
                    pos.y + textSz.y + padY * 2.0f};
@@ -380,7 +384,7 @@ void ProjectTreePanel::drawBadgeAt(NodeBadge badge, ImVec2 pos)
     dl->AddRectFilled(pos, bMax,
         ImGui::ColorConvertFloat4ToU32(s.bgColor), rounding);
     dl->AddText({pos.x + padX, pos.y + padY},
-        ImGui::ColorConvertFloat4ToU32(s.textColor), s.label);
+        ImGui::ColorConvertFloat4ToU32(s.textColor), s.label.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -483,13 +487,13 @@ void ProjectTreePanel::renderContextMenu(TreeNode& node)
         ImGui::OpenPopup(popupId.c_str());
 
     if (ImGui::BeginPopup(popupId.c_str())) {
-        if (ImGui::MenuItem(ICON_FA_PENCIL "  Editar"))
+        if (ImGui::MenuItem((std::string(ICON_FA_PENCIL) + "  " + getTranslationsManager()->_t("TREE.CONTEXT_EDIT")).c_str()))
             if (onNodeSelected) onNodeSelected(node.id, node.type);
-        if (ImGui::MenuItem(ICON_FA_FILES_O "  Duplicar"))
+        if (ImGui::MenuItem((std::string(ICON_FA_FILES_O) + "  " + getTranslationsManager()->_t("TREE.CONTEXT_DUPLICATE")).c_str()))
             if (onDuplicateNode) onDuplicateNode(node.id);
         ImGui::Separator();
         ImGui::PushStyleColor(ImGuiCol_Text, C_ERROR);
-        if (ImGui::MenuItem(ICON_FA_TRASH "  Eliminar"))
+        if (ImGui::MenuItem((std::string(ICON_FA_TRASH) + "  " + getTranslationsManager()->_t("TREE.CONTEXT_DELETE")).c_str()))
             if (onDeleteNode) onDeleteNode(node.id);
         ImGui::PopStyleColor();
         ImGui::EndPopup();
@@ -511,28 +515,28 @@ void ProjectTreePanel::renderFooter()
     ImGui::PushStyleColor(ImGuiCol_Text,          TEXT0);
 
     float btnHeight = ImGui::GetFrameHeight();
-    if (ImGui::Button("+ Nueva escena", {halfW, btnHeight}))
+    if (ImGui::Button(getTranslationsManager()->_t("TREE.FOOTER_NEW_SCENE").c_str(), {halfW, btnHeight}))
         if (onAddNode) onAddNode(NodeType::Scene);
 
     ImGui::SameLine(0, 4);
 
-    if (ImGui::Button("Añadir...", {halfW, btnHeight}))
+    if (ImGui::Button(getTranslationsManager()->_t("TREE.FOOTER_ADD").c_str(), {halfW, btnHeight}))
         ImGui::OpenPopup("add_element_popup");
 
     ImGui::PopStyleColor(4);
 
     if (ImGui::BeginPopup("add_element_popup")) {
-        if (ImGui::MenuItem(ICON_FA_MAP_MARKER "  Escena"))
+        if (ImGui::MenuItem((std::string(ICON_FA_MAP_MARKER) + "  " + getTranslationsManager()->_t("TREE.ADD_SCENE")).c_str()))
             if (onAddNode) onAddNode(NodeType::Scene);
-        if (ImGui::MenuItem(ICON_FA_USER "  Personaje"))
+        if (ImGui::MenuItem((std::string(ICON_FA_USER) + "  " + getTranslationsManager()->_t("TREE.ADD_CHARACTER")).c_str()))
             if (onAddNode) onAddNode(NodeType::NPC);
-        if (ImGui::MenuItem(ICON_FA_CUBE "  Objeto"))
+        if (ImGui::MenuItem((std::string(ICON_FA_CUBE) + "  " + getTranslationsManager()->_t("TREE.ADD_ITEM")).c_str()))
             if (onAddNode) onAddNode(NodeType::Item);
-        if (ImGui::MenuItem(ICON_FA_PUZZLE_PIECE "  Puzzle"))
+        if (ImGui::MenuItem((std::string(ICON_FA_PUZZLE_PIECE) + "  " + getTranslationsManager()->_t("TREE.ADD_PUZZLE")).c_str()))
             if (onAddNode) onAddNode(NodeType::Puzzle);
-        if (ImGui::MenuItem(ICON_FA_CODE "  Variable"))
+        if (ImGui::MenuItem((std::string(ICON_FA_CODE) + "  " + getTranslationsManager()->_t("TREE.ADD_VARIABLE")).c_str()))
             if (onAddNode) onAddNode(NodeType::Variable);
-        if (ImGui::MenuItem(ICON_FA_MUSIC "  Audio"))
+        if (ImGui::MenuItem((std::string(ICON_FA_MUSIC) + "  " + getTranslationsManager()->_t("TREE.ADD_AUDIO")).c_str()))
             if (onAddNode) onAddNode(NodeType::Audio);
         ImGui::EndPopup();
     }

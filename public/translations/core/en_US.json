@@ -61,5 +61,49 @@
 
     "HELP_HEADER": "Help",
     "HELP_ABOUT": "About"
+  },
+
+  "BADGE": {
+    "START": "start",
+    "END": "end",
+    "WIN": "win",
+    "CONDITIONAL": "conditional",
+    "LOCKED": "locked",
+    "KEY": "key",
+    "USABLE": "usable",
+    "MISSION": "mission",
+    "SECRET": "secret",
+    "ERROR": "err",
+    "WARNING": "warn"
+  },
+  "TREE": {
+    "WINDOW_TITLE": "Project",
+    "SEARCH_PLACEHOLDER": "Search...",
+    "SECTION_SCENES": "SCENES",
+    "SECTION_CHARACTERS": "CHARACTERS",
+    "SECTION_ITEMS": "ITEMS",
+    "SECTION_PUZZLES": "PUZZLES",
+    "SECTION_VARIABLES": "VARIABLES",
+    "SECTION_AUDIO": "AUDIO",
+    "STAT_SCENES": "sce",
+    "STAT_CHARACTERS": "npc",
+    "STAT_ITEMS": "itm",
+    "STAT_PUZZLES": "puz",
+    "STAT_VARIABLES": "var",
+    "STAT_AUDIO": "aud",
+    "NODE_DESCRIPTION": "description",
+    "NODE_OPTIONS": "options",
+    "NODE_DIALOGS": "dialogs",
+    "CONTEXT_EDIT": "Edit",
+    "CONTEXT_DUPLICATE": "Duplicate",
+    "CONTEXT_DELETE": "Delete",
+    "FOOTER_NEW_SCENE": "+ New scene",
+    "FOOTER_ADD": "Add...",
+    "ADD_SCENE": "Scene",
+    "ADD_CHARACTER": "Character",
+    "ADD_ITEM": "Item",
+    "ADD_PUZZLE": "Puzzle",
+    "ADD_VARIABLE": "Variable",
+    "ADD_AUDIO": "Audio"
   }
 }

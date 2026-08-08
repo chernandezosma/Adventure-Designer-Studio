@@ -60,6 +60,50 @@
 
     "HELP_HEADER": "Справка",
     "HELP_ABOUT": "О программе"
+  },
+
+  "BADGE": {
+    "START": "начало",
+    "END": "конец",
+    "WIN": "победа",
+    "CONDITIONAL": "условие",
+    "LOCKED": "заблокировано",
+    "KEY": "ключ",
+    "USABLE": "используемый",
+    "MISSION": "миссия",
+    "SECRET": "секрет",
+    "ERROR": "ошб",
+    "WARNING": "пред"
+  },
+  "TREE": {
+    "WINDOW_TITLE": "Проект",
+    "SEARCH_PLACEHOLDER": "Поиск...",
+    "SECTION_SCENES": "СЦЕНЫ",
+    "SECTION_CHARACTERS": "ПЕРСОНАЖИ",
+    "SECTION_ITEMS": "ПРЕДМЕТЫ",
+    "SECTION_PUZZLES": "ГОЛОВОЛОМКИ",
+    "SECTION_VARIABLES": "ПЕРЕМЕННЫЕ",
+    "SECTION_AUDIO": "АУДИО",
+    "STAT_SCENES": "сцн",
+    "STAT_CHARACTERS": "нпс",
+    "STAT_ITEMS": "прд",
+    "STAT_PUZZLES": "гол",
+    "STAT_VARIABLES": "пер",
+    "STAT_AUDIO": "ауд",
+    "NODE_DESCRIPTION": "описание",
+    "NODE_OPTIONS": "варианты",
+    "NODE_DIALOGS": "диалоги",
+    "CONTEXT_EDIT": "Изменить",
+    "CONTEXT_DUPLICATE": "Дублировать",
+    "CONTEXT_DELETE": "Удалить",
+    "FOOTER_NEW_SCENE": "+ Новая сцена",
+    "FOOTER_ADD": "Добавить...",
+    "ADD_SCENE": "Сцена",
+    "ADD_CHARACTER": "Персонаж",
+    "ADD_ITEM": "Предмет",
+    "ADD_PUZZLE": "Головоломка",
+    "ADD_VARIABLE": "Переменная",
+    "ADD_AUDIO": "Аудио"
   }
 }
 
