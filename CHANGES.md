@@ -16,6 +16,7 @@ Use `[x]` for completed items and `[ ]` for pending ones.
 - [x] Translation system (en_US, es_ES, de_DE, fr_FR, it_IT, pt_PT, ru_RU)
 - [x] Theme system
 - [x] Logging with spdlog
+- [x] Add Testing + Coverage support
 
 ### Project Entity (`Core::Project`)
 

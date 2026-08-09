@@ -47,6 +47,34 @@ namespace ADS::Data {
     {
         std::string direction; ///< Direction label (e.g. "north")
         std::string targetSceneId; ///< ID of the destination scene
+
+        /**
+         * @brief Check equality with another exit
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @param other The exit to compare against
+         * @return bool True if direction and targetSceneId are equal
+         */
+        bool operator==(const Exit& other) const
+        {
+            return direction == other.direction && targetSceneId == other.targetSceneId;
+        }
+
+        /**
+         * @brief Check inequality with another exit
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @param other The exit to compare against
+         * @return bool True if direction or targetSceneId differ
+         */
+        bool operator!=(const Exit& other) const
+        {
+            return !(*this == other);
+        }
     };
 
     /**

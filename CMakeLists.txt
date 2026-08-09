@@ -57,7 +57,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
     set(CMAKE_CXX_FLAGS_DEBUG "-g3 -O0 -Wall -Wextra -DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
-    set(CMAKE_CXX_FLAGS_TEST "-g3 -O0 -Wall -Wextra -DTEST_MODE")   ### NUEVO ###
+    set(CMAKE_CXX_FLAGS_TEST "-g3 -O0 -Wall -Wextra -DTEST_MODE --coverage")   ### NUEVO ###
+    set(CMAKE_EXE_LINKER_FLAGS_TEST "--coverage")
+    set(CMAKE_SHARED_LINKER_FLAGS_TEST "--coverage")
 elseif (MSVC)
     set(CMAKE_CXX_FLAGS_DEBUG "/Zi /Od /DEBUG:FULL /DDEBUG")
     set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG")
@@ -255,12 +257,14 @@ target_link_libraries(${ADSProject} PRIVATE
 # ----------------------------------------------------------
 include(CTest)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Test")    ### NUEVO ###
-    message(STATUS "Modo TEST activado — incluyendo GoogleTest")
+# Enable tests in Debug and RelWithDebInfo builds (good for development)
+if (CMAKE_BUILD_TYPE MATCHES "Debug|RelWithDebInfo|Test")
+    message(STATUS "Building tests — including GoogleTest")
     find_package(GTest CONFIG REQUIRED)
     add_subdirectory(tests)
     enable_testing()
 endif ()
+
 
 # ----------------------------------------------------------
 # --- Useful information

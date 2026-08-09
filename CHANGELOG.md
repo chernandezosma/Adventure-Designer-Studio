@@ -5,6 +5,62 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2026-08-09] — GoogleTest suite · coverage tooling
+
+### Added
+- Unit test suite (200 tests) across Types, Data, i18n, Entities, Inspector,
+  and Core, plus an integration suite exercising them together through
+  `Core::Project` (`tests/unit/`, `tests/integration/`).
+- `ads_inspector`/`ads_entities`/`ads_core` static libs in `tests/CMakeLists.txt`,
+  extracted the same way as the existing `ads_i18n`/`ads_utils`, so the test
+  binary links Inspector/Entities/Core without pulling in the full app target.
+- `--coverage` (gcov) instrumentation on the `Test` build type.
+- `tests/coverage/coverage.sh` — build + test + `lcov`/`genhtml` HTML report,
+  with `--ignore-errors inconsistent,unused` for lcov 2.x/GCC 15 compatibility.
+- `TESTING.md` — cross-platform build/test/coverage guide, including CLion
+  coverage setup and troubleshooting.
+- `Data::Exit` gained `operator==`/`operator!=`.
+
+### Changed
+- `tests/unit/i18n/` rewritten against the current JSON-only `i18n` API,
+  replacing tests left over from before the Properties/PO-format removal.
+- `.gitignore` updated to exclude generated coverage output.
+
+### Fixed
+- Test executable failed to link (`gtest`/`gtest_main` targets renamed to
+  `GTest::gtest`/`GTest::gtest_main`; `ads_i18n` was missing a `spdlog` link).
+
+---
+
+## [2026-08-08] — Fix translations (PR #9)
+
+### Added
+- `BADGE` and `TREE` translation keys added to all locale files (en_US,
+  es_ES, de_DE, fr_FR, it_IT, pt_PT, ru_RU) — `ProjectTreePanel` badges and
+  the project tree window now read their labels from the active translation
+  file instead of a hardcoded Spanish default.
+- `public/assets/icon.bmp` — application window icon, loaded via
+  `SDL_SetWindowIcon` in `Window`'s constructor.
+- `LayoutManager::onWindowResized()` / `IDERenderer::notifyWindowResized()` —
+  `App::run()`'s event pump now forwards `SDL_EVENT_WINDOW_RESIZED` so the
+  Project/Inspector/Working Area docked panels are re-split at their default
+  width ratios against the new window size, instead of staying pinned to
+  their original pixel widths.
+- `System::COLORS_INI_FILE` constant.
+
+### Changed
+- `public/ads.ini` now holds the persisted ImGui docking/window layout
+  (`System::CONFIG_FILE` moved from `imgui.ini` to `public/ads.ini`).
+- `BasePanel::getImGuiLabel()` returns a stable `"<title>###<name>"` ImGui ID
+  instead of the raw translated title, so `LayoutManager`'s
+  `DockBuilderDockWindow` calls target panels by stable ID (`"###Proyecto"`,
+  `"###hInspector"`, `"###hWorkingArea"`) rather than by their
+  language-dependent tab text — docking layout no longer breaks when the UI
+  language changes.
+- Main window now starts maximized (`SDL_WINDOW_MAXIMIZED`).
+
+---
+
 ## [2026-04-29] — SDL3 migration · ImGui 1.92.7 · HiDPI fix
 
 ### Added

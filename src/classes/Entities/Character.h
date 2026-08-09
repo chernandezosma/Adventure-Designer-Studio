@@ -32,9 +32,10 @@ namespace ADS::Entities {
      * and delegates all persistent storage to the backing Data::CharacterData
      * struct owned by Core::Project.
      */
-    class Character : public BaseEntity {
+    class Character : public BaseEntity
+    {
     private:
-        Data::CharacterData* m_data; ///< Non-owning pointer to the backing CharacterData
+        Data::CharacterData *m_data; ///< Non-owning pointer to the backing CharacterData
 
     public:
         /**
@@ -46,7 +47,7 @@ namespace ADS::Entities {
          * @param data Non-owning pointer to the CharacterData struct. Must not be
          *             null and must outlive this entity.
          */
-        explicit Character(Data::CharacterData* data);
+        explicit Character(Data::CharacterData *data);
 
         // IInspectable interface
 
@@ -82,7 +83,7 @@ namespace ADS::Entities {
          * @param propertyId The unique property identifier string
          * @return Inspector::PropertyValue Current value, or std::monostate if unknown
          */
-        Inspector::PropertyValue getPropertyValue(const std::string& propertyId) const override;
+        Inspector::PropertyValue getPropertyValue(const std::string &propertyId) const override;
 
         /**
          * @brief Set the value of a property by ID
@@ -97,10 +98,7 @@ namespace ADS::Entities {
          * @param value The new value (must match the property's expected type)
          * @return bool True if the value was accepted and written, false otherwise
          */
-        bool setPropertyValue(
-            const std::string& propertyId,
-            const Inspector::PropertyValue& value
-        ) override;
+        bool setPropertyValue(const std::string &propertyId, const Inspector::PropertyValue &value) override;
 
         // Character-specific getters/setters (operate on DataObject)
 
@@ -112,7 +110,7 @@ namespace ADS::Entities {
          *
          * @return const std::string& Backstory and description text
          */
-        const std::string& getDescription() const;
+        const std::string &getDescription() const;
 
         /**
          * @brief Set the character's backstory and description text
@@ -124,7 +122,7 @@ namespace ADS::Entities {
          *
          * @param desc The new description text
          */
-        void setDescription(const std::string& desc);
+        void setDescription(const std::string &desc);
 
         /**
          * @brief Get the current health points
@@ -200,7 +198,7 @@ namespace ADS::Entities {
          *
          * @return const ADS::Types::Color& Dialog text color
          */
-        const ADS::Types::Color& getDialogColor() const;
+        const ADS::Types::Color &getDialogColor() const;
 
         /**
          * @brief Set the color used for this character's dialog text
@@ -212,7 +210,7 @@ namespace ADS::Entities {
          *
          * @param color The new dialog text color
          */
-        void setDialogColor(const ADS::Types::Color& color);
+        void setDialogColor(const ADS::Types::Color &color);
 
         /**
          * @brief Get the path to the character portrait image
@@ -222,7 +220,7 @@ namespace ADS::Entities {
          *
          * @return const std::string& File path to the portrait image
          */
-        const std::string& getPortraitPath() const;
+        const std::string &getPortraitPath() const;
 
         /**
          * @brief Set the path to the character portrait image
@@ -234,7 +232,7 @@ namespace ADS::Entities {
          *
          * @param path The new portrait image file path
          */
-        void setPortraitPath(const std::string& path);
+        void setPortraitPath(const std::string &path);
 
         /**
          * @brief Get the ID of the scene where this character starts
@@ -244,7 +242,7 @@ namespace ADS::Entities {
          *
          * @return const std::string& Starting scene ID
          */
-        const std::string& getStartingSceneId() const;
+        const std::string &getStartingSceneId() const;
 
         /**
          * @brief Set the ID of the scene where this character starts
@@ -256,7 +254,7 @@ namespace ADS::Entities {
          *
          * @param sceneId The new starting scene ID
          */
-        void setStartingSceneId(const std::string& sceneId);
+        void setStartingSceneId(const std::string &sceneId);
     };
 }
 
