@@ -185,6 +185,16 @@ so CLion has nothing to collect there either.
    `tests/coverage/reports/`, alongside the `coverage.sh` output, since
    that whole folder is already gitignored as generated content).
 
+**Excluding `*Tests.cpp` from the report:** CLion's C/C++ coverage runner
+(gcov/llvm-cov based) has no built-in file-exclusion setting — the
+"Excluded classes and files" pattern list some JetBrains IDEs expose is a
+JVM (Java/Kotlin) coverage feature and doesn't apply here. The Coverage
+tool window and any report exported from it (step 4 above) will include
+`*Tests.cpp` files. If that's a problem, use `coverage.sh`'s `lcov
+--remove` instead (already configured to strip `*/tests/*Tests.cpp` — see
+above), which produces a `coverage.info` you can [import back into
+CLion](#importing-coverages-report-into-clion) already filtered.
+
 ## Viewing coverage in VS Code (MinGW GCC only)
 
 VS Code has no built-in coverage runner. On Windows, with a **MinGW-w64
