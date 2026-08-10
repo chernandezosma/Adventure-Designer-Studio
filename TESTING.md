@@ -95,6 +95,16 @@ sudo apt install lcov
 brew install lcov
 ```
 
+> **Windows:** `lcov`/`genhtml` aren't available — they're Perl scripts
+> that ship as Linux/macOS packages, and `tests/coverage/coverage.sh` is a
+> bash script besides. Don't try to install `lcov` on Windows. Note that
+> `--coverage` instrumentation itself is only wired up for the `GNU|Clang`
+> branch in the root `CMakeLists.txt` — plain MSVC builds get no gcov data
+> to report at all, regardless of tool. So coverage on Windows requires a
+> GCC-based toolchain (e.g. MinGW-w64), and then either:
+> - [CLion's built-in coverage runner](#viewing-coverage-in-clion), or
+> - [`gcovr` for VS Code / any other editor](#viewing-coverage-in-vs-code-mingw-gcc-only).
+
 **Run it:**
 
 ```bash
@@ -143,8 +153,10 @@ and green/red editor gutters as a native "Run with Coverage" session.
 ## Viewing coverage in CLion
 
 CLion has a built-in coverage runner that works without `lcov`/`genhtml` —
-useful on any platform, including Windows/MSVC where the shell script
-doesn't apply.
+useful on any platform, including Windows, as long as the CMake profile is
+configured with a GCC-based toolchain (e.g. MinGW-w64). Plain MSVC builds
+get no `--coverage` instrumentation at all (see the Windows note above),
+so CLion has nothing to collect there either.
 
 1. **Set up a Test CMake profile** (if you don't have one): **Settings →
    Build, Execution, Deployment → CMake** → add a profile with **Build
@@ -172,6 +184,50 @@ doesn't apply.
    `tests/coverage/reports/html-clion/` (keep it under
    `tests/coverage/reports/`, alongside the `coverage.sh` output, since
    that whole folder is already gitignored as generated content).
+
+## Viewing coverage in VS Code (MinGW GCC only)
+
+VS Code has no built-in coverage runner. On Windows, with a **MinGW-w64
+GCC** toolchain (MSVC produces no `--coverage` data — see the Windows note
+above), use `gcovr` instead of `lcov`/`genhtml`: it's pure Python, reads
+the same `.gcda`/`.gcno` files directly, and needs no bash or Perl.
+
+**Requires `gcovr`:**
+
+```bash
+pip install gcovr
+```
+
+**Configure and build the `Test` type, then run it from the build directory:**
+
+```bash
+cmake -B build-coverage -DCMAKE_BUILD_TYPE=Test
+cmake --build build-coverage
+ctest --test-dir build-coverage --output-on-failure
+```
+
+**Generate an HTML report directly:**
+
+```bash
+gcovr --root . --object-directory build-coverage \
+    --exclude 'lib/.*' --exclude 'tests/.*' --exclude '.*/vcpkg_installed/.*' \
+    --html --html-details -o tests/coverage/reports/html-gcovr/index.html
+```
+
+**Or emit an lcov-format tracefile** for the [Coverage
+Gutters](https://marketplace.visualstudio.com/items?itemName=ryanluker.vscode-coverage-gutters)
+extension, which then renders inline green/red gutters directly in the
+editor:
+
+```bash
+gcovr --root . --object-directory build-coverage \
+    --exclude 'lib/.*' --exclude 'tests/.*' --exclude '.*/vcpkg_installed/.*' \
+    --lcov -o tests/coverage/reports/coverage.info
+```
+
+Then in VS Code: install Coverage Gutters, run **"Coverage Gutters: Display
+Coverage"** (or **"Watch"**) from the command palette, and point it at
+`tests/coverage/reports/coverage.info` if it isn't picked up automatically.
 
 ## Troubleshooting
 

@@ -48,6 +48,7 @@ lcov --remove "${COVERAGE_INFO}" \
     '*/vcpkg_installed/*' \
     '*/lib/*' \
     '*/tests/*' \
+    '*/tests/*Tests.cpp' \
     --ignore-errors inconsistent,unused \
     --output-file "${COVERAGE_INFO}"
 
