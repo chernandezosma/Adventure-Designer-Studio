@@ -39,6 +39,7 @@
  * @see ADS::Entities::Scene
  * @see ADS::Entities::Character
  * @see ADS::Entities::Item
+ * @see ADS::Lexicon::Lexicon
  */
 
 #include <filesystem>
@@ -53,6 +54,7 @@
 #include "Entities/Scene.h"
 #include "Entities/Character.h"
 #include "Entities/Item.h"
+#include "Lexicon/Lexicon.h"
 
 namespace ADS::Core {
 
@@ -81,6 +83,12 @@ namespace ADS::Core {
         std::vector<std::unique_ptr<Entities::Scene>>      m_scenes;             ///< Owned scene entity adapters
         std::vector<std::unique_ptr<Entities::Character>>  m_characters;         ///< Owned character entity adapters
         std::vector<std::unique_ptr<Entities::Item>>       m_items;              ///< Owned item entity adapters
+
+        // --- Lexingine (vocabulary compiler subsystem) ---
+        // Default-initialised here, independent of the constructor's `name`
+        // parameter — the project/game display name is metadata, not
+        // vocabulary, and is never fed into the Lexicon.
+        std::unique_ptr<Lexicon::Lexicon> m_lexicon = std::make_unique<Lexicon::Lexicon>(); ///< Owned Lexicon — no ImGui dependency, no entity adapter
 
     public:
         /**
@@ -342,6 +350,22 @@ namespace ADS::Core {
          * @return const std::vector<std::unique_ptr<Data::ItemData>>&
          */
         [[nodiscard]] const std::vector<std::unique_ptr<Data::ItemData>>& getItemData() const;
+
+        // --- Lexingine ---
+
+        /**
+         * @brief Get the project's Lexicon (vocabulary compiler subsystem)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Unlike Scene/Character/Item, the Lexicon is a single instance per
+         * project rather than a collection — there is no per-entry inspector
+         * adapter for individual vocabulary entries.
+         *
+         * @return Lexicon::Lexicon& Reference to the owned Lexicon
+         */
+        [[nodiscard]] Lexicon::Lexicon& getLexicon() const;
     };
 
 } // namespace ADS::Core

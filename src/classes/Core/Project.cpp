@@ -226,4 +226,10 @@ namespace ADS::Core {
         return m_itemData;
     }
 
+    // --- Lexingine ---
+
+    Lexicon::Lexicon& Project::getLexicon() const {
+        return *m_lexicon;
+    }
+
 } // namespace ADS::Core

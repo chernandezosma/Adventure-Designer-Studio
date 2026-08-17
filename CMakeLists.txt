@@ -233,6 +233,20 @@ set(Sources
         # Core classes
         src/classes/Core/Project.cpp
         src/classes/Core/Project.h
+        # Lexicon system (Lexingine — vocabulary compiler)
+        src/classes/Lexicon/types.h
+        src/classes/Lexicon/LexEntry.cpp
+        src/classes/Lexicon/LexEntry.h
+        src/classes/Lexicon/INLPBackend.h
+        src/classes/Lexicon/FallbackNLPBackend.cpp
+        src/classes/Lexicon/FallbackNLPBackend.h
+        src/classes/Lexicon/ILexiconLookup.h
+        src/classes/Lexicon/SynonymPipeline.cpp
+        src/classes/Lexicon/SynonymPipeline.h
+        src/classes/Lexicon/Lexicon.cpp
+        src/classes/Lexicon/Lexicon.h
+        src/classes/Lexicon/LexiconSerializer.cpp
+        src/classes/Lexicon/LexiconSerializer.h
 )
 
 # ----------------------------------------------------------
