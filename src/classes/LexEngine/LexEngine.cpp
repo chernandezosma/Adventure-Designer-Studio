@@ -15,20 +15,20 @@
  */
 
 /**
- * @file Lexicon.cpp
- * @brief Implementation of the Lexicon container
+ * @file LexEngine.cpp
+ * @brief Implementation of the LexEngine container
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
  */
 
-#include "Lexicon.h"
+#include "LexEngine.h"
 
 #include <algorithm>
 
 #include "spdlog/spdlog.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     namespace {
         /// Maximum length of LexEntry::canonical, per the documented field constraint.
@@ -43,13 +43,13 @@ namespace ADS::Lexicon {
         }
     } // namespace
 
-    void Lexicon::feed(std::string_view sentence, const LanguageCode& lang, INLPBackend& backend) {
+    void LexEngine::feed(std::string_view sentence, const LanguageCode& lang, INLPBackend& backend) {
         for (const NLPToken& token : backend.analyse(sentence, lang)) {
             record(token);
         }
     }
 
-    LexEntry* Lexicon::record(const NLPToken& token) {
+    LexEntry* LexEngine::record(const NLPToken& token) {
         if (!token.isLexical()) {
             return nullptr;
         }
@@ -87,7 +87,7 @@ namespace ADS::Lexicon {
         return entry;
     }
 
-    void Lexicon::index() {
+    void LexEngine::index() {
         for (auto& [lang, entries] : m_entriesByLang) {
             std::sort(entries.begin(), entries.end(),
                 [](const std::unique_ptr<LexEntry>& a, const std::unique_ptr<LexEntry>& b) {
@@ -103,7 +103,7 @@ namespace ADS::Lexicon {
                     const std::size_t extendedRank = rank - (Token::SINGLE_BYTE_MAX - Token::SINGLE_BYTE_MIN + 1);
                     const auto tokenValue = static_cast<TokenIndex>(Token::EXTENDED_MIN + extendedRank);
                     if (tokenValue > Token::EXTENDED_MAX) {
-                        spdlog::warn("Lexicon: vocabulary for '{}' exceeds addressable TokenIndex range "
+                        spdlog::warn("LexEngine: vocabulary for '{}' exceeds addressable TokenIndex range "
                                      "({} entries) — '{}' left unassigned", lang, entries.size(), entry.canonical);
                         continue;
                     }
@@ -111,30 +111,52 @@ namespace ADS::Lexicon {
                 }
 
                 if (entry.isAmbiguous()) {
-                    spdlog::warn("Lexicon: ambiguous entry '{}' ({}) — dominant type '{}'",
+                    spdlog::warn("LexEngine: ambiguous entry '{}' ({}) — dominant type '{}'",
                                  entry.canonical, lang, WordTypeBits::name(entry.dominantType()));
                 }
             }
         }
     }
 
-    const std::vector<std::unique_ptr<LexEntry>>& Lexicon::getEntries(const LanguageCode& lang) const {
+    const std::vector<std::unique_ptr<LexEntry>>& LexEngine::getEntries(const LanguageCode& lang) const {
         static const std::vector<std::unique_ptr<LexEntry>> kEmpty;
         const auto it = m_entriesByLang.find(lang);
         return it != m_entriesByLang.end() ? it->second : kEmpty;
     }
 
-    LexEntry* Lexicon::findById(LexEntryId id) const {
+    LexEntry* LexEngine::findById(LexEntryId id) const {
         const auto it = m_byId.find(id);
         return it != m_byId.end() ? it->second : nullptr;
     }
 
-    LexEntryId Lexicon::findEntryId(std::string_view form, const LanguageCode& lang) const {
+    std::vector<LanguageCode> LexEngine::getLanguages() const {
+        std::vector<LanguageCode> languages;
+        languages.reserve(m_entriesByLang.size());
+        for (const auto& [lang, entries] : m_entriesByLang) {
+            languages.push_back(lang);
+        }
+        return languages;
+    }
+
+    LexEntry* LexEngine::restoreEntry(LexEntry entry, const LanguageCode& lang) {
+        auto owned = std::make_unique<LexEntry>(std::move(entry));
+        LexEntry* raw = owned.get();
+
+        m_byId.emplace(raw->id, raw);
+        m_lookupIndex.emplace(lookupKey(raw->canonical, lang), raw->id);
+        m_totalTokens[lang] += raw->rawCount();
+        m_nextId = std::max(m_nextId, static_cast<LexEntryId>(raw->id + 1));
+        m_entriesByLang[lang].push_back(std::move(owned));
+
+        return raw;
+    }
+
+    LexEntryId LexEngine::findEntryId(std::string_view form, const LanguageCode& lang) const {
         const auto it = m_lookupIndex.find(lookupKey(form, lang));
         return it != m_lookupIndex.end() ? it->second : INVALID_ENTRY_ID;
     }
 
-    std::vector<LexEntryId> Lexicon::findByStem(std::string_view stemValue,
+    std::vector<LexEntryId> LexEngine::findByStem(std::string_view stemValue,
                                                  const LanguageCode& lang,
                                                  LexEntryId excluding) const {
         std::vector<LexEntryId> matches;
@@ -151,4 +173,4 @@ namespace ADS::Lexicon {
         return matches;
     }
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine

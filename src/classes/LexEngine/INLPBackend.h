@@ -14,22 +14,22 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_INLP_BACKEND_H
-#define ADS_LEXICON_INLP_BACKEND_H
+#ifndef ADS_LEXENGINE_INLP_BACKEND_H
+#define ADS_LEXENGINE_INLP_BACKEND_H
 
 /**
  * @file INLPBackend.h
- * @brief NLP backend abstraction consumed by the Lexicon
+ * @brief NLP backend abstraction consumed by the LexEngine
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
  *
- * The Lexicon never depends on a concrete NLP library directly. A future
+ * The LexEngine never depends on a concrete NLP library directly. A future
  * UDPipe-backed implementation can be added behind this interface once
  * packaging (vcpkg overlay port or FetchContent) is resolved; today only
  * FallbackNLPBackend is provided.
  *
- * @see ADS::Lexicon::FallbackNLPBackend
+ * @see ADS::LexEngine::FallbackNLPBackend
  */
 
 #include <string_view>
@@ -37,7 +37,7 @@
 
 #include "types.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     /**
      * @brief Abstract interface for a sentence-level NLP analysis backend
@@ -67,6 +67,6 @@ namespace ADS::Lexicon {
                                                               const LanguageCode& lang) = 0;
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_INLP_BACKEND_H
+#endif // ADS_LEXENGINE_INLP_BACKEND_H

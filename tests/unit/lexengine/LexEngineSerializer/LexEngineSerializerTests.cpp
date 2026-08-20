@@ -16,10 +16,10 @@
 
 #include <gtest/gtest.h>
 
-#include "Lexicon/LexiconSerializer.h"
+#include "LexEngine/LexEngineSerializer.h"
 
 using namespace ADS;
-using namespace ADS::Lexicon;
+using namespace ADS::LexEngine;
 
 namespace {
 
@@ -39,11 +39,11 @@ namespace {
 
 } // namespace
 
-TEST(LexiconSerializer, ToJson_ProducesCanonicalNodeStructure)
+TEST(LexEngineSerializer, ToJson_ProducesCanonicalNodeStructure)
 {
     const LexEntry entry = makeSampleEntry();
 
-    const nlohmann::json json = LexiconSerializer::toJson(entry);
+    const nlohmann::json json = LexEngineSerializer::toJson(entry);
 
     EXPECT_EQ(json.at("id").get<LexEntryId>(), 3u);
     EXPECT_EQ(json.at("lang").get<std::string>(), "es_ES");
@@ -63,11 +63,11 @@ TEST(LexiconSerializer, ToJson_ProducesCanonicalNodeStructure)
     EXPECT_TRUE(json.at("synonym_meta")[1].at("confirmed").get<bool>());
 }
 
-TEST(LexiconSerializer, RoundTrip_PreservesPersistedFields)
+TEST(LexEngineSerializer, RoundTrip_PreservesPersistedFields)
 {
     const LexEntry original = makeSampleEntry();
 
-    const LexEntry restored = LexiconSerializer::fromJson(LexiconSerializer::toJson(original));
+    const LexEntry restored = LexEngineSerializer::fromJson(LexEngineSerializer::toJson(original));
 
     EXPECT_EQ(restored.id, original.id);
     EXPECT_EQ(restored.lang, original.lang);
@@ -85,14 +85,14 @@ TEST(LexiconSerializer, RoundTrip_PreservesPersistedFields)
     EXPECT_TRUE(restored.synonyms[1].confirmed);
 }
 
-TEST(LexiconSerializer, RoundTrip_DoesNotReconstructDominantTypeOrDiagnostics)
+TEST(LexEngineSerializer, RoundTrip_DoesNotReconstructDominantTypeOrDiagnostics)
 {
     // dominant_type, type_counts, upos_raw, feats, stem, compiled_token are
     // documented as NOT persisted — verify the round trip does not silently
     // fabricate them.
     const LexEntry original = makeSampleEntry();
 
-    const LexEntry restored = LexiconSerializer::fromJson(LexiconSerializer::toJson(original));
+    const LexEntry restored = LexEngineSerializer::fromJson(LexEngineSerializer::toJson(original));
 
     EXPECT_EQ(restored.dominantType(), WordTypeBits::None);
     EXPECT_TRUE(restored.upos_raw.empty());
@@ -100,7 +100,7 @@ TEST(LexiconSerializer, RoundTrip_DoesNotReconstructDominantTypeOrDiagnostics)
     EXPECT_EQ(restored.compiledToken(), Token::UNASSIGNED);
 }
 
-TEST(LexiconSerializer, FromJson_MissingSynonymMeta_DefaultsToManuallyConfirmed)
+TEST(LexEngineSerializer, FromJson_MissingSynonymMeta_DefaultsToManuallyConfirmed)
 {
     nlohmann::json json;
     json["id"]        = 1;
@@ -113,10 +113,61 @@ TEST(LexiconSerializer, FromJson_MissingSynonymMeta_DefaultsToManuallyConfirmed)
     json["synonyms"]  = {7};
     // synonym_meta intentionally absent.
 
-    const LexEntry restored = LexiconSerializer::fromJson(json);
+    const LexEntry restored = LexEngineSerializer::fromJson(json);
 
     ASSERT_EQ(restored.synonyms.size(), 1u);
     EXPECT_EQ(restored.synonyms[0].target, 7u);
     EXPECT_FLOAT_EQ(restored.synonyms[0].confidence, 1.0f);
     EXPECT_TRUE(restored.synonyms[0].confirmed);
+}
+
+// =============================================================================
+// Whole-engine toJson()/fromJson()
+// =============================================================================
+
+TEST(LexEngineSerializer, EngineToJson_ProducesVersionedEntriesArray)
+{
+    ADS::LexEngine::LexEngine engine;
+    engine.restoreEntry(makeSampleEntry(), "es_ES");
+
+    const nlohmann::json document = LexEngineSerializer::toJson(engine);
+
+    EXPECT_EQ(document.at("version").get<int>(), 1);
+    ASSERT_EQ(document.at("entries").size(), 1u);
+    EXPECT_EQ(document.at("entries")[0].at("canonical").get<std::string>(), "abrir");
+}
+
+TEST(LexEngineSerializer, EngineRoundTrip_PreservesEveryEntryAcrossLanguages)
+{
+    ADS::LexEngine::LexEngine original;
+    LexEntry es = makeSampleEntry();
+    LexEntry en;
+    en.id       = 99;
+    en.lang      = "en_US";
+    en.canonical = "open";
+    en.accumulate(10);
+    original.restoreEntry(es, "es_ES");
+    original.restoreEntry(en, "en_US");
+
+    const nlohmann::json document = LexEngineSerializer::toJson(original);
+
+    ADS::LexEngine::LexEngine restored;
+    LexEngineSerializer::fromJson(restored, document);
+
+    ASSERT_EQ(restored.getEntries("es_ES").size(), 1u);
+    ASSERT_EQ(restored.getEntries("en_US").size(), 1u);
+    EXPECT_EQ(restored.findById(3)->canonical, "abrir");
+    EXPECT_EQ(restored.findById(99)->canonical, "open");
+}
+
+TEST(LexEngineSerializer, EngineFromJson_UnsupportedVersion_LeavesEngineEmpty)
+{
+    nlohmann::json document;
+    document["version"] = 999;
+    document["entries"] = nlohmann::json::array({LexEngineSerializer::toJson(makeSampleEntry())});
+
+    ADS::LexEngine::LexEngine engine;
+    LexEngineSerializer::fromJson(engine, document);
+
+    EXPECT_TRUE(engine.getLanguages().empty());
 }

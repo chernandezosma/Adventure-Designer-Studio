@@ -14,8 +14,8 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_SYNONYM_PIPELINE_H
-#define ADS_LEXICON_SYNONYM_PIPELINE_H
+#ifndef ADS_LEXENGINE_SYNONYM_PIPELINE_H
+#define ADS_LEXENGINE_SYNONYM_PIPELINE_H
 
 /**
  * @file SynonymPipeline.h
@@ -24,7 +24,7 @@
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
  *
- * Runs automatically on every new Lexicon insertion, in order, with
+ * Runs automatically on every new LexEngine insertion, in order, with
  * short-circuit propagation: if a layer produces a match, the reduced
  * form (not the original) is passed to the next layer.
  *
@@ -34,27 +34,27 @@
  *
  * Confidence by origin:
  *   1.0  manually confirmed by the author (not produced by this pipeline)
- *   0.9  Layer 1: affix detected and the reduced root exists in the Lexicon
+ *   0.9  Layer 1: affix detected and the reduced root exists in the LexEngine
  *   0.6  Layer 2: shared stem
  *   0.4  Layer 3: semantic-similarity candidate (currently never produced)
  *
  * If an affix is detected but the reduced root does NOT exist in the
- * Lexicon, the match is discarded entirely rather than proposed at lower
+ * LexEngine, the match is discarded entirely rather than proposed at lower
  * confidence — this is the explicit rule in both design documents
- * (docs/core/lexicon/Lexingine.md §2.3, docs/core/lexicon/vocabulary.md
+ * (docs/core/lexengine/LexEngine.md §2.3, docs/core/lexengine/vocabulary.md
  * "Layer 1"), stated to prevent false positives such as Spanish
  * "recabar" -> "cabar" where the candidate root is not itself a word.
  *
- * @see ADS::Lexicon::ILexiconLookup
+ * @see ADS::LexEngine::ILexEngineLookup
  */
 
 #include <string_view>
 #include <vector>
 
-#include "ILexiconLookup.h"
+#include "ILexEngineLookup.h"
 #include "types.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     /**
      * @brief Runs the three-layer synonym detection pipeline for one entry
@@ -73,15 +73,15 @@ namespace ADS::Lexicon {
          * @param canonical Canonical form of the entry being processed
          * @param entryId Id of the entry being processed — excluded from its own candidate list
          * @param lang Language of the entry
-         * @param lookup Read-only Lexicon view used to validate candidate roots and find stem siblings
+         * @param lookup Read-only LexEngine view used to validate candidate roots and find stem siblings
          * @return std::vector<SynonymLink> Proposed (unconfirmed) synonym links, possibly empty
          */
         [[nodiscard]] static std::vector<SynonymLink> run(std::string_view canonical,
                                                             LexEntryId entryId,
                                                             const LanguageCode& lang,
-                                                            const ILexiconLookup& lookup);
+                                                            const ILexEngineLookup& lookup);
 
-        /// Confidence assigned to a Layer 1 match (affix detected, root exists in the Lexicon).
+        /// Confidence assigned to a Layer 1 match (affix detected, root exists in the LexEngine).
         static constexpr float LAYER1_CONFIDENCE = 0.9f;
 
         /// Confidence assigned to a Layer 2 match (shared stem, fallback mode).
@@ -95,12 +95,12 @@ namespace ADS::Lexicon {
          * @brief Layer 1 — strip a productive prefix/suffix and check the root exists
          * @param canonical Canonical form to reduce
          * @param lang Language selecting the affix table
-         * @param lookup Read-only Lexicon view used to validate the candidate root
+         * @param lookup Read-only LexEngine view used to validate the candidate root
          * @return LexEntryId Root entry id if a valid reduction was found, INVALID_ENTRY_ID otherwise
          */
         [[nodiscard]] static LexEntryId affixLayer(std::string_view canonical,
                                                      const LanguageCode& lang,
-                                                     const ILexiconLookup& lookup);
+                                                     const ILexEngineLookup& lookup);
 
         /**
          * @brief Layer 3 — semantic-similarity candidates
@@ -114,6 +114,6 @@ namespace ADS::Lexicon {
         [[nodiscard]] static std::vector<SynonymLink> semanticLayer();
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_SYNONYM_PIPELINE_H
+#endif // ADS_LEXENGINE_SYNONYM_PIPELINE_H

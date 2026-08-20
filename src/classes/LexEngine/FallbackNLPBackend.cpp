@@ -28,7 +28,7 @@
 #include <cctype>
 #include <unordered_map>
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     namespace {
 
@@ -185,4 +185,4 @@ namespace ADS::Lexicon {
         return tokens;
     }
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine

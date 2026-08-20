@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 A scene represents a location in the game world — what classic text adventures
 call a *scene*. It is the primary container for items and the hub through which
 the player navigates. A scene has no mass, no vocabulary entry of its own (the
-lexicon engine manages all name resolution), and no combinatorial behaviour. Its
+LexEngine manages all name resolution), and no combinatorial behaviour. Its
 character comes entirely from the items it holds, the exits it exposes, and the
 triggers it defines.
 
@@ -38,11 +38,11 @@ Index
 
 In general all Strings are not stored as a literal in this schema. Like any
 other player-facing text, it must be authored through the
-[Lexicon](../lexicon/vocabulary.md) so a translated form exists for every
+[LexEngine](../lexengine/vocabulary.md) so a translated form exists for every
 language the project authors in — not just the one language a given build is
 compiled for.
-`name` therefore holds a Lexicon entry `id` (`uint32_t`, per the
-[Canonical Node Structure](../lexicon/vocabulary.md#canonical-node-structure)),
+`name` therefore holds a LexEngine entry `id` (`uint32_t`, per the
+[Canonical Node Structure](../lexengine/vocabulary.md#canonical-node-structure)),
 and the compiler resolves it to that build's target-language text at compile
 time, exactly as it does for the
 `texts` group
@@ -82,7 +82,7 @@ have no separate ROM segment. The `affordances` byte is logically read-only
 `state` byte are both mutable and zero-initialised at startup — `flags`
 as independent booleans, `state` as a single catalog `id` (`0` = `None`).
 
-The descriptions are tokenised by the lexicon engine and stored as token ID
+The descriptions are tokenised by the LexEngine and stored as token ID
 arrays; no ASCII strings appear in the compiled output.
 
 The `exits` block compiles to a fixed 10-entry array of `SceneId` values (one
@@ -96,13 +96,13 @@ is shared by every element that supports triggers, not just scenes.
 
 ## Descriptions definition
 
-A field type of `<Text>` holds a Lexicon entry `id` (`uint32_t`, per
-the [Canonical Node Structure](../lexicon/vocabulary.md#canonical-node-structure)),
+A field type of `<Text>` holds a LexEngine entry `id` (`uint32_t`, per
+the [Canonical Node Structure](../lexengine/vocabulary.md#canonical-node-structure)),
 and the compiler will resolves it to that build's target-language text at
 compile time.
 
 The size/length limits and `<String>` markers below describe the *authored* text
-the Lexicon entry ultimately resolves to, not the field's storage type.
+the LexEngine entry ultimately resolves to, not the field's storage type.
 
 So the definition for a text, that we will use in the rest of these documents,
 it is defined as below and we can use as `<Text,128>` to indicate a Text with a
@@ -111,7 +111,7 @@ it is defined as below and we can use as `<Text,128>` to indicate a Text with a
 ```json
 {
   "Text": {
-    "<uint32_t>": "Lexicon Id (pointer)",
+    "<uint32_t>": "LexEngine Id (pointer)",
     "<uint8_t>": "Maximum string length"
   }
 }
@@ -119,24 +119,24 @@ it is defined as below and we can use as `<Text,128>` to indicate a Text with a
 
 None of the four fields below are stored as literal strings in this schema. Like
 any other player-facing text, each must be authored through
-the [Lexicon](../lexicon/vocabulary.md) so a translated form exists for every
+the [LexEngine](../lexengine/vocabulary.md) so a translated form exists for every
 language the project authors in — not just the one language a given build is
 compiled for.
 
 ```json
 {
   "desriptions": {
-    "normal": "<Text> — Lexicon id; text max: 128 — shown on revisit or LOOK",
-    "long": "<Text> — Lexicon id; text max: 255 — shown on first visit",
-    "odor": "<Text> —Preface notes Lexicon id; text max: 255 — optional; omit if no ambient smell",
-    "sound": "<Text> — Lexicon id; text max: 255 — optional; omit if no ambient sound"
+    "normal": "<Text> — LexEngine id; text max: 128 — shown on revisit or LOOK",
+    "long": "<Text> — LexEngine id; text max: 255 — shown on first visit",
+    "odor": "<Text> —Preface notes LexEngine id; text max: 255 — optional; omit if no ambient smell",
+    "sound": "<Text> — LexEngine id; text max: 255 — optional; omit if no ambient sound"
   }
 }
 ```
 
 ### Details
 
-Each of the entries above is a Lexicon-backed text field describing some sensory
+Each of the entries above is a LexEngine-backed text field describing some sensory
 or narrative aspect of the object holding this `texts` group (scene, item, or
 character). They are detailed below.
 
@@ -191,7 +191,7 @@ a new one you must define it above the 200 position:
   "condition": [
     {
       "id": "<uint8_t>",
-      "name": "<uint32_t> — Lexicon entry id; see lexicon/vocabulary.md",
+      "name": "<uint32_t> — LexEngine entry id; see ../lexengine/vocabulary.md",
       "category": "<uint8_t>",
       "description": "<Text, 128> — shown to the player while active",
       "effect": "<EventId> — fired when this condition becomes active."
@@ -206,7 +206,7 @@ a new one you must define it above the 200 position:
 referenced by a character's `condition` field. `0` is reserved for `None`.
 
 <font color="#C27AFF">name</font>: `uint32_t` reference to a
-[Lexicon entry](../lexicon/vocabulary.md#lexicon-entry-structure) rather than a
+[LexEngine entry](../lexengine/vocabulary.md#lexengine-entry-structure) rather than a
 literal string, so the condition's visible name is translated into every
 authored language. Used to identify the condition in the IDE and in
 triggers/conditions; the tables below show its English form for readability

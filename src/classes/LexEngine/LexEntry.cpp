@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     void LexEntry::observeType(WordType singleBit) noexcept {
         assert(singleBit != WordTypeBits::None);
@@ -63,4 +63,4 @@ namespace ADS::Lexicon {
         return canonical <=> other.canonical;
     }
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine

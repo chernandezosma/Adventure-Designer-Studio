@@ -16,10 +16,10 @@
 
 #include <gtest/gtest.h>
 
-#include "Lexicon/FallbackNLPBackend.h"
+#include "LexEngine/FallbackNLPBackend.h"
 
 using namespace ADS;
-using namespace ADS::Lexicon;
+using namespace ADS::LexEngine;
 
 TEST(FallbackNLPBackend, Analyse_SetsFallbackConfidenceAndOtherWordType)
 {

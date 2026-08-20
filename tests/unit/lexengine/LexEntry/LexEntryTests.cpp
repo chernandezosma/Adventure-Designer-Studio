@@ -16,10 +16,10 @@
 
 #include <gtest/gtest.h>
 
-#include "Lexicon/LexEntry.h"
+#include "LexEngine/LexEntry.h"
 
 using namespace ADS;
-using namespace ADS::Lexicon;
+using namespace ADS::LexEngine;
 
 TEST(LexEntry, DefaultConstruction_HasNoTypesAndIsNotIndexed)
 {

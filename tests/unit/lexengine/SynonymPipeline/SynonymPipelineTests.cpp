@@ -18,16 +18,16 @@
 
 #include <unordered_map>
 
-#include "Lexicon/SynonymPipeline.h"
+#include "LexEngine/SynonymPipeline.h"
 
 using namespace ADS;
-using namespace ADS::Lexicon;
+using namespace ADS::LexEngine;
 
 namespace {
 
-    /// Minimal ILexiconLookup stub — lets each test control exactly which
-    /// forms/stems are "known" without needing a full Lexicon.
-    class FakeLookup final : public ILexiconLookup {
+    /// Minimal ILexEngineLookup stub — lets each test control exactly which
+    /// forms/stems are "known" without needing a full LexEngine.
+    class FakeLookup final : public ILexEngineLookup {
     public:
         std::unordered_map<std::string, LexEntryId> entriesByForm;
         std::unordered_map<std::string, std::vector<LexEntryId>> entriesByStem;
@@ -52,7 +52,7 @@ namespace {
 
 } // namespace
 
-TEST(SynonymPipeline, Layer1_RootNotInLexicon_DiscardsMatchEntirely)
+TEST(SynonymPipeline, Layer1_RootNotInLexEngine_DiscardsMatchEntirely)
 {
     // "recabar" -> prefix "re" -> candidate root "cabar", which does not
     // exist — must be discarded, not proposed at lower confidence.

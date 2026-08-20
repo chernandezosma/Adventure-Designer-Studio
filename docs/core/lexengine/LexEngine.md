@@ -1,16 +1,16 @@
-# Lexingine — Design Document
+# LexEngine — Design Document
 
 **Project:** Adventure Designer Studio (ADS)
-**Component:** Lexingine — Lexicon Engine
+**Component:** LexEngine — Vocabulary Compiler
 **Version:** 0.1 (draft)
 **Language:** C++23
 **Status:** Design phase
 
 ---
 
-## 1. What is Lexingine?
+## 1. What is LexEngine?
 
-Lexingine is the language processing engine at the heart of Adventure
+LexEngine is the language processing engine at the heart of Adventure
 Designer Studio. Its core mission is to bridge the gap between
 human-readable game text, authored on a PC, and the compact binary token
 format required for severely memory-constrained 8-bit target platforms.
@@ -20,7 +20,7 @@ structured vocabulary of the game's words—and an *engine*—an active
 processing pipeline that analyses, classifies, compresses, and dispatches
 language at every stage of a game's lifecycle.
 
-Lexingine operates in two distinct environments:
+LexEngine operates in two distinct environments:
 
 ```
 +---------------------------+        +---------------------------+
@@ -42,25 +42,25 @@ reads pre-computed results.
 
 ---
 
-## 2. Lexingine Parts
+## 2. LexEngine Parts
 
-Lexingine is composed of six subsystems. Each has a clearly bounded
+LexEngine is composed of six subsystems. Each has a clearly bounded
 responsibility and a defined interface to the others.
 
 ---
 
-### 2.1 Lexicon
+### 2.1 LexEngine
 
-The Lexicon is the central in-memory data structure that accumulates and
+The LexEngine is the central in-memory data structure that accumulates and
 organises the game's vocabulary during authoring. It is built incrementally
 as the creator writes text in the IDE.
 
-The Lexicon holds one ordered collection per active language, sorted by
+The LexEngine holds one ordered collection per active language, sorted by
 descending frequency. A secondary lookup index resolves any form — canonical
 or synonym — to its entry in O(1).
 
 ```
-Lexicon
+LexEngine
 ├── ordered collection per language (sorted by descending frequency)
 │     "es_ES" → [entry(freq=0.12), entry(freq=0.09), ...]
 │     "en_US" → [entry(freq=0.15), entry(freq=0.11), ...]
@@ -72,16 +72,16 @@ Lexicon
 ```
 
 **Languages** follow BCP-47 with mandatory region variant: `es_ES`, `en_US`,
-`de_DE`, `fr_FR`, `pt_BR`. The Lexicon treats `es_ES` and `es_MX` as
+`de_DE`, `fr_FR`, `pt_BR`. The LexEngine treats `es_ES` and `es_MX` as
 independent entries — separate frequency tables, separate token assignments.
 
 **Entry IDs** are stable at design time. They are assigned on first insertion
 and never change, regardless of frequency reordering. Token indices are
 volatile and only assigned at compile time.
 
-#### Lexicon entry node
+#### LexEngine entry node
 
-Each node in the Lexicon represents one canonical word form within a specific
+Each node in the LexEngine represents one canonical word form within a specific
 language. This is its persistent JSON representation:
 
 ```json
@@ -125,7 +125,7 @@ language. This is its persistent JSON representation:
 > (1)
 > **role — what the word is used for in the game**
 >
-> A word in the Lexicon can serve two completely different purposes:
+> A word in the LexEngine can serve two completely different purposes:
 >
 > - **Output** — it appears in text that the game shows to the player. For example, the word "dark"
 >   in "You are in a dark room." The player reads it but never types it.
@@ -185,7 +185,7 @@ observation. The compiler emits a warning for ambiguous entries.
 
 ### 2.2 NLP Backend (UDPipe)
 
-Lexingine delegates all linguistic analysis to **UDPipe 1.x** (2), a C++-native
+LexEngine delegates all linguistic analysis to **UDPipe 1.x** (2), a C++-native
 NLP pipeline that performs tokenisation, lemmatisation, POS tagging, and
 dependency parsing for over 50 languages.
 
@@ -193,9 +193,9 @@ UDPipe operates on **complete sentences**, not isolated words. This is
 essential for correct disambiguation of lexically ambiguous forms — the
 context of the full sentence is required for accurate POS tagging.
 
-Lexingine never depends on `udpipe.h` directly. The UDPipe adapter translates
+LexEngine never depends on `udpipe.h` directly. The UDPipe adapter translates
 `udpipe::word` into an `NLPToken` — an internal plain data carrier — before
-passing it to the Lexicon. This isolation keeps UDPipe swappable.
+passing it to the LexEngine. This isolation keeps UDPipe swappable.
 
 ```
 udpipe::word fields used:
@@ -235,7 +235,7 @@ manually.
 
 ### 2.3 Synonym Pipeline
 
-The synonym pipeline runs automatically on every new Lexicon insertion. It
+The synonym pipeline runs automatically on every new LexEngine insertion. It
 operates in three layers applied in order, with short-circuit propagation: if
 a layer produces a match, subsequent layers receive the reduced form rather
 than the original.
@@ -244,7 +244,7 @@ than the original.
 Layer 1 — Affix trie (automatic, per-language)
     Detects productive prefixes and suffixes.
     Reduces "recoger" → root candidate "coger".
-    Validates: root must already exist in Lexicon.
+    Validates: root must already exist in LexEngine.
     If root does not exist → discards match (prevents "recabar" → "cabar").
     Confidence: 0.9 (affix + root exists), 0.7 (affix only).
 
@@ -277,7 +277,7 @@ or `confidence >= threshold`.
 ### 2.4 Token Encoder
 
 The Token Encoder is responsible for assigning `TokenIndex` values at compile
-time and serialising the Lexicon into the binary structures that live in the
+time and serialising the LexEngine into the binary structures that live in the
 target's RAM.
 
 #### TokenIndex encoding
@@ -318,7 +318,7 @@ Decoder pseudocode (Z80):
 #### Indexing algorithm
 
 ```
-1. Sort all Lexicon entries by descending frequency per language.
+1. Sort all LexEngine entries by descending frequency per language.
 2. Assign TokenIndex 0x0001..0x00FE to the top-254 entries (1-byte tokens).
 3. Assign TokenIndex 0x0100..0xFFFE to all remaining entries (3-byte tokens).
 4. Emit vocab_table: array of (string pointer, TokenIndex, WordType) per entry.
@@ -330,7 +330,7 @@ Decoder pseudocode (Z80):
 `vocab_table` is the binary structure produced by the Token Encoder and loaded
 into RAM on the 8-bit target. It contains only the entries where `role` has
 the `Input` bit set — the words the player can type. It is a subset of the
-full Lexicon.
+full LexEngine.
 
 **Entry layout (6 bytes per row):**
 
@@ -358,14 +358,14 @@ field. Never modified at runtime.
 | `role = Both` (Output + Input) | Yes | Player can type it |
 | `role = Input` only | Yes | Player can type it |
 | `role = Output` only | No | Player never types it — saves RAM |
-| `WordType = Punctuation` | No | Filtered during Lexicon feed |
+| `WordType = Punctuation` | No | Filtered during LexEngine feed |
 | Direction words (NORTH, SOUTH…) | No | Resolved as direction constants, not tokens |
 
 **Where vocab_table is built:**
 
 The table is built in two stages in two different places:
 
-Stage 1 — **Content defined in the Lexicon (PC, design time).** As the author
+Stage 1 — **Content defined in the LexEngine (PC, design time).** As the author
 writes game text and defines parser vocabulary, `LexEntry` nodes accumulate.
 Every entry with the `Input` bit set is a candidate row. UDPipe generates
 inflected forms for morphologically rich languages, each becoming an
@@ -523,7 +523,7 @@ response. It connects `ParsedCommand` to the object that should react, and
 determines which behaviour to execute.
 
 This subsystem is covered in detail in the ADS Object Affordance System
-design document. The Lexingine interface to it is:
+design document. The LexEngine interface to it is:
 
 ```
 dispatch(ParsedCommand, game_world)
@@ -552,7 +552,7 @@ game turn.
 
 ## 3. Algorithms
 
-### 3.1 Lexicon feed — word insertion and frequency update
+### 3.1 LexEngine feed — word insertion and frequency update
 
 ```
   +-----------------------------+
@@ -572,7 +572,7 @@ game turn.
   +----------+  +---------+
   |  Look up |  | Discard |
   |  in      |  +---------+
-  |  Lexicon |
+  |  LexEngine |
   |  by      |
   |  lemma   |
   |  + lang  |
@@ -807,7 +807,7 @@ game turn.
 
 ## 4. Relations with Other Entities
 
-### 4.1 Lexingine ↔ Item (object)
+### 4.1 LexEngine ↔ Item (object)
 
 Items are the primary consumers of the affordance dispatch subsystem. Each
 Item carries:
@@ -816,13 +816,13 @@ Item carries:
 - A **trigger table** that maps verbs to deferred custom behaviours.
 - A **state bitmask** that the default affordance behaviours read and write.
 
-Lexingine's relationship to Items is read-only at runtime: the parser produces
+LexEngine's relationship to Items is read-only at runtime: the parser produces
 a `ParsedCommand`, dispatch finds the Item via `noun1`, and the Item's own
-data drives what happens next. Lexingine never mutates Item state directly —
+data drives what happens next. LexEngine never mutates Item state directly —
 it calls the Item's affordance handler which does.
 
 ```
-Lexingine                        Item
+LexEngine                        Item
 ──────────────────────────────────────────────────────
 ParsedCommand { verb=TAKE,  ──>  affordances: Takeable
                 noun1=KEY }      state: NotCarried
@@ -833,7 +833,7 @@ ParsedCommand { verb=TAKE,  ──>  affordances: Takeable
                                  trigger: not fired
 ```
 
-### 4.2 Lexingine ↔ Room
+### 4.2 LexEngine ↔ Room
 
 Rooms are objects with a `Navigable` affordance. They differ from Items in
 one key way: movement verbs (`GO`, `TRAVEL`) dispatch to the **current Room**,
@@ -844,7 +844,7 @@ constants, not vocabulary tokens. They are resolved directly against the
 Room's exit table, requiring only one lookup at runtime.
 
 ```
-Lexingine                        Room
+LexEngine                        Room
 ──────────────────────────────────────────────────────
 ParsedCommand { verb=GO,      ──>  affordances: Navigable
                 noun1=NORTH}       exits:
@@ -855,20 +855,20 @@ ParsedCommand { verb=GO,      ──>  affordances: Navigable
                                    exit absent: "You can't go that way."
 ```
 
-### 4.3 Lexingine ↔ Compiler (PC side)
+### 4.3 LexEngine ↔ Compiler (PC side)
 
-On the PC, the compiler drives Lexingine through four sequential phases:
+On the PC, the compiler drives LexEngine through four sequential phases:
 
 ```
 Compiler
     │
     ├── FEED phase
-    │     Reads game JSON → passes text to LexiconBuilder
-    │     LexiconBuilder calls UDPipe → receives NLPToken stream
-    │     Lexicon grows incrementally
+    │     Reads game JSON → passes text to LexEngineBuilder
+    │     LexEngineBuilder calls UDPipe → receives NLPToken stream
+    │     LexEngine grows incrementally
     │
     ├── ANALYSIS phase
-    │     Synonym pipeline runs on completed Lexicon
+    │     Synonym pipeline runs on completed LexEngine
     │     Phrase detection promotes frequent n-grams
     │
     ├── INDEXING phase
@@ -882,21 +882,21 @@ Compiler
             message_pool[]  → tokenised game texts in RAM
 ```
 
-### 4.4 Lexingine ↔ i18n system
+### 4.4 LexEngine ↔ i18n system
 
-Lexingine uses the ADS i18n system's `LanguageCode` format directly (`es_ES`,
-`en_US`, `de_DE`). Each language maps to an independent Lexicon collection,
+LexEngine uses the ADS i18n system's `LanguageCode` format directly (`es_ES`,
+`en_US`, `de_DE`). Each language maps to an independent LexEngine collection,
 an independent `vocab_table` in RAM, and an independent UDPipe model file.
 
 The i18n system is responsible for selecting the active language at runtime.
-Lexingine is responsible for ensuring the correct `vocab_table` is loaded for
+LexEngine is responsible for ensuring the correct `vocab_table` is loaded for
 that language.
 
 ---
 
 ## 5. Conclusions
 
-Lexingine achieves its goals through a strict separation of concerns between
+LexEngine achieves its goals through a strict separation of concerns between
 the authoring environment and the 8-bit runtime.
 
 **All intelligence is compile-time.** UDPipe, the synonym pipeline, frequency

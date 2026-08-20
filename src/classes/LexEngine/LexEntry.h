@@ -14,12 +14,12 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_LEX_ENTRY_H
-#define ADS_LEXICON_LEX_ENTRY_H
+#ifndef ADS_LEXENGINE_LEX_ENTRY_H
+#define ADS_LEXENGINE_LEX_ENTRY_H
 
 /**
  * @file LexEntry.h
- * @brief Atomic vocabulary unit of the Lexicon compiler subsystem
+ * @brief Atomic vocabulary unit of the LexEngine compiler subsystem
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
@@ -33,7 +33,7 @@
 
 #include "types.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     /**
      * @brief One canonical word form within a specific language
@@ -47,11 +47,11 @@ namespace ADS::Lexicon {
      * frequency are only ever changed together, through accumulate().
      *
      * Lifecycle:
-     *   1. Created when the NLP backend returns a lemma not yet in the Lexicon.
+     *   1. Created when the NLP backend returns a lemma not yet in the LexEngine.
      *   2. On each subsequent occurrence, observeType() updates the bitmask,
      *      the per-bit counts, and recalculates the dominant type.
      *   3. The author may add synonyms and adjust the role via the IDE.
-     *   4. setCompiledToken() is called by Lexicon::index() at compile time.
+     *   4. setCompiledToken() is called by LexEngine::index() at compile time.
      */
     class LexEntry {
     public:
@@ -135,7 +135,7 @@ namespace ADS::Lexicon {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Mar 2026
          *
-         * Used only by LexiconSerializer when loading. Per-bit occurrence
+         * Used only by LexEngineSerializer when loading. Per-bit occurrence
          * counts and the dominant type are NOT restored — the persistence
          * contract documented in vocabulary.md keeps type_counts and
          * dominant_type as recalculated-on-load fields with no companion
@@ -152,7 +152,7 @@ namespace ADS::Lexicon {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Mar 2026
          *
-         * Used only by LexiconSerializer when loading, bypassing
+         * Used only by LexEngineSerializer when loading, bypassing
          * accumulate()'s increment semantics since these are exact
          * persisted values rather than a new observation.
          *
@@ -166,13 +166,13 @@ namespace ADS::Lexicon {
 
         /**
          * @brief Get the compiled token index assigned at index time
-         * @return TokenIndex Token::UNASSIGNED until Lexicon::index() has run
+         * @return TokenIndex Token::UNASSIGNED until LexEngine::index() has run
          */
         [[nodiscard]] TokenIndex compiledToken() const noexcept { return m_compiledToken; }
 
         /**
          * @brief Check whether this entry has been assigned a compiled token
-         * @return bool True once Lexicon::index() has processed this entry
+         * @return bool True once LexEngine::index() has processed this entry
          */
         [[nodiscard]] bool isIndexed() const noexcept {
             return m_compiledToken != Token::UNASSIGNED;
@@ -187,7 +187,7 @@ namespace ADS::Lexicon {
         }
 
         /**
-         * @brief Assign the compiled token index — called by Lexicon::index() only
+         * @brief Assign the compiled token index — called by LexEngine::index() only
          * @param t Token index to assign to this entry
          */
         void setCompiledToken(TokenIndex t) noexcept { m_compiledToken = t; }
@@ -224,9 +224,9 @@ namespace ADS::Lexicon {
 
         float      m_frequency     = 0.0f;             ///< raw_count / total_corpus_tokens
         uint32_t   m_rawCount      = 0;                ///< Absolute occurrence count, never decremented
-        TokenIndex m_compiledToken = Token::UNASSIGNED; ///< Assigned by Lexicon::index() at compile time
+        TokenIndex m_compiledToken = Token::UNASSIGNED; ///< Assigned by LexEngine::index() at compile time
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_LEX_ENTRY_H
+#endif // ADS_LEXENGINE_LEX_ENTRY_H

@@ -28,7 +28,7 @@
 
 #include "FallbackNLPBackend.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     namespace {
 
@@ -59,7 +59,7 @@ namespace ADS::Lexicon {
 
     LexEntryId SynonymPipeline::affixLayer(std::string_view canonical,
                                             const LanguageCode& lang,
-                                            const ILexiconLookup& lookup) {
+                                            const ILexEngineLookup& lookup) {
         constexpr std::size_t kMinRootLength = 3;
         const std::string base = baseLang(lang);
 
@@ -85,7 +85,7 @@ namespace ADS::Lexicon {
     std::vector<SynonymLink> SynonymPipeline::run(std::string_view canonical,
                                                     LexEntryId entryId,
                                                     const LanguageCode& lang,
-                                                    const ILexiconLookup& lookup) {
+                                                    const ILexEngineLookup& lookup) {
         std::vector<SynonymLink> links;
 
         if (const LexEntryId rootId = affixLayer(canonical, lang, lookup);
@@ -112,4 +112,4 @@ namespace ADS::Lexicon {
         return links;
     }
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine

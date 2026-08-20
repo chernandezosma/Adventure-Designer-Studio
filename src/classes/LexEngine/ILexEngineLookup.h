@@ -14,18 +14,18 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_ILEXICON_LOOKUP_H
-#define ADS_LEXICON_ILEXICON_LOOKUP_H
+#ifndef ADS_LEXENGINE_ILEXENGINE_LOOKUP_H
+#define ADS_LEXENGINE_ILEXENGINE_LOOKUP_H
 
 /**
- * @file ILexiconLookup.h
- * @brief Minimal read-only Lexicon view consumed by SynonymPipeline
+ * @file ILexEngineLookup.h
+ * @brief Minimal read-only LexEngine view consumed by SynonymPipeline
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
  *
- * @see ADS::Lexicon::SynonymPipeline
- * @see ADS::Lexicon::Lexicon
+ * @see ADS::LexEngine::SynonymPipeline
+ * @see ADS::LexEngine::LexEngine
  */
 
 #include <string_view>
@@ -33,20 +33,20 @@
 
 #include "types.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     /**
-     * @brief Minimal read-only view of the Lexicon needed by the synonym pipeline
+     * @brief Minimal read-only view of the LexEngine needed by the synonym pipeline
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Mar 2026
      *
-     * Implemented by Lexicon. Kept as a narrow interface so SynonymPipeline
-     * does not depend on the full Lexicon container type.
+     * Implemented by LexEngine. Kept as a narrow interface so SynonymPipeline
+     * does not depend on the full LexEngine container type.
      */
-    class ILexiconLookup {
+    class ILexEngineLookup {
     public:
-        virtual ~ILexiconLookup() = default;
+        virtual ~ILexEngineLookup() = default;
 
         /**
          * @brief Resolve a canonical or synonym form to its owning entry id
@@ -68,6 +68,6 @@ namespace ADS::Lexicon {
                                                                    LexEntryId excluding) const = 0;
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_ILEXICON_LOOKUP_H
+#endif // ADS_LEXENGINE_ILEXENGINE_LOOKUP_H

@@ -14,8 +14,8 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_FALLBACK_NLP_BACKEND_H
-#define ADS_LEXICON_FALLBACK_NLP_BACKEND_H
+#ifndef ADS_LEXENGINE_FALLBACK_NLP_BACKEND_H
+#define ADS_LEXENGINE_FALLBACK_NLP_BACKEND_H
 
 /**
  * @file FallbackNLPBackend.h
@@ -32,7 +32,7 @@
 #include "INLPBackend.h"
 #include "types.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     /**
      * @brief Rule-based tokenizer and suffix-stripping stemmer fallback backend
@@ -91,6 +91,6 @@ namespace ADS::Lexicon {
         [[nodiscard]] static std::string stem(std::string_view normalisedWord, const LanguageCode& lang);
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_FALLBACK_NLP_BACKEND_H
+#endif // ADS_LEXENGINE_FALLBACK_NLP_BACKEND_H

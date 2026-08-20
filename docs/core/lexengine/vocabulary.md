@@ -17,13 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 -->
 
-# `Lexicon` System Design
+# `LexEngine` System Design
 
 ## Context
 
-The `Lexicon` is the compiler component of Adventure Designer Studio responsible for managing game vocabulary, calculating word frequencies, and producing the tokenized binary for 8-bit target platforms. It operates entirely in memory during compilation — there is no database or own persistence layer. Input is JSON; output is binary.
+The `LexEngine` is the compiler component of Adventure Designer Studio responsible for managing game vocabulary, calculating word frequencies, and producing the tokenized binary for 8-bit target platforms. It operates entirely in memory during compilation — there is no database or own persistence layer. Input is JSON; output is binary.
 
-The system is built incrementally: the `Lexicon` grows and updates as the author writes text in the IDE, not in a single batch pass at compile time.
+The system is built incrementally: the `LexEngine` grows and updates as the author writes text in the IDE, not in a single batch pass at compile time.
 
 ## Core Principles
 
@@ -37,7 +37,7 @@ The system is built incrementally: the `Lexicon` grows and updates as the author
 
 ### Role
 
-The `Lexicon` does not perform linguistic analysis itself. All tokenisation, lemmatisation, and part-of-speech tagging is delegated to **UDPipe 1.x**, a C++-native NLP pipeline developed by the Institute of Formal and Applied Linguistics at Charles University, Prague.
+The `LexEngine` does not perform linguistic analysis itself. All tokenisation, lemmatisation, and part-of-speech tagging is delegated to **UDPipe 1.x**, a C++-native NLP pipeline developed by the Institute of Formal and Applied Linguistics at Charles University, Prague.
 
 UDPipe processes complete sentences — not isolated words — which is essential for correct disambiguation of lexically ambiguous forms (e.g. "abierto" as verb participle vs. adjective). The context of the full sentence is required for accurate POS tagging.
 
@@ -54,11 +54,11 @@ For each word in a sentence, UDPipe returns:
 | `head` | Dependency head index | `2` |
 | `deprel` | Dependency relation | `"nsubj"` |
 
-The `lemma` field is the primary key used by the `Lexicon` for lookup and insertion. This replaces any manual normalisation (lowercase, diacritic stripping) that would otherwise be needed — UDPipe's linguistic knowledge produces more accurate canonical forms.
+The `lemma` field is the primary key used by the `LexEngine` for lookup and insertion. This replaces any manual normalisation (lowercase, diacritic stripping) that would otherwise be needed — UDPipe's linguistic knowledge produces more accurate canonical forms.
 
 ### Adapter layer
 
-The `Lexicon` never depends on `udpipe.h` directly. The UDPipe adapter translates `udpipe::word` into an `NLPToken` — an internal data carrier — before passing it to the `Lexicon`. This isolation keeps UDPipe swappable without touching the `Lexicon` code.
+The `LexEngine` never depends on `udpipe.h` directly. The UDPipe adapter translates `udpipe::word` into an `NLPToken` — an internal data carrier — before passing it to the `LexEngine`. This isolation keeps UDPipe swappable without touching the `LexEngine` code.
 
 ### Language model availability
 
@@ -104,7 +104,7 @@ UDPipe returns POS tags following the Universal Dependencies standard. These are
 | `SCONJ` | Conjunction | Subordinating |
 | `PRON` | Pronoun | |
 | `INTJ` | Interjection | |
-| `PUNCT` | Punctuation | Filtered — never inserted into the Lexicon |
+| `PUNCT` | Punctuation | Filtered — never inserted into the LexEngine |
 | `NUM`, `SYM`, `X`, `PART` | Other | Kept, low priority |
 
 ## WordType: Bitmask Design
@@ -146,7 +146,7 @@ After three ADJ observations and one VERB observation:
 - `dominant_type` = `Adjective`
 - Compiler warning issued
 
-## Lexicon Entry Structure
+## LexEngine Entry Structure
 
 Each entry represents one canonical word form within a specific language.
 
@@ -177,7 +177,7 @@ Each entry represents one canonical word form within a specific language.
 
 ## Canonical Node Structure
 
-This is the authoritative definition of a `Lexicon` entry node as it exists in memory and as it is persisted to JSON. All fields listed here are present in every entry — optional fields default to the values shown.
+This is the authoritative definition of a `LexEngine` entry node as it exists in memory and as it is persisted to JSON. All fields listed here are present in every entry — optional fields default to the values shown.
 
 ```json
 {
@@ -203,7 +203,7 @@ This is the authoritative definition of a `Lexicon` entry node as it exists in m
 | `types` | `uint16_t` | Bitmask. One bit per grammatical category (see WordType bit layout). Default: `0x0000`. | All grammatical categories observed for this lemma across the corpus. Set automatically by the NLP pipeline; may be adjusted by the author. |
 | `synonyms` | `uint32_t[]` | Each element is a valid `id` of another entry in the same language. May be empty. Forward references (target not yet inserted) are resolved at index time. | List of entry IDs that are semantically equivalent to this entry. The relationship is directional: this entry is canonical; the listed entries are variants that resolve to it. |
 | `frequency` | `float` | Range `[0.0, 1.0]`. Derived: `raw_count / total_corpus_tokens`. | Normalised occurrence frequency. Recalculated on every new observation. Used for sorting and token index assignment. |
-| `raw_count` | `uint32_t` | Monotonically increasing. Never decremented. | Absolute occurrence count across all text fed to the Lexicon. Allows O(1) frequency recalculation without replaying the corpus. |
+| `raw_count` | `uint32_t` | Monotonically increasing. Never decremented. | Absolute occurrence count across all text fed to the LexEngine. Allows O(1) frequency recalculation without replaying the corpus. |
 
 ### Fields not persisted to JSON
 
@@ -267,6 +267,28 @@ Interpretation:
 - `types: 5` → `0b00000101` = bits 0 and 2 = `Verb | Adjective` — lexically ambiguous
 - `synonyms: [18, 42]` → entry 18 is an unconfirmed affix match (confidence 0.9); entry 42 was manually confirmed by the author
 
+## Whole-Engine JSON Document
+
+`LexEngineSerializer::saveToFile()`/`loadFromFile()` persist an entire `LexEngine`
+(every language, every entry) as one JSON file. The top-level shape is a flat
+`entries` array — each element is the same canonical node structure documented
+above, self-describing its language via its own `lang` field, so there is no
+need to nest entries under a per-language key:
+
+```json
+{
+  "version": 1,
+  "entries": [
+    { "id": 1, "lang": "es_ES", "canonical": "coger", "role": 3, "types": 1, "synonyms": [], "frequency": 0.5, "raw_count": 1 },
+    { "id": 2, "lang": "en_US", "canonical": "take",  "role": 3, "types": 1, "synonyms": [], "frequency": 0.3, "raw_count": 1 }
+  ]
+}
+```
+
+`version` is currently always `1`; `loadFromFile()` rejects any other value
+without throwing (returns `false` and logs a warning) rather than attempting a
+migration that does not exist yet.
+
 ## Token ID Encoding
 
 The `compiled_token` (`uint16_t`) is serialised into `message_pool` with variable length:
@@ -283,10 +305,10 @@ The decoder on the 8-bit target reads one byte. If it is not `0xFF`, that byte i
 
 ## In-Memory Organisation (Compiler, C++)
 
-The `Lexicon` holds one ordered collection per active language, sorted by descending frequency. A secondary lookup index resolves any form — canonical or synonym — to its entry in O(1).
+The `LexEngine` holds one ordered collection per active language, sorted by descending frequency. A secondary lookup index resolves any form — canonical or synonym — to its entry in O(1).
 
 ```
-Lexicon
+LexEngine
 ├── ordered collection per language (sorted by descending frequency)
 │     "es_ES" → [entry(freq=0.12), entry(freq=0.09), ...]
 │     "en_US" → [entry(freq=0.15), entry(freq=0.11), ...]
@@ -300,7 +322,7 @@ Lexicon
 
 ## ROM Table Separation on the Target
 
-Although the compiler uses a single `Lexicon`, two independent structures are generated in the 8-bit target ROM:
+Although the compiler uses a single `LexEngine`, two independent structures are generated in the 8-bit target ROM:
 
 ```
 Target ROM
@@ -326,8 +348,8 @@ Synonym relationships are detected in three layers, applied in order. Each layer
 
 A trie of productive prefixes and suffixes per language detects morphological relationships. The trie operates on lemmas, not surface forms.
 
-- If an affix is detected and the resulting root **exists in the Lexicon**, a `SynonymLink` is proposed with confidence `0.9`.
-- If the root does **not** exist in the Lexicon, the match is discarded entirely — this prevents false positives such as "recabar" → "cabar" (root does not exist in Spanish).
+- If an affix is detected and the resulting root **exists in the LexEngine**, a `SynonymLink` is proposed with confidence `0.9`.
+- If the root does **not** exist in the LexEngine, the match is discarded entirely — this prevents false positives such as "recabar" → "cabar" (root does not exist in Spanish).
 - The reduced root (without affix) is passed to Layer 2.
 - If no affix is detected, the original lemma is passed to Layer 2 unchanged.
 
@@ -346,19 +368,19 @@ Proposes candidate synonyms based on semantic distance. All proposals require ex
 | Origin | `confidence` | `confirmed` |
 |---|---|---|
 | Author-defined (manual) | `1.0` | `true` |
-| Layer 1: affix + root exists in Lexicon | `0.9` | `false` |
-| Layer 1: affix only, root not yet in Lexicon | `0.7` | `false` |
+| Layer 1: affix + root exists in LexEngine | `0.9` | `false` |
+| Layer 1: affix only, root not yet in LexEngine | `0.7` | `false` |
 | Layer 2: shared Snowball stem (fallback) | `0.6` | `false` |
 | Layer 3: semantic similarity candidate | `0.4` | `false` |
 
 `confirmed = true` is set exclusively by the author. The compiler can be configured to emit only synonyms where `confirmed = true` or `confidence >= threshold`.
 
-## Lexicon Lifecycle
+## LexEngine Lifecycle
 
 ```
 1. FEED (incremental, IDE)
       Author writes text → UDPipe analyses full sentence
-      → NLPToken per word → Lexicon looks up by lemma+lang
+      → NLPToken per word → LexEngine looks up by lemma+lang
       → found:     observe_type(), accumulate frequency
       → not found: insert new entry, observe_type(), accumulate frequency
       → synonym pipeline runs on every new insertion
@@ -384,18 +406,18 @@ Proposes candidate synonyms based on semantic distance. All proposals require ex
 - [ ] JSON input format for the compiler (single file vs. multiple files per section)
 - [ ] Minimum frequency threshold for an n-gram to be promoted to a phrase entry
 - [ ] Compression profile per target platform (`vocab_limit`, `phrase_min_freq`)
-- [ ] Concrete C++23 class `Lexicon` (container, lookup index, `record()` method)
+- [ ] Concrete C++23 class `LexEngine` (container, lookup index, `record()` method)
 - [ ] Concrete C++23 class `INLPBackend` and `UDPipeBackend` adapter
 - [ ] Affix trie data format and per-language affix tables (JSON external files)
 - [ ] Compiler warning format and reporting for ambiguous entries
 
-# ADS — `Lexicon` System Design
+# ADS — `LexEngine` System Design
 
 ## Context
 
-The `Lexicon` is the compiler component of Adventure Designer Studio responsible for managing game vocabulary, calculating word frequencies, and producing the tokenized binary for 8-bit target platforms. It operates entirely in memory during compilation — there is no database or own persistence layer. Input is JSON; output is binary.
+The `LexEngine` is the compiler component of Adventure Designer Studio responsible for managing game vocabulary, calculating word frequencies, and producing the tokenized binary for 8-bit target platforms. It operates entirely in memory during compilation — there is no database or own persistence layer. Input is JSON; output is binary.
 
-The system is built incrementally: the `Lexicon` grows and updates as the author writes text in the IDE, not in a single batch pass at compile time.
+The system is built incrementally: the `LexEngine` grows and updates as the author writes text in the IDE, not in a single batch pass at compile time.
 
 ---
 
@@ -413,7 +435,7 @@ The system is built incrementally: the `Lexicon` grows and updates as the author
 
 ### Role
 
-The `Lexicon` does not perform linguistic analysis itself. All tokenisation, lemmatisation, and part-of-speech tagging is delegated to **UDPipe 1.x**, a C++-native NLP pipeline developed by the Institute of Formal and Applied Linguistics at Charles University, Prague.
+The `LexEngine` does not perform linguistic analysis itself. All tokenisation, lemmatisation, and part-of-speech tagging is delegated to **UDPipe 1.x**, a C++-native NLP pipeline developed by the Institute of Formal and Applied Linguistics at Charles University, Prague.
 
 UDPipe processes complete sentences — not isolated words — which is essential for correct disambiguation of lexically ambiguous forms (e.g. "abierto" as verb participle vs. adjective). The context of the full sentence is required for accurate POS tagging.
 
@@ -430,11 +452,11 @@ For each word in a sentence, UDPipe returns:
 | `head` | Dependency head index | `2` |
 | `deprel` | Dependency relation | `"nsubj"` |
 
-The `lemma` field is the primary key used by the `Lexicon` for lookup and insertion. This replaces any manual normalisation (lowercase, diacritic stripping) that would otherwise be needed — UDPipe's linguistic knowledge produces more accurate canonical forms.
+The `lemma` field is the primary key used by the `LexEngine` for lookup and insertion. This replaces any manual normalisation (lowercase, diacritic stripping) that would otherwise be needed — UDPipe's linguistic knowledge produces more accurate canonical forms.
 
 ### Adapter layer
 
-The `Lexicon` never depends on `udpipe.h` directly. The UDPipe adapter translates `udpipe::word` into an `NLPToken` — an internal data carrier — before passing it to the `Lexicon`. This isolation keeps UDPipe swappable without touching the `Lexicon` code.
+The `LexEngine` never depends on `udpipe.h` directly. The UDPipe adapter translates `udpipe::word` into an `NLPToken` — an internal data carrier — before passing it to the `LexEngine`. This isolation keeps UDPipe swappable without touching the `LexEngine` code.
 
 ### Language model availability
 
@@ -482,7 +504,7 @@ UDPipe returns POS tags following the Universal Dependencies standard. These are
 | `SCONJ` | Conjunction | Subordinating |
 | `PRON` | Pronoun | |
 | `INTJ` | Interjection | |
-| `PUNCT` | Punctuation | Filtered — never inserted into the Lexicon |
+| `PUNCT` | Punctuation | Filtered — never inserted into the LexEngine |
 | `NUM`, `SYM`, `X`, `PART` | Other | Kept, low priority |
 
 ---
@@ -528,7 +550,7 @@ After three ADJ observations and one VERB observation:
 
 ---
 
-## Lexicon Entry Structure
+## LexEngine Entry Structure
 
 Each entry represents one canonical word form within a specific language.
 
@@ -561,7 +583,7 @@ Each entry represents one canonical word form within a specific language.
 
 ## Canonical Node Structure
 
-This is the authoritative definition of a `Lexicon` entry node as it exists in memory and as it is persisted to JSON. All fields listed here are present in every entry — optional fields default to the values shown.
+This is the authoritative definition of a `LexEngine` entry node as it exists in memory and as it is persisted to JSON. All fields listed here are present in every entry — optional fields default to the values shown.
 
 ```json
 {
@@ -587,7 +609,7 @@ This is the authoritative definition of a `Lexicon` entry node as it exists in m
 | `types` | `uint16_t` | Bitmask. One bit per grammatical category (see WordType bit layout). Default: `0x0000`. | All grammatical categories observed for this lemma across the corpus. Set automatically by the NLP pipeline; may be adjusted by the author. |
 | `synonyms` | `uint32_t[]` | Each element is a valid `id` of another entry in the same language. May be empty. Forward references (target not yet inserted) are resolved at index time. | List of entry IDs that are semantically equivalent to this entry. The relationship is directional: this entry is canonical; the listed entries are variants that resolve to it. |
 | `frequency` | `float` | Range `[0.0, 1.0]`. Derived: `raw_count / total_corpus_tokens`. | Normalised occurrence frequency. Recalculated on every new observation. Used for sorting and token index assignment. |
-| `raw_count` | `uint32_t` | Monotonically increasing. Never decremented. | Absolute occurrence count across all text fed to the Lexicon. Allows O(1) frequency recalculation without replaying the corpus. |
+| `raw_count` | `uint32_t` | Monotonically increasing. Never decremented. | Absolute occurrence count across all text fed to the LexEngine. Allows O(1) frequency recalculation without replaying the corpus. |
 
 ### Fields not persisted to JSON
 
@@ -651,6 +673,27 @@ Interpretation:
 - `types: 5` → `0b00000101` = bits 0 and 2 = `Verb | Adjective` — lexically ambiguous
 - `synonyms: [18, 42]` → entry 18 is an unconfirmed affix match (confidence 0.9); entry 42 was manually confirmed by the author
 
+## Whole-Engine JSON Document
+
+`LexEngineSerializer::saveToFile()`/`loadFromFile()` persist an entire `LexEngine`
+(every language, every entry) as one JSON file. The top-level shape is a flat
+`entries` array — each element is the same canonical node structure documented
+above, self-describing its language via its own `lang` field, so there is no
+need to nest entries under a per-language key:
+
+```json
+{
+  "version": 1,
+  "entries": [
+    { "id": 1, "lang": "es_ES", "canonical": "coger", "role": 3, "types": 1, "synonyms": [], "frequency": 0.5, "raw_count": 1 },
+    { "id": 2, "lang": "en_US", "canonical": "take",  "role": 3, "types": 1, "synonyms": [], "frequency": 0.3, "raw_count": 1 }
+  ]
+}
+```
+
+`version` is currently always `1`; `loadFromFile()` rejects any other value
+without throwing (returns `false` and logs a warning) rather than attempting a
+migration that does not exist yet.
 
 ---
 
@@ -672,10 +715,10 @@ The decoder on the 8-bit target reads one byte. If it is not `0xFF`, that byte i
 
 ## In-Memory Organisation (Compiler, C++)
 
-The `Lexicon` holds one ordered collection per active language, sorted by descending frequency. A secondary lookup index resolves any form — canonical or synonym — to its entry in O(1).
+The `LexEngine` holds one ordered collection per active language, sorted by descending frequency. A secondary lookup index resolves any form — canonical or synonym — to its entry in O(1).
 
 ```
-Lexicon
+LexEngine
 ├── ordered collection per language (sorted by descending frequency)
 │     "es_ES" → [entry(freq=0.12), entry(freq=0.09), ...]
 │     "en_US" → [entry(freq=0.15), entry(freq=0.11), ...]
@@ -691,7 +734,7 @@ Lexicon
 
 ## ROM Table Separation on the Target
 
-Although the compiler uses a single `Lexicon`, two independent structures are generated in the 8-bit target ROM:
+Although the compiler uses a single `LexEngine`, two independent structures are generated in the 8-bit target ROM:
 
 ```
 Target ROM
@@ -719,8 +762,8 @@ Synonym relationships are detected in three layers, applied in order. Each layer
 
 A trie of productive prefixes and suffixes per language detects morphological relationships. The trie operates on lemmas, not surface forms.
 
-- If an affix is detected and the resulting root **exists in the Lexicon**, a `SynonymLink` is proposed with confidence `0.9`.
-- If the root does **not** exist in the Lexicon, the match is discarded entirely — this prevents false positives such as "recabar" → "cabar" (root does not exist in Spanish).
+- If an affix is detected and the resulting root **exists in the LexEngine**, a `SynonymLink` is proposed with confidence `0.9`.
+- If the root does **not** exist in the LexEngine, the match is discarded entirely — this prevents false positives such as "recabar" → "cabar" (root does not exist in Spanish).
 - The reduced root (without affix) is passed to Layer 2.
 - If no affix is detected, the original lemma is passed to Layer 2 unchanged.
 
@@ -739,8 +782,8 @@ Proposes candidate synonyms based on semantic distance. All proposals require ex
 | Origin | `confidence` | `confirmed` |
 |---|---|---|
 | Author-defined (manual) | `1.0` | `true` |
-| Layer 1: affix + root exists in Lexicon | `0.9` | `false` |
-| Layer 1: affix only, root not yet in Lexicon | `0.7` | `false` |
+| Layer 1: affix + root exists in LexEngine | `0.9` | `false` |
+| Layer 1: affix only, root not yet in LexEngine | `0.7` | `false` |
 | Layer 2: shared Snowball stem (fallback) | `0.6` | `false` |
 | Layer 3: semantic similarity candidate | `0.4` | `false` |
 
@@ -748,12 +791,12 @@ Proposes candidate synonyms based on semantic distance. All proposals require ex
 
 ---
 
-## Lexicon Lifecycle
+## LexEngine Lifecycle
 
 ```
 1. FEED (incremental, IDE)
       Author writes text → UDPipe analyses full sentence
-      → NLPToken per word → Lexicon looks up by lemma+lang
+      → NLPToken per word → LexEngine looks up by lemma+lang
       → found:     observe_type(), accumulate frequency
       → not found: insert new entry, observe_type(), accumulate frequency
       → synonym pipeline runs on every new insertion
@@ -781,7 +824,7 @@ Proposes candidate synonyms based on semantic distance. All proposals require ex
 - [ ] JSON input format for the compiler (single file vs. multiple files per section)
 - [ ] Minimum frequency threshold for an n-gram to be promoted to a phrase entry
 - [ ] Compression profile per target platform (`vocab_limit`, `phrase_min_freq`)
-- [ ] Concrete C++23 class `Lexicon` (container, lookup index, `record()` method)
+- [ ] Concrete C++23 class `LexEngine` (container, lookup index, `record()` method)
 - [ ] Concrete C++23 class `INLPBackend` and `UDPipeBackend` adapter
 - [ ] Affix trie data format and per-language affix tables (JSON external files)
 - [ ] Compiler warning format and reporting for ambiguous entries

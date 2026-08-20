@@ -15,21 +15,28 @@
  */
 
 /**
- * @file LexiconSerializer.cpp
- * @brief Implementation of LexiconSerializer
+ * @file LexEngineSerializer.cpp
+ * @brief Implementation of LexEngineSerializer
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
  */
 
-#include "LexiconSerializer.h"
+#include "LexEngineSerializer.h"
 
+#include <fstream>
 #include <unordered_map>
 #include <utility>
 
-namespace ADS::Lexicon {
+#include "spdlog/spdlog.h"
 
-    nlohmann::json LexiconSerializer::toJson(const LexEntry& entry) {
+namespace ADS::LexEngine {
+
+    namespace {
+        constexpr int kCurrentVersion = 1;
+    } // namespace
+
+    nlohmann::json LexEngineSerializer::toJson(const LexEntry& entry) {
         nlohmann::json j;
         j["id"]        = entry.id;
         j["lang"]      = entry.lang;
@@ -55,7 +62,7 @@ namespace ADS::Lexicon {
         return j;
     }
 
-    LexEntry LexiconSerializer::fromJson(const nlohmann::json& json) {
+    LexEntry LexEngineSerializer::fromJson(const nlohmann::json& json) {
         LexEntry entry;
         entry.id        = json.at("id").get<LexEntryId>();
         entry.lang       = json.at("lang").get<LanguageCode>();
@@ -94,4 +101,75 @@ namespace ADS::Lexicon {
         return entry;
     }
 
-} // namespace ADS::Lexicon
+    nlohmann::json LexEngineSerializer::toJson(const LexEngine& engine) {
+        nlohmann::json entries = nlohmann::json::array();
+
+        for (const LanguageCode& lang : engine.getLanguages()) {
+            for (const std::unique_ptr<LexEntry>& entry : engine.getEntries(lang)) {
+                entries.push_back(toJson(*entry));
+            }
+        }
+
+        nlohmann::json document;
+        document["version"] = kCurrentVersion;
+        document["entries"] = std::move(entries);
+        return document;
+    }
+
+    void LexEngineSerializer::fromJson(LexEngine& engine, const nlohmann::json& document) {
+        if (document.at("version").get<int>() != kCurrentVersion) {
+            spdlog::warn("LexEngineSerializer: unsupported document version {}, expected {}",
+                         document.at("version").get<int>(), kCurrentVersion);
+            return;
+        }
+
+        for (const auto& entryJson : document.at("entries")) {
+            LexEntry entry = fromJson(entryJson);
+            const LanguageCode lang = entry.lang;
+            engine.restoreEntry(std::move(entry), lang);
+        }
+    }
+
+    bool LexEngineSerializer::saveToFile(const LexEngine& engine, const std::filesystem::path& path) {
+        try {
+            std::ofstream file(path, std::ios::trunc);
+            if (!file.is_open()) {
+                spdlog::error("LexEngineSerializer: failed to open '{}' for writing", path.string());
+                return false;
+            }
+
+            file << toJson(engine).dump(2) << std::endl;
+            file.close();
+
+            return true;
+        } catch (const std::ios_base::failure& e) {
+            spdlog::error("LexEngineSerializer: failed to write '{}': {}", path.string(), e.what());
+            return false;
+        }
+    }
+
+    bool LexEngineSerializer::loadFromFile(LexEngine& engine, const std::filesystem::path& path) {
+        if (!std::filesystem::exists(path)) {
+            spdlog::error("LexEngineSerializer: file '{}' does not exist", path.string());
+            return false;
+        }
+
+        try {
+            std::ifstream file(path);
+            const std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            file.close();
+
+            const nlohmann::json document = nlohmann::json::parse(content);
+            fromJson(engine, document);
+
+            return true;
+        } catch (const nlohmann::json::exception& e) {
+            spdlog::error("LexEngineSerializer: malformed JSON in '{}': {}", path.string(), e.what());
+            return false;
+        } catch (const std::ios_base::failure& e) {
+            spdlog::error("LexEngineSerializer: failed to read '{}': {}", path.string(), e.what());
+            return false;
+        }
+    }
+
+} // namespace ADS::LexEngine

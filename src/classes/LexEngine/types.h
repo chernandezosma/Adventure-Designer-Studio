@@ -14,23 +14,23 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_TYPES_H
-#define ADS_LEXICON_TYPES_H
+#ifndef ADS_LEXENGINE_TYPES_H
+#define ADS_LEXENGINE_TYPES_H
 
 /**
  * @file types.h
- * @brief Base types for the ADS Lexicon (Lexingine) compiler subsystem
+ * @brief Base types for the ADS LexEngine (Lexingine) compiler subsystem
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
  *
  * NLP backend: pluggable via INLPBackend. udpipe::word is never referenced
  * here — the concrete backend adapter (e.g. a future UDPipeBackend) is
- * responsible for populating NLPToken. This keeps the Lexicon and this
+ * responsible for populating NLPToken. This keeps the LexEngine and this
  * header free of any third-party NLP dependency.
  *
- * @see ADS::Lexicon::INLPBackend
- * @see ADS::Lexicon::LexEntry
+ * @see ADS::LexEngine::INLPBackend
+ * @see ADS::LexEngine::LexEntry
  */
 
 #include <array>
@@ -41,7 +41,7 @@
 #include <vector>
 #include <boost/describe/members.hpp>
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     // -------------------------------------------------------------------
     // LanguageCode — BCP-47 / POSIX locale with region: "es_ES", "en_US"
@@ -301,11 +301,11 @@ namespace ADS::Lexicon {
      * @version Mar 2026
      *
      * A plain data carrier with no invariants: the backend fills it, the
-     * Lexicon consumes it via Lexicon::record(), and it is then discarded.
+     * LexEngine consumes it via LexEngine::record(), and it is then discarded.
      */
     struct NLPToken {
         std::string  form;                                  ///< Surface form as written
-        std::string  lemma;                                 ///< Canonical dictionary form — Lexicon lookup key
+        std::string  lemma;                                 ///< Canonical dictionary form — LexEngine lookup key
         std::string  upos;                                  ///< Raw UD UPOS tag (e.g. "VERB")
         std::string  feats;                                 ///< UD morphological features string
         std::string  dependencyRelation;                    ///< Dependency relation (diagnostic only)
@@ -315,7 +315,7 @@ namespace ADS::Lexicon {
         LanguageCode lang;                                  ///< Language this token was analysed in
 
         /**
-         * @brief Check whether this token should be inserted into the Lexicon
+         * @brief Check whether this token should be inserted into the LexEngine
          * @return bool False for punctuation, unclassified, or empty-lemma tokens
          */
         [[nodiscard]] bool isLexical() const noexcept {
@@ -328,8 +328,8 @@ namespace ADS::Lexicon {
     //
     // Confidence by origin:
     //   1.0  manually confirmed by the author
-    //   0.9  Layer 1 affix match + root exists in the Lexicon
-    //   0.7  Layer 1 affix match only, root not yet in the Lexicon
+    //   0.9  Layer 1 affix match + root exists in the LexEngine
+    //   0.7  Layer 1 affix match only, root not yet in the LexEngine
     //   0.6  Layer 2 shared stem (fallback mode, no full NLP model)
     //   0.4  Layer 3 semantic-similarity candidate, pending review
     // -------------------------------------------------------------------
@@ -346,6 +346,6 @@ namespace ADS::Lexicon {
         bool       confirmed  = false;            ///< True only when set by the author
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_TYPES_H
+#endif // ADS_LEXENGINE_TYPES_H

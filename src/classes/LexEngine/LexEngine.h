@@ -14,12 +14,12 @@
  * https://www.gnu.org/licenses/
  */
 
-#ifndef ADS_LEXICON_LEXICON_H
-#define ADS_LEXICON_LEXICON_H
+#ifndef ADS_LEXENGINE_LEXENGINE_H
+#define ADS_LEXENGINE_LEXENGINE_H
 
 /**
- * @file Lexicon.h
- * @brief The Lexicon container — accumulates and indexes a game's vocabulary
+ * @file LexEngine.h
+ * @brief The LexEngine container — accumulates and indexes a game's vocabulary
  *
  * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
  * @version Mar 2026
@@ -29,9 +29,9 @@
  * a canonical form to its entry in O(1). Built incrementally as the author
  * writes text in the IDE via feed()/record().
  *
- * @see ADS::Lexicon::LexEntry
- * @see ADS::Lexicon::INLPBackend
- * @see ADS::Lexicon::SynonymPipeline
+ * @see ADS::LexEngine::LexEntry
+ * @see ADS::LexEngine::INLPBackend
+ * @see ADS::LexEngine::SynonymPipeline
  */
 
 #include <memory>
@@ -44,7 +44,7 @@
 #include "SynonymPipeline.h"
 #include "types.h"
 
-namespace ADS::Lexicon {
+namespace ADS::LexEngine {
 
     /**
      * @brief Accumulates, indexes, and looks up a game's per-language vocabulary
@@ -53,16 +53,16 @@ namespace ADS::Lexicon {
      * @version Mar 2026
      *
      * Non-copyable: owns every LexEntry via std::unique_ptr. Implements
-     * ILexiconLookup so SynonymPipeline can validate candidate roots and
-     * find stem siblings without depending on the full Lexicon type.
+     * ILexEngineLookup so SynonymPipeline can validate candidate roots and
+     * find stem siblings without depending on the full LexEngine type.
      */
-    class Lexicon final : public ILexiconLookup {
+    class LexEngine final : public ILexEngineLookup {
     public:
-        Lexicon() = default;
-        ~Lexicon() override = default;
+        LexEngine() = default;
+        ~LexEngine() override = default;
 
-        Lexicon(const Lexicon&) = delete;
-        Lexicon& operator=(const Lexicon&) = delete;
+        LexEngine(const LexEngine&) = delete;
+        LexEngine& operator=(const LexEngine&) = delete;
 
         /**
          * @brief Analyse a sentence and record every lexical token it contains
@@ -124,7 +124,32 @@ namespace ADS::Lexicon {
          */
         [[nodiscard]] LexEntry* findById(LexEntryId id) const;
 
-        // -- ILexiconLookup ------------------------------------------------
+        /**
+         * @brief List every language that currently has at least one entry
+         * @return std::vector<LanguageCode> Languages present in the engine, in no particular order
+         */
+        [[nodiscard]] std::vector<LanguageCode> getLanguages() const;
+
+        /**
+         * @brief Insert an already-built entry while preserving its id
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * For deserialization only — record() is the entry point for fresh,
+         * NLP-token-driven insertion. This method takes an entry already
+         * reconstructed by LexEngineSerializer::fromJson(), inserts it into
+         * m_entriesByLang/m_lookupIndex/m_byId under the given language,
+         * folds its raw_count into m_totalTokens, and advances m_nextId past
+         * its id so subsequent record() calls never reuse a restored id.
+         *
+         * @param entry Already-constructed entry to take ownership of
+         * @param lang Language to file the entry under
+         * @return LexEntry* Non-owning pointer to the inserted entry
+         */
+        LexEntry* restoreEntry(LexEntry entry, const LanguageCode& lang);
+
+        // -- ILexEngineLookup ------------------------------------------------
 
         /**
          * @brief Resolve a canonical form to its owning entry id
@@ -161,6 +186,6 @@ namespace ADS::Lexicon {
         LexEntryId m_nextId = 0; ///< Next id to assign — monotonically increasing, never reused
     };
 
-} // namespace ADS::Lexicon
+} // namespace ADS::LexEngine
 
-#endif // ADS_LEXICON_LEXICON_H
+#endif // ADS_LEXENGINE_LEXENGINE_H
