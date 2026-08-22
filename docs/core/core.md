@@ -57,12 +57,12 @@ of how the project is structured before diving into the source code.
 - [`questions.md`](questions.md) — Open design decisions still pending for the
   engine/IDE.
 
-### Lexicon
+### LexEngine
 
-- [`lexicon/Lexingine.md`](lexicon/Lexingine.md) — Lexingine: the dual
+- [`lexengine/LexEngine.md`](lexengine/LexEngine.md) — LexEngine: the dual
   lexicon+engine system for authoring-time NLP and runtime tokenized dispatch on
   8-bit targets.
-- [`lexicon/vocabulary.md`](lexicon/vocabulary.md) — Lexicon system design:
+- [`lexengine/vocabulary.md`](lexengine/vocabulary.md) — LexEngine system design:
   vocabulary/word-frequency management and tokenized binary output for
   compilation.
 

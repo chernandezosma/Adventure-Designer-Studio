@@ -21,7 +21,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 A scene represents a location in the game world — what classic text adventures
 call a *scene*. It is the primary container for items and the hub through which
 the player navigates. A scene has no mass, no vocabulary entry of its own (the
-lexicon engine manages all name resolution), and no combinatorial behaviour. Its
+LexEngine manages all name resolution), and no combinatorial behaviour. Its
 character comes entirely from the items it holds, the exits it exposes, and the
 triggers it defines.
 
@@ -67,7 +67,7 @@ See [Id implementation](#id-implementation).
 <font color="#C27AFF">name</font>: This is the human readable item's name. It
 will show in the game as the item's name. It will be treated as a string with a
 max length of 128 bytes, but internally will be stored as <uint32_t>, and it
-represents a Lexicon id.
+represents a LexEngine id.
 
 <font color="#C27AFF">Descriptions</font>: Group of text fields describing the
 scene from different sensory perspectives. See the

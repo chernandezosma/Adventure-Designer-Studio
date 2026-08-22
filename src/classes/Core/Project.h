@@ -39,6 +39,7 @@
  * @see ADS::Entities::Scene
  * @see ADS::Entities::Character
  * @see ADS::Entities::Item
+ * @see ADS::LexEngine::LexEngine
  */
 
 #include <filesystem>
@@ -53,6 +54,7 @@
 #include "Entities/Scene.h"
 #include "Entities/Character.h"
 #include "Entities/Item.h"
+#include "LexEngine/LexEngine.h"
 
 namespace ADS::Core {
 
@@ -81,6 +83,12 @@ namespace ADS::Core {
         std::vector<std::unique_ptr<Entities::Scene>>      m_scenes;             ///< Owned scene entity adapters
         std::vector<std::unique_ptr<Entities::Character>>  m_characters;         ///< Owned character entity adapters
         std::vector<std::unique_ptr<Entities::Item>>       m_items;              ///< Owned item entity adapters
+
+        // --- LexEngine (vocabulary compiler subsystem) ---
+        // Default-initialised here, independent of the constructor's `name`
+        // parameter — the project/game display name is metadata, not
+        // vocabulary, and is never fed into the LexEngine.
+        std::unique_ptr<LexEngine::LexEngine> m_lexEngine = std::make_unique<LexEngine::LexEngine>(); ///< Owned LexEngine — no ImGui dependency, no entity adapter
 
     public:
         /**
@@ -342,6 +350,22 @@ namespace ADS::Core {
          * @return const std::vector<std::unique_ptr<Data::ItemData>>&
          */
         [[nodiscard]] const std::vector<std::unique_ptr<Data::ItemData>>& getItemData() const;
+
+        // --- LexEngine ---
+
+        /**
+         * @brief Get the project's LexEngine (vocabulary compiler subsystem)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * Unlike Scene/Character/Item, the LexEngine is a single instance per
+         * project rather than a collection — there is no per-entry inspector
+         * adapter for individual vocabulary entries.
+         *
+         * @return LexEngine::LexEngine& Reference to the owned LexEngine
+         */
+        [[nodiscard]] LexEngine::LexEngine& getLexEngine() const;
     };
 
 } // namespace ADS::Core

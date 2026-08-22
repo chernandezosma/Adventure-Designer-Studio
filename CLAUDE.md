@@ -114,7 +114,7 @@ via `vcpkg-configuration.json` → `overlay-ports`. No manual action needed.
 | File | Status |
 |---|---|
 | `docs/core/core.md` | Exists — docs index |
-| `docs/core/lexicon/vocabulary.md` | Exists |
+| `docs/core/lexengine/vocabulary.md` | Exists |
 | `docs/core/schemas/item.md` | Exists |
 | `docs/core/data.md` | **Missing** |
 | `docs/core/entities.md` | **Missing** |

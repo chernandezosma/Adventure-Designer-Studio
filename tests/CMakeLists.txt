@@ -61,6 +61,19 @@ target_include_directories(ads_entities PUBLIC
 )
 target_link_libraries(ads_entities PUBLIC ads_inspector imgui::imgui)
 
+# LexEngine library (vocabulary compiler subsystem)
+add_library(ads_lexengine STATIC
+        ../src/classes/LexEngine/LexEntry.cpp
+        ../src/classes/LexEngine/FallbackNLPBackend.cpp
+        ../src/classes/LexEngine/SynonymPipeline.cpp
+        ../src/classes/LexEngine/LexEngine.cpp
+        ../src/classes/LexEngine/LexEngineSerializer.cpp
+)
+target_include_directories(ads_lexengine PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/classes
+)
+target_link_libraries(ads_lexengine PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
+
 # Core library (Project — owns DataObjects + entity adapters)
 add_library(ads_core STATIC
         ../src/classes/Core/Project.cpp
@@ -68,7 +81,7 @@ add_library(ads_core STATIC
 target_include_directories(ads_core PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/classes
 )
-target_link_libraries(ads_core PUBLIC ads_entities spdlog::spdlog fmt::fmt)
+target_link_libraries(ads_core PUBLIC ads_entities ads_lexengine spdlog::spdlog fmt::fmt)
 
 # ============================================================================
 # Gather all test sources
@@ -88,6 +101,7 @@ target_link_libraries(${ADSProject_Tests} PUBLIC
         ads_utils
         ads_inspector
         ads_entities
+        ads_lexengine
         ads_core
         GTest::gtest_main
         GTest::gtest

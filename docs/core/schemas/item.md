@@ -70,7 +70,7 @@ item's type. See
 <font color="#C27AFF">name</font>: This is the human readable item's name. It
 will show in the game as the item's name. It will be treated as a string with a
 max length of 128 bytes, but internally will be stored as <uint32_t>, and it
-represents a Lexicon id.
+represents a LexEngine id.
 
 <font color="#C27AFF">descriptions</font>: This is the group of extra texts
 which will describe the item. See the shared
@@ -100,7 +100,7 @@ inventory.
 **abbreviatures** are the same structure, that is an array of `<String>` until
 the game needs to be compiled for the target platform, and in that moment the
 tetx will be translated as a pointer (`uint16_t`) which point to a collection of
-Lexicon Ids which represents the words are in.
+LexEngine Ids which represents the words are in.
 
 <font color="#C27AFF">service_life</font>: This is the item's life indicator, when it
 reach 0, the item will be destroyed.

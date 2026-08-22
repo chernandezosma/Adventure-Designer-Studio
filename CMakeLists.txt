@@ -233,6 +233,20 @@ set(Sources
         # Core classes
         src/classes/Core/Project.cpp
         src/classes/Core/Project.h
+        # LexEngine system (vocabulary compiler)
+        src/classes/LexEngine/types.h
+        src/classes/LexEngine/LexEntry.cpp
+        src/classes/LexEngine/LexEntry.h
+        src/classes/LexEngine/INLPBackend.h
+        src/classes/LexEngine/FallbackNLPBackend.cpp
+        src/classes/LexEngine/FallbackNLPBackend.h
+        src/classes/LexEngine/ILexEngineLookup.h
+        src/classes/LexEngine/SynonymPipeline.cpp
+        src/classes/LexEngine/SynonymPipeline.h
+        src/classes/LexEngine/LexEngine.cpp
+        src/classes/LexEngine/LexEngine.h
+        src/classes/LexEngine/LexEngineSerializer.cpp
+        src/classes/LexEngine/LexEngineSerializer.h
 )
 
 # ----------------------------------------------------------
