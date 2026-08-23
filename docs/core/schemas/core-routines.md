@@ -140,12 +140,12 @@ MOV 0x00, item_torch:durability
 
 ---
 
-### LDV — Load Value
+### LD — Load Value
 
 **Purpose:** Load an immediate value into a register or temporary
 location.
 
-**Format:** `LDV <value>, <destination>`
+**Format:** `LD <value>, <destination>`
 
 **Parameters:**
 - `<value>`: Immediate hex literal (e.g., `0xFF`, `0x42`)
@@ -159,9 +159,9 @@ location.
 
 **Examples:**
 ```
-LDV 0xFF, temp_value
+LD 0xFF, temp_value
   — Load 0xFF into temp_value
-LDV 0x00, player:status_flags
+LD 0x00, player:status_flags
   — Clear player status flags
 ```
 

@@ -31,6 +31,7 @@ Index
 - [Texts](#decriptions-definition)
 - [State Catalog Pattern](#state-catalog-pattern)
 - [Damages](#Damages)
+- [Global Triggers](#GlobalTriggers)
 
 --- 
 
@@ -77,10 +78,10 @@ may reorder them for output optimisation but preserves all cross-references.
 
 At compile time the authoring JSON is reduced to flat, packed structures
 suitable for the target platform. All data lives in RAM — the target platforms
-have no separate ROM segment. The `affordances` byte is logically read-only
-(never written at runtime); the `flags` byte and the
-`state` byte are both mutable and zero-initialised at startup — `flags`
-as independent booleans, `state` as a single catalog `id` (`0` = `None`).
+have no separate ROM segment. The `affordance` array (see item.md's
+Affordances definitions) is logically read-only (never written at runtime);
+the `flags` byte is mutable and zero-initialised at startup, as independent
+booleans.
 
 The descriptions are tokenised by the LexEngine and stored as token ID
 arrays; no ASCII strings appear in the compiled output.
@@ -168,7 +169,7 @@ optional and should be omitted entirely if the object is silent.
 ## States
 
 This is the common pattern behind every state field in the schemas (e.g.
-character's `condition`, scene's `state`, item's `state`): an entity can only
+character's `condition`, item's `state`): an entity can only
 have one active catalog entry at a time, and considering that
 <uint8_t> is an 8 bit type, it will give to us 255 entries, where 0 will be the
 baseline/unafflicted `None` value. The entries
@@ -178,8 +179,9 @@ the table, from 200 to 254 will be user-defined entries.
 
 Each entity that uses this pattern defines its own concrete catalog following
 this shape
-(see [character.md → Conditions](character.md), [scene.md → Environmental States](scene.md#environmental-states),
-and [item.md → States](item.md#states) for the domain-specific tables). Item's
+(see [character.md → Conditions](character.md)
+and [item.md → States](item.md#states) for the domain-specific tables). Scene
+does not use this pattern — it has no state field. Item's
 catalog is the one exception to the shape below: its entries carry
 `effectivity` instead of `effect: EventId` — see
 [item.md → States](item.md#states) for details. The definition for each catalog
@@ -296,3 +298,27 @@ it is defined with the following bitmap.
 ```
 
 
+### Global triggers
+
+These triggers are referenced by an <uint8_t> and internally, at IDE, we will
+use that value to match which will fire the event.
+
+| id   | Trigger           | Applicable to | Fires when                                      |
+|------|-------------------|---------------|-------------------------------------------------|
+| 0x01 | `on_enter`        | Scene         | Player arrives in the scene                     |
+| 0x02 | `on_exit`         | Scene         | Player leaves the scene                         |
+| 0x03 | `on_examine`      | Scene / Item  | Player examines the scene (LOOK / EXAMINE)      |
+| 0x04 | `on_turn`         | Game          | Each game turn while the player is in the scene |
+| 0x05 | `on_item_taken`   | Item          | An item is picked up from this scene            |
+| 0x06 | `on_item_dropped` | Item          | An item is dropped into this scene              |
+| 0x07 | `on_item_used`    | Item          | An item is used while in this scene             |
+| 0x08 | `on_talk`         | Character     | Player talks to the character                   |
+| 0x09 | `on_die`          | Character     | The character's life reaches 0                  |
+| 0x0A | `on_heal`         | Character     | The character is healed                         |
+| 0x0B | `on_hurt`         | Character     | The character takes damage                      |
+
+Each applicable entity keeps its own independent trigger map — the same
+`<uint8_t, EventId[]>` shape as `scene.triggers` — scoped to just the ids
+listed as "Applicable to" it above. A Scene's `on_item_taken` and an Item's
+own `on_item_taken` are separate entries (one per entity instance), even
+though they share the same global id and concept.

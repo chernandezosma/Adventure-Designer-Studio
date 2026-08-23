@@ -158,6 +158,16 @@ namespace ADS::i18n {
         string fallbackLanguage;
 
         /**
+         * Process-wide active i18n instance, set by whoever owns the
+         * app-lifetime instance (ADS::Core::App). Lets layers below App
+         * (e.g. Entities) reach translations without linking against App
+         * itself — nullptr in contexts where no instance was set (e.g.
+         * isolated unit tests), in which case callers should fall back
+         * to the untranslated key.
+         */
+        static i18n *s_activeInstance;
+
+        /**
          * @brief Initialize the internationalization system
          *
          * @autor   Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -547,6 +557,31 @@ namespace ADS::i18n {
          * @see Constants::Languages for language support definitions
          */
         [[nodiscard]] static vector<string> getSupportedLanguages();
+
+        /**
+         * @brief Set the process-wide active i18n instance
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Called once by whoever owns the app-lifetime instance
+         * (ADS::Core::App's constructor); also useful in test fixtures
+         * that want translated strings without constructing a full App.
+         *
+         * @param instance Non-owning pointer to the instance to expose,
+         *                 or nullptr to clear it
+         */
+        static void setActiveInstance(i18n *instance);
+
+        /**
+         * @brief Get the process-wide active i18n instance
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return i18n* Non-owning pointer, or nullptr if none is active
+         */
+        [[nodiscard]] static i18n *getActiveInstance();
 
         /**
          * @brief Reload all translation files from disk

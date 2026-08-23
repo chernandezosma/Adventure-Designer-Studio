@@ -19,6 +19,7 @@
 #define ADS_IDE_RENDERER_H
 
 #include "IDEBase.h"
+#include "EntityKind.h"
 #include "LayoutManager.h"
 #include "navigation/MenuBarRenderer.h"
 #include "navigation/ToolBarRenderer.h"
@@ -26,7 +27,12 @@
 #include "panels/ProjectTreePanel.h"
 #include "panels/InspectorPanel.h"
 #include "panels/WorkingAreaPanel.h"
+#include "panels/TranslationPanel.h"
+#include "dialogs/NewProjectDialog.h"
 #include "Core/Project.h"
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ADS::IDE {
     /**
@@ -78,16 +84,151 @@ namespace ADS::IDE {
         Panels::WorkingAreaPanel *m_workingAreaPanel;
 
         /**
+         * Translation editor panel (View ▸ Translations). Floating / dockable,
+         * hidden by default, rendered every frame.
+         */
+        Panels::TranslationPanel *m_translationPanel;
+
+        /**
+         * Modal collecting name/languages/author for a brand-new project.
+         * Rendered every frame from renderMainWindow(); armed by the File > New
+         * navigation callback.
+         */
+        NewProjectDialog *m_newProjectDialog;
+
+        /**
          * Owning pointer to the active project (created in initializePanels)
          */
         Core::Project *m_project;
 
         /**
          * True while the project has unsaved changes.
-         * Set by onPropertyChanged / onAddNode / newProject callbacks.
+         * Set by onPropertyChanged / onAddNode / newProjectFromSpec callbacks.
          * Cleared after a successful save (future).
          */
         bool m_hasUnsavedChanges = false;
+
+        /**
+         * Message from the last failed save, shown in the project info bar
+         * until the next save attempt. Empty when the last save succeeded or
+         * none has been attempted — a save must never fail silently.
+         */
+        std::string m_lastSaveError;
+
+        /**
+         * @brief Create a new bare State, mirroring the tree's "Add > State"
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Auto-names it "Nuevo estado N" the same way onAddNode does, links
+         * it to nothing, rebuilds the project tree, and marks unsaved
+         * changes. Shared by onAddNode's State case and
+         * InspectorPanel::onCreateState so both paths behave identically.
+         *
+         * @return Entities::State* The newly created state, or nullptr on failure
+         */
+        Entities::State* createNewState();
+
+        /**
+         * @brief Create a new bare StateChain, mirroring "Add > Chain"
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @return Entities::StateChain* The newly created chain, or nullptr on failure
+         */
+        Entities::StateChain* createNewChain();
+
+        /**
+         * @brief Create a fresh entity of the given kind.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Auto-names it ("New scene 12", …) with a free id from
+         * Core::Project::nextXId(), then refreshes the tree and status bar and
+         * marks the project dirty. Shared by the tree's "+" / context menu and
+         * the "Entities" menu.
+         *
+         * @param kind Entity type to create
+         */
+        void createEntity(EntityKind kind);
+
+        /**
+         * @brief Deep-copy an existing entity (new id + " (copy)" name).
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Resolves @p id within the @p kind collection, calls the matching
+         * Core::Project::duplicateX(), then selects the copy in the Inspector.
+         * No-op when @p id is unknown.
+         *
+         * @param kind Entity type
+         * @param id   String id of the entity to copy (BaseEntity::getId())
+         */
+        void duplicateEntity(EntityKind kind, const std::string& id);
+
+        /**
+         * @brief Delete the entity of @p kind with the given string id.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Clears the Inspector selection first when it points at that entity,
+         * then calls the matching Core::Project::removeX(). No-op when @p id is
+         * unknown.
+         *
+         * @param kind Entity type
+         * @param id   String id of the entity to delete
+         */
+        void deleteEntity(EntityKind kind, const std::string& id);
+
+        /**
+         * @brief Current entities of @p kind as {stringId, displayName} pairs.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Feeds the "Entities" menu's Duplicate ▸ / Delete ▸ lists. Empty when
+         * no project is open.
+         *
+         * @param kind Entity type
+         * @return std::vector<std::pair<std::string, std::string>> id/name pairs
+         */
+        [[nodiscard]] std::vector<std::pair<std::string, std::string>>
+        listEntities(EntityKind kind) const;
+
+        /**
+         * @brief Refresh tree + status bar + dirty flag after an entity change.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         */
+        void refreshAfterEntityChange();
+
+        /**
+         * @brief Map a tree NodeType to its EntityKind.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @param type Tree node type (must satisfy nodeTypeIsEntity())
+         * @return EntityKind The matching kind (defaults to Scene)
+         */
+        static EntityKind nodeTypeToEntityKind(Panels::NodeType type);
+
+        /**
+         * @brief Whether @p type is one of the four full CRUD entity kinds.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @param type Tree node type
+         * @return bool true for Scene / NPC / Item / State
+         */
+        static bool nodeTypeIsEntity(Panels::NodeType type);
 
         /**
          * @brief Initialize all panels
@@ -106,22 +247,22 @@ namespace ADS::IDE {
         void initializePanels();
 
         /**
-         * @brief Create a fresh empty project, discarding the current one
+         * @brief Replace the active project with one built from a NewProjectSpec
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Feb 2026
+         * @version Aug 2026
          *
-         * Replaces the active project with a new empty Core::Project instance.
-         * Clears the inspector selection and updates the entities panel data
-         * source so the UI reflects the empty state immediately.
+         * Builds a fresh Core::Project from @p spec (title, synopsis, author,
+         * version, languages) and **writes its `.ads` file to
+         * @c spec.projectPath**. Only if that write succeeds does it delete the
+         * previous project, install the new one and refresh the tree / status
+         * bar. On a write failure nothing changes — the caller (NewProjectDialog)
+         * keeps its modal open and shows the returned message.
          *
-         * Called by the NavigationService callback registered in initializePanels()
-         * when the user confirms "New project" via the File > New dialog.
-         *
-         * @note The old project is deleted; any unsaved data is lost
-         * @see NavigationService::fileNewHandler()
+         * @param spec Collected settings from the New Project modal
+         * @return std::string Empty on success; the failure reason otherwise
          */
-        void newProject();
+        std::string newProjectFromSpec(const NewProjectSpec& spec);
 
         /**
          * @brief Render the main dockspace window
@@ -213,6 +354,23 @@ namespace ADS::IDE {
          * @see App::run()
          */
         void processPendingDialogs();
+
+        /**
+         * @brief Whether any native file dialog is currently running
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Aggregates MenuBarRenderer's NavigationService (Open/Save) and
+         * InspectorPanel's Browse… dialog. NFD dialogs run on a background
+         * thread and belong to a separate portal process with no
+         * programmatic close, so App::run() checks this before honoring a
+         * window-close request — quitting while this is true would leave the
+         * dialog orphaned on screen.
+         *
+         * @return true if a background dialog thread is currently running
+         */
+        bool isDialogInProgress() const;
 
         /**
          * @brief Notify the IDE that the main window was resized

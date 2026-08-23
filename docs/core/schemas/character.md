@@ -45,7 +45,9 @@ This is the character's schema which rules it:
           "stamina": "<uint8_t>",
           "sanity": "<uint8_t>"
         }
-      }
+      },
+      "affordance": "<affordance[]> — see item.md's Affordances definitions",
+      "triggers": "<Triggers> — see common-structures.md#global-triggers"
     }
   ]
 }
@@ -88,6 +90,19 @@ supports up to 150 distinct authored states.
 numeric keys which indicate the values that gate stablish what the character can
 physically and mentally do. See [Capacities](#capacities) below for the meaning
 of each sub-field.
+
+<font color="#C27AFF">affordance</font>: An array of `<affordance>` entries,
+same shape as item.md's `affordance` field — each pairs an author-chosen
+name with the trigger names it fires. Applies to any character (NPC or the
+player) the IDE manages, not only the single "main character" this schema
+otherwise describes.
+
+<font color="#C27AFF">triggers</font>: Map from a character-applicable
+global trigger id to an array of `EventId`s referencing entries in
+[Event Schema](event.md#schema). See
+[Global triggers](common-structures.md#global-triggers) for the character
+ids (`on_talk`, `on_die`, `on_heal`, `on_hurt`) — an independent map from
+Scene's and Item's own `triggers`.
 
 ### States
 

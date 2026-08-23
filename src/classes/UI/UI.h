@@ -38,6 +38,16 @@ namespace ADS::IDE {
 }
 
 namespace ADS::UI {
+    /**
+     * @brief Owns SDL/ImGui setup and the collection of managed windows
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     *
+     * Initializes SDL and the ImGui context, tracks every Window created
+     * through newWindow() by UUID, and exposes the font manager and current
+     * theme to the rest of the IDE layer.
+     */
     class ImGuiManager {
     private:
         /**

@@ -51,6 +51,9 @@ namespace ADS::Constants {
          */
         static constexpr auto CONFIG_FILE = "public/ads.ini";
 
+        /**
+         * Path to the theme color-palette file (Dark/Light sections).
+         */
         static constexpr auto COLORS_INI_FILE = "public/colors.ini";
 
         /**
@@ -104,6 +107,9 @@ namespace ADS::Constants {
          */
         static constexpr float DEFAULT_TOOLTIP_DELAY = 0.5f;
 
+        /**
+         * Default spacing in pixels between adjacent text elements.
+         */
         static constexpr float DEFULT_TEXT_SPACER = 10.0f;
 
         // #ifdef _WIN32

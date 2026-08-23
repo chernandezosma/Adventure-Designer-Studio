@@ -19,27 +19,38 @@
 #include "Data/BaseData.h"
 
 using namespace ADS::Data;
+using ADS::Types::SceneId;
+using ADS::Types::SceneTag;
 
-TEST(BaseData, DefaultConstruction_HasEmptyIdAndName)
+TEST(BaseData, DefaultConstruction_HasUnassignedIdAndEmptyName)
 {
-    BaseData data;
+    BaseData<SceneTag> data;
 
-    EXPECT_TRUE(data.getId().empty());
+    EXPECT_EQ(data.getId().value, 0);
     EXPECT_TRUE(data.getName().empty());
 }
 
 TEST(BaseData, SetId_UpdatesId)
 {
-    BaseData data;
+    BaseData<SceneTag> data;
 
-    data.setId("scene-01");
+    data.setId(SceneId(1));
 
-    EXPECT_EQ(data.getId(), "scene-01");
+    EXPECT_EQ(data.getId(), SceneId(1));
+}
+
+TEST(BaseData, GetIdString_ReturnsStringifiedId)
+{
+    BaseData<SceneTag> data;
+
+    data.setId(SceneId(7));
+
+    EXPECT_EQ(data.getIdString(), "7");
 }
 
 TEST(BaseData, SetName_UpdatesName)
 {
-    BaseData data;
+    BaseData<SceneTag> data;
 
     data.setName("Old Library");
 
@@ -48,10 +59,10 @@ TEST(BaseData, SetName_UpdatesName)
 
 TEST(BaseData, SetId_DoesNotAffectName)
 {
-    BaseData data;
+    BaseData<SceneTag> data;
     data.setName("Old Library");
 
-    data.setId("scene-01");
+    data.setId(SceneId(1));
 
     EXPECT_EQ(data.getName(), "Old Library");
 }

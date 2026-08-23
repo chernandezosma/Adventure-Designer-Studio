@@ -32,6 +32,7 @@ namespace ADS::Core {
     Environment* App::m_environment = nullptr;
     i18n::i18n* App::m_translationsManager = nullptr;
     UI::Fonts* App::m_fontManager = nullptr;
+    UI::Window* App::m_mainWindow = nullptr;
 
     /**
      * @brief Initialize all internal App structures and systems
@@ -60,10 +61,6 @@ namespace ADS::Core {
         i18n::i18n* tm = App::getTranslationsManager();
         this->setDebugMode(stringToBool(e->getOrDefault("DEBUG", "false")));
 
-        if (this->isDebug()) {
-            tm->setLocale(ADS::Constants::Languages::ENGLISH_UNITED_STATES.data());
-        }
-
         Logger::init(this->isDebug());
 
         // Note: we can use format to notify the line and file.
@@ -76,6 +73,31 @@ namespace ADS::Core {
              const string &language: languages) {
             tm->addLanguage(std::string(language));
         }
+
+        // Decide the active IDE UI language. Precedence (highest first):
+        //   1. UI_LANGUAGE from .env — a supported code whose dictionary loaded
+        //   2. DEBUG=true and no UI_LANGUAGE — force en_US for a stable dev view
+        //   3. otherwise keep whatever the i18n ctor chose (OS locale, else en_US)
+        // Any failure falls back to en_US so the IDE never comes up keyless.
+        const std::string uiLanguage = e->getOrDefault("UI_LANGUAGE", "");
+        try {
+            if (!uiLanguage.empty()
+                && ADS::Constants::Languages::isLanguageSupported(uiLanguage)
+                && tm->hasLanguage(uiLanguage)) {
+                tm->setLocale(uiLanguage);
+            } else if (!uiLanguage.empty()) {
+                spdlog::warn("UI_LANGUAGE '{}' is not a loaded, supported locale — ignoring", uiLanguage);
+                if (this->isDebug()) {
+                    tm->setLocale(std::string(ADS::Constants::Languages::ENGLISH_UNITED_STATES));
+                }
+            } else if (this->isDebug()) {
+                tm->setLocale(std::string(ADS::Constants::Languages::ENGLISH_UNITED_STATES));
+            }
+        } catch (const std::exception &ex) {
+            spdlog::warn("Falling back to en_US — could not set UI locale: {}", ex.what());
+            tm->setLocale(std::string(ADS::Constants::Languages::ENGLISH_UNITED_STATES));
+        }
+
         spdlog::info("Initializing the ImGui Library Manager");
         this->m_imguiObject.init();
 
@@ -105,6 +127,7 @@ namespace ADS::Core {
             "public/translations/core",
             std::string(ADS::Constants::Languages::ENGLISH_UNITED_STATES)
         );
+        i18n::i18n::setActiveInstance(m_translationsManager);
         m_environment = new Environment();
         this->init();
     }
@@ -195,6 +218,19 @@ namespace ADS::Core {
     UI::Fonts *App::getFontManager()
     {
         return App::m_fontManager;
+    }
+
+    /**
+     * @brief Get the main application window
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @return UI::Window* Pointer to the main window, or nullptr before setMainWindow() is called
+     */
+    UI::Window *App::getMainWindow()
+    {
+        return App::m_mainWindow;
     }
 
     /**
@@ -305,10 +341,19 @@ namespace ADS::Core {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
+            // A native file dialog (NFD) has no cancel/close API and its
+            // window belongs to a separate portal process, not this app —
+            // quitting while one is open would leave it orphaned on screen
+            // with no owning process. Ignore the close request until the
+            // user resolves the dialog themselves; the app then closes
+            // normally on the next attempt.
+            bool dialogOpen = m_ideRenderer->isDialogInProgress();
+
+            if (event.type == SDL_EVENT_QUIT && !dialogOpen)
                 m_running = false;
             if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
-                event.window.windowID == SDL_GetWindowID(m_mainWindow->getWindow()))
+                event.window.windowID == SDL_GetWindowID(m_mainWindow->getWindow()) &&
+                !dialogOpen)
                 m_running = false;
             if (event.type == SDL_EVENT_WINDOW_RESIZED &&
                 event.window.windowID == SDL_GetWindowID(m_mainWindow->getWindow()))

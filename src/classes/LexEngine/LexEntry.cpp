@@ -29,6 +29,18 @@
 
 namespace ADS::LexEngine {
 
+    /**
+     * @brief Record one new occurrence of a given single-bit WordType
+     *
+     * Updates the bitmask, the per-bit occurrence count, and recalculates
+     * the dominant type. Precondition: singleBit must have exactly one
+     * bit set and must not be WordTypeBits::None.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param singleBit Single-bit WordType observed for this occurrence
+     */
     void LexEntry::observeType(WordType singleBit) noexcept {
         assert(singleBit != WordTypeBits::None);
         assert((singleBit & (singleBit - 1)) == 0); // must be single-bit
@@ -44,6 +56,14 @@ namespace ADS::LexEngine {
         m_dominantType = static_cast<WordType>(1 << maxPos);
     }
 
+    /**
+     * @brief Record one new occurrence and recompute frequency
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param totalTokens Current total corpus token count, including this occurrence
+     */
     void LexEntry::accumulate(uint32_t totalTokens) noexcept {
         ++m_rawCount;
         m_frequency = totalTokens > 0
@@ -51,6 +71,15 @@ namespace ADS::LexEngine {
             : 0.0f;
     }
 
+    /**
+     * @brief Find a synonym link to a given target entry, if one exists
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param targetId Id of the entry to search for
+     * @return const SynonymLink* Pointer to the link, or nullptr if not found
+     */
     const SynonymLink* LexEntry::findSynonym(LexEntryId targetId) const noexcept {
         for (const auto& s : synonyms) {
             if (s.target == targetId) return &s;
@@ -58,6 +87,15 @@ namespace ADS::LexEngine {
         return nullptr;
     }
 
+    /**
+     * @brief Order entries by descending frequency, alphabetical tiebreak
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param other Entry to compare against
+     * @return std::partial_ordering Ordering result used for index-time sorting
+     */
     std::partial_ordering LexEntry::operator<=>(const LexEntry& other) const noexcept {
         if (m_frequency != other.m_frequency) return other.m_frequency <=> m_frequency;
         return canonical <=> other.canonical;

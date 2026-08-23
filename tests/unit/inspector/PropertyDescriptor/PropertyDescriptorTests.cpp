@@ -156,6 +156,104 @@ TEST(PropertyDescriptor, IsVisible_ConditionSet_EvaluatesCallback)
     EXPECT_FALSE(descriptor.isVisible(nullptr));
 }
 
+TEST(PropertyDescriptor, IsMultiSelect_DefaultsToFalse)
+{
+    PropertyDescriptor descriptor("items", "Items", PropertyType::Select);
+
+    EXPECT_FALSE(descriptor.isMultiSelect());
+}
+
+TEST(PropertyDescriptor, SetMultiSelect_DefaultArgument_SetsTrue)
+{
+    PropertyDescriptor descriptor("items", "Items", PropertyType::Select);
+
+    descriptor.setMultiSelect();
+
+    EXPECT_TRUE(descriptor.isMultiSelect());
+}
+
+TEST(PropertyDescriptor, SetMultiSelect_ExplicitFalse)
+{
+    PropertyDescriptor descriptor("items", "Items", PropertyType::Select);
+
+    descriptor.setMultiSelect(true);
+    descriptor.setMultiSelect(false);
+
+    EXPECT_FALSE(descriptor.isMultiSelect());
+}
+
+TEST(PropertyDescriptor, IsAllowCreateNew_DefaultsToFalse)
+{
+    PropertyDescriptor descriptor("state", "State", PropertyType::Select);
+
+    EXPECT_FALSE(descriptor.isAllowCreateNew());
+}
+
+TEST(PropertyDescriptor, SetAllowCreateNew_DefaultArgument_SetsTrue)
+{
+    PropertyDescriptor descriptor("state", "State", PropertyType::Select);
+
+    descriptor.setAllowCreateNew();
+
+    EXPECT_TRUE(descriptor.isAllowCreateNew());
+}
+
+TEST(PropertyDescriptor, SetAllowCreateNew_ExplicitFalse)
+{
+    PropertyDescriptor descriptor("state", "State", PropertyType::Select);
+
+    descriptor.setAllowCreateNew(true);
+    descriptor.setAllowCreateNew(false);
+
+    EXPECT_FALSE(descriptor.isAllowCreateNew());
+}
+
+TEST(PropertyDescriptor, GetOptionsProvider_DefaultsToEmpty)
+{
+    PropertyDescriptor descriptor("items", "Items", PropertyType::Select);
+
+    EXPECT_FALSE(static_cast<bool>(descriptor.getOptionsProvider()));
+}
+
+TEST(PropertyDescriptor, SetOptionsProvider_InvokedByGetOptionsProvider)
+{
+    PropertyDescriptor descriptor("items", "Items", PropertyType::Select);
+
+    descriptor.setOptionsProvider([] { return std::vector<std::string>{"A", "B"}; });
+
+    ASSERT_TRUE(static_cast<bool>(descriptor.getOptionsProvider()));
+    EXPECT_EQ(descriptor.getOptionsProvider()(), (std::vector<std::string>{"A", "B"}));
+}
+
+TEST(PropertyDescriptor, IsUserDefinedOption_DefaultsToFalseForEveryIndex)
+{
+    PropertyDescriptor descriptor("affordances", "Affordances", PropertyType::Select);
+
+    EXPECT_FALSE(descriptor.isUserDefinedOption(0));
+    EXPECT_FALSE(descriptor.isUserDefinedOption(3));
+}
+
+TEST(PropertyDescriptor, GetUserDefinedOptionBit_UnsetIndex_ReturnsZero)
+{
+    PropertyDescriptor descriptor("affordances", "Affordances", PropertyType::Select);
+
+    EXPECT_EQ(descriptor.getUserDefinedOptionBit(3), 0);
+}
+
+TEST(PropertyDescriptor, SetUserDefinedOptionBits_MarksOnlyGivenIndices)
+{
+    PropertyDescriptor descriptor("affordances", "Affordances", PropertyType::Select);
+
+    descriptor.setUserDefinedOptionBits({{3, 6}, {4, 7}});
+
+    EXPECT_FALSE(descriptor.isUserDefinedOption(0));
+    EXPECT_FALSE(descriptor.isUserDefinedOption(2));
+    ASSERT_TRUE(descriptor.isUserDefinedOption(3));
+    EXPECT_EQ(descriptor.getUserDefinedOptionBit(3), 6);
+    ASSERT_TRUE(descriptor.isUserDefinedOption(4));
+    EXPECT_EQ(descriptor.getUserDefinedOptionBit(4), 7);
+}
+
 TEST(PropertyDescriptor, IsVisible_ConditionReceivesTarget)
 {
     PropertyDescriptor descriptor("width", "Width", PropertyType::Int);
@@ -170,4 +268,58 @@ TEST(PropertyDescriptor, IsVisible_ConditionReceivesTarget)
     descriptor.isVisible(seenTarget);
 
     EXPECT_EQ(capturedTarget, seenTarget);
+}
+
+TEST(PropertyDescriptor, GetSubcategory_DefaultsToEmpty)
+{
+    PropertyDescriptor descriptor("dmgBase", "Base", PropertyType::Int);
+
+    EXPECT_TRUE(descriptor.getSubcategory().empty());
+}
+
+TEST(PropertyDescriptor, SetSubcategory_UpdatesValueAndReturnsSelf)
+{
+    PropertyDescriptor descriptor("dmgBase", "Base", PropertyType::Int);
+
+    PropertyDescriptor& ref = descriptor.setSubcategory("Damage");
+
+    EXPECT_EQ(descriptor.getSubcategory(), "Damage");
+    EXPECT_EQ(&ref, &descriptor);
+}
+
+TEST(PropertyDescriptor, SetSubcategory_LvalueOverload_UpdatesValue)
+{
+    PropertyDescriptor descriptor("healBase", "Base", PropertyType::Int);
+    const std::string group = "Heal";
+
+    descriptor.setSubcategory(group);
+
+    EXPECT_EQ(descriptor.getSubcategory(), "Heal");
+}
+
+TEST(PropertyDescriptor, GetEmptyOptionsTextKey_DefaultsToGenericKey)
+{
+    PropertyDescriptor descriptor("state", "State", PropertyType::Select);
+
+    EXPECT_EQ(descriptor.getEmptyOptionsTextKey(), "INSPECTOR.NO_OPTIONS");
+}
+
+TEST(PropertyDescriptor, SetEmptyOptionsText_OverridesKeyAndReturnsSelf)
+{
+    PropertyDescriptor descriptor("state", "State", PropertyType::Select);
+
+    PropertyDescriptor& ref = descriptor.setEmptyOptionsText("INSPECTOR.NO_STATES");
+
+    EXPECT_EQ(descriptor.getEmptyOptionsTextKey(), "INSPECTOR.NO_STATES");
+    EXPECT_EQ(&ref, &descriptor);
+}
+
+TEST(PropertyDescriptor, SetEmptyOptionsText_LvalueOverload_OverridesKey)
+{
+    PropertyDescriptor descriptor("state", "State", PropertyType::Select);
+    const std::string key = "INSPECTOR.NO_STATES";
+
+    descriptor.setEmptyOptionsText(key);
+
+    EXPECT_EQ(descriptor.getEmptyOptionsTextKey(), "INSPECTOR.NO_STATES");
 }

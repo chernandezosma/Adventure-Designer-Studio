@@ -43,6 +43,18 @@ sudo apt install libx11-dev libxft-dev libxext-dev \
                  libegl1-mesa-dev libibus-1.0-dev
 ```
 
+**2b. Install GTK3 development headers:**
+
+The `nativefiledialog-extended` dependency is built from a project overlay port
+(`vcpkg-overlays/nativefiledialog-extended`) that uses the GTK3 file-chooser
+backend instead of the default xdg-desktop-portal one — the portal backend
+opens its dialog as a separate window whose placement the app can't control,
+so it can appear pinned to a screen corner instead of centered over the app.
+GTK3's own dialog is a normal window the desktop centers over its parent.
+```bash
+sudo apt install libgtk-3-dev
+```
+
 **3. Install CMake:**
 ```bash
 sudo apt install cmake
@@ -83,6 +95,14 @@ sudo dnf install gcc-c++ autoconf autoconf-archive automake libtool pkgconfig py
 sudo dnf install libX11-devel libXft-devel libXext-devel \
                  wayland-devel libxkbcommon-devel \
                  mesa-libEGL-devel ibus-devel
+```
+
+**2b. Install GTK3 development headers:**
+
+Needed by the `nativefiledialog-extended` overlay port's GTK3 file-chooser
+backend (see the Debian/Ubuntu section above for why).
+```bash
+sudo dnf install gtk3-devel
 ```
 
 **3. Install CMake:**
@@ -184,6 +204,41 @@ This should find the cl.exe compiler path if Visual Studio Build Tools is instal
 </details>
 
 ### Quick Start
+
+#### 0. One-shot build & package (recommended)
+
+If you just want a runnable copy of the app, use the bootstrap script for your
+platform instead of doing the steps below by hand:
+
+| Platform | Script |
+|---|---|
+| Linux (Debian/Ubuntu, Fedora/RHEL) | `./compile-nix.sh` |
+| macOS (Apple Silicon / Intel) | `./compile-osx.sh` |
+| Windows 10/11 (x64) | `compile-win.bat` |
+
+Each script detects the system, installs any missing prerequisites (compiler,
+CMake, Git, Ninja, vcpkg build deps, SDL3 system libraries), clones and
+bootstraps vcpkg if needed, initialises the submodule, builds, and then stages a
+ready-to-run artifact into `dist/`:
+
+- **Linux** — `dist/Adventure_Designer_Studio` + `public/` + `.env` + `run.sh`
+- **macOS** — `dist/Adventure Designer Studio.app` plus a plain `dist/` run folder
+- **Windows** — `dist\Adventure_Designer_Studio.exe` + its DLLs + `public\` + `.env` + `run.bat`
+
+```bash
+./compile-nix.sh              # Release, auto-install prerequisites, stage dist/
+./compile-nix.sh Debug        # pick a build type (Release | Debug | Test)
+./compile-nix.sh --no-install # only check prerequisites, never touch the package manager
+./compile-nix.sh --clean      # wipe build/ first
+./compile-nix.sh --no-package # configure + build only, skip dist/ staging
+```
+
+> **Portability:** on Linux/macOS `CMakeLists.txt` forces `-march=native`, so the
+> produced binary targets the CPU it was built on. Rebuild on the target machine
+> if its CPU differs. On Windows the target needs the Microsoft Visual C++
+> Redistributable (x64).
+
+The rest of this section documents the manual steps the scripts automate.
 
 #### 1. Install vcpkg
 

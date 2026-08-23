@@ -81,3 +81,53 @@ TEST(PropertyConstraints, Enumeration_EmptyVector_DoesNotFlagEnum)
 
     EXPECT_FALSE(constraints.hasEnumConstraints());
 }
+
+TEST(PropertyConstraints, StringConstraint_MultilineDefaultsToFalse)
+{
+    PropertyConstraints constraints = PropertyConstraints::string(255);
+
+    EXPECT_FALSE(constraints.multiline);
+}
+
+TEST(PropertyConstraints, StringConstraint_MultilineTrue_SetsFlag)
+{
+    PropertyConstraints constraints = PropertyConstraints::string(255, true);
+
+    EXPECT_TRUE(constraints.multiline);
+}
+
+TEST(PropertyConstraints, FilePath_SetsIsFilePathAndExtensions)
+{
+    std::vector<std::string> extensions = {"png", "jpg", "jpeg", "bmp"};
+
+    PropertyConstraints constraints = PropertyConstraints::filePath(extensions);
+
+    EXPECT_TRUE(constraints.isFilePath);
+    EXPECT_EQ(constraints.fileExtensions, extensions);
+    EXPECT_FALSE(constraints.multiline);
+}
+
+TEST(PropertyConstraints, DefaultConstruction_IsFilePathDefaultsToFalse)
+{
+    PropertyConstraints constraints;
+
+    EXPECT_FALSE(constraints.isFilePath);
+    EXPECT_TRUE(constraints.fileExtensions.empty());
+}
+
+TEST(PropertyConstraints, DefaultConstruction_TranslatableDefaultsToFalse)
+{
+    PropertyConstraints constraints;
+
+    EXPECT_FALSE(constraints.translatable);
+}
+
+TEST(PropertyConstraints, TranslatableText_SetsMultilineAndTranslatableAndMaxLength)
+{
+    PropertyConstraints constraints = PropertyConstraints::translatableText(255);
+
+    EXPECT_TRUE(constraints.translatable);
+    EXPECT_TRUE(constraints.multiline);
+    ASSERT_TRUE(constraints.maxLength.has_value());
+    EXPECT_EQ(*constraints.maxLength, 255u);
+}

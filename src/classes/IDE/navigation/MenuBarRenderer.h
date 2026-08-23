@@ -19,12 +19,42 @@
 #define ADS_MENU_BAR_RENDERER_H
 
 #include "NavigationService.h"
+#include "MenuModel.h"
+#include "../EntityKind.h"
 #include "../LayoutManager.h"
 #include "i18n/i18n.h"
 #include <functional>
 #include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ADS::IDE {
+
+    /**
+     * @brief Handlers backing the "Entities" menu and the tree context menu.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     *
+     * Every field is optional (a null std::function is simply ignored). The
+     * same four handlers serve the menu bar's "Entities" submenus and
+     * ProjectTreePanel's per-node context menu so both routes end up in one
+     * place (IDERenderer).
+     */
+    struct EntityMenuCallbacks {
+        /// Create a fresh entity of the given kind.
+        std::function<void(EntityKind)> onCreate;
+        /// Deep-copy the entity with the given string id (new id + name).
+        std::function<void(EntityKind, const std::string& id)> onDuplicate;
+        /// Delete the entity with the given string id.
+        std::function<void(EntityKind, const std::string& id)> onDelete;
+        /// Current entities of a kind as {stringId, displayName} pairs.
+        std::function<std::vector<std::pair<std::string, std::string>>(EntityKind)>
+            listEntities;
+    };
+
     /**
      * @brief Renders the main menu bar for the IDE
      *
@@ -62,78 +92,114 @@ namespace ADS::IDE {
         i18n::i18n* m_translationManager;
 
         /**
-         * @brief Render the File menu
+         * @brief Invoked after the user picks a new IDE UI language
          *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Displays the File menu containing file operations including New (Ctrl+N),
-         * Open (Ctrl+O), Save (Ctrl+S), and Exit (Alt+F4). Delegates file operations
-         * to the NavigationService.
-         *
-         * @note Should be called within an active ImGui menu bar context
-         * @see NavigationService::fileNewHandler()
-         * @see NavigationService::fileOpenHandler()
+         * Set via setLanguageChangedCallback(). Lets the owning renderer
+         * refresh caches (IDEBase::updateLocale(), tree rebuild, inspector
+         * refresh) that read the locale once rather than every frame.
          */
-        void renderFileMenu();
+        std::function<void()> m_onLanguageChanged;
 
         /**
-         * @brief Render the Edit menu
+         * @brief Toggle / query the Translations panel
          *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Displays the Edit menu containing standard editing operations including
-         * Undo (Ctrl+Z), Redo (Shift+Ctrl+Z), Copy (Ctrl+C), Cut (Ctrl+X), and
-         * Paste (Ctrl+V). Currently contains placeholder implementations.
-         *
-         * @note Should be called within an active ImGui menu bar context
+         * Set via setTranslationsToggle(). `m_onToggleTranslations` flips the
+         * panel's visibility; `m_translationsIsOpen` feeds the menu item's check.
          */
-        void renderEditMenu();
+        std::function<void()> m_onToggleTranslations;
+        std::function<bool()> m_translationsIsOpen;
 
         /**
-         * @brief Render the View menu
+         * @brief Entity create / duplicate / delete handlers + list provider
          *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Displays the View menu containing view-related operations including
-         * Zoom In (Ctrl++), Zoom Out (Ctrl+-), and Reset Layout. Delegates
-         * layout operations to the LayoutManager.
-         *
-         * @note Should be called within an active ImGui menu bar context
-         * @see LayoutManager::resetLayout()
+         * Set via setEntityMenuCallbacks(); consumed by the "Entities" menu
+         * built in buildMenus() and by renderEntityListSubmenu(). Null until
+         * the owning IDERenderer wires them, so every call site guards.
          */
-        void renderViewMenu();
+        std::function<void(EntityKind)> m_onEntityCreate;
+        std::function<void(EntityKind, const std::string&)> m_onEntityDuplicate;
+        std::function<void(EntityKind, const std::string&)> m_onEntityDelete;
+        std::function<std::vector<std::pair<std::string, std::string>>(EntityKind)>
+            m_entityListProvider;
 
         /**
-         * @brief Render the Options menu
+         * @brief The whole menu bar as data, built once by buildMenus()
          *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Displays the Options menu containing application settings including
-         * Language Selector and Theme submenu (Dark Theme, Light Theme).
-         * Theme changes are handled through handleThemeChange().
-         *
-         * @note Should be called within an active ImGui menu bar context
-         * @see handleThemeChange()
+         * Walked every frame by render() → renderMenu() → renderEntry().
          */
-        void renderOptionsMenu();
+        std::vector<MenuDef> m_menus;
 
         /**
-         * @brief Render the Help menu
+         * @brief Populate m_menus with the File / Edit / View / Options / Help table
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
+         * @version Aug 2026
          *
-         * Displays the Help menu containing help-related items including
-         * the About dialog. Currently contains placeholder implementation
-         * for the About dialog.
-         *
-         * @note Should be called within an active ImGui menu bar context
+         * Called once from the constructor. Entry handlers capture @c this and
+         * call through the member std::function callbacks (m_on…, the owned
+         * NavigationService), so building before setNavigationCallbacks() /
+         * setTranslationsToggle() / … run is safe.
          */
-        void renderHelpMenu();
+        void buildMenus();
+
+        /**
+         * @brief Render one top-level menu from its MenuDef
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @param menu The menu to render
+         * @note Must be called within an active ImGui::BeginMenuBar() context
+         */
+        void renderMenu(const MenuDef& menu);
+
+        /**
+         * @brief Render one menu entry according to its MenuEntryKind
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Recurses into @c children for a Submenu entry. Labels are resolved
+         * through the translation manager on every call, never cached.
+         *
+         * @param entry The entry to render
+         * @note Must be called within an active ImGui menu context
+         */
+        void renderEntry(const MenuEntry& entry);
+
+        /**
+         * @brief Render the Options > Language submenu
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Lists every currently loaded UI language (i18n::getAvailableLanguages()
+         * — the codes that actually have a translation file). Selecting one
+         * applies it live via i18n::setLocale() + reloadTranslations(), persists
+         * it to .env as UI_LANGUAGE, and fires the language-changed callback.
+         *
+         * @note Must be called within an active ImGui menu context
+         */
+        void renderLanguageMenu();
+
+        /**
+         * @brief Render a "Duplicate ▸" / "Delete ▸" submenu listing entities.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Pulls the current entities of @p kind from @c m_entityListProvider
+         * and shows one @c MenuItem per entity; picking one calls
+         * @c m_onEntityDelete (when @p isDelete) or @c m_onEntityDuplicate
+         * with that entity's string id. The submenu is greyed when the kind
+         * has no entities.
+         *
+         * @param kind     Entity type this submenu operates on
+         * @param labelKey i18n key for the submenu label
+         * @param isDelete  true → delete route, false → duplicate route
+         * @note Must be called within an active ImGui menu context
+         */
+        void renderEntityListSubmenu(EntityKind kind, const char* labelKey, bool isDelete);
 
         /**
          * @brief Handle exit action
@@ -197,6 +263,20 @@ namespace ADS::IDE {
         ~MenuBarRenderer() = default;
 
         /**
+         * @brief Get the NavigationService owned by this menu bar
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Exposes the single NavigationService instance so other renderers
+         * (e.g. ToolBarRenderer) can share it instead of owning a second,
+         * separately-wired instance.
+         *
+         * @return NavigationService* Non-owning pointer to the owned instance
+         */
+        NavigationService *getNavigationService() const;
+
+        /**
          * @brief Register project-awareness callbacks on the NavigationService
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -236,6 +316,82 @@ namespace ADS::IDE {
         );
 
         /**
+         * @brief Forward the project-file-path provider to the NavigationService
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @param getPath Callable returning the saved path, or std::nullopt when
+         *                the project has never been saved
+         * @see NavigationService::setProjectPathProvider()
+         */
+        void setProjectPathProvider(std::function<std::optional<std::string>()> getPath);
+
+        /**
+         * @brief Forward the default-directory provider to the NavigationService
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @param getDir Callable returning the folder the native Open / Save-As
+         *               pickers should open in (the projects root), or an empty
+         *               string to let the OS decide
+         * @see NavigationService::setDefaultDirProvider()
+         */
+        void setDefaultDirProvider(std::function<std::string()> getDir);
+
+        /**
+         * @brief Forward the save-picker pre-fill provider to the NavigationService
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @param getPrefill Callable returning a full `.ads` path to seed the
+         *                   Save / Save As dialog, or an empty string for no hint
+         * @see NavigationService::setSavePrefillProvider()
+         */
+        void setSavePrefillProvider(std::function<std::string()> getPrefill);
+
+        /**
+         * @brief Register a callback fired when the IDE UI language changes
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * The Options > Language submenu applies the new locale immediately and
+         * persists it to .env; this callback lets the owning renderer refresh
+         * whatever it caches from the locale (menu/inspector LocaleInfo, project
+         * tree labels).
+         *
+         * @param onLanguageChanged Callable invoked after a successful switch
+         */
+        void setLanguageChangedCallback(std::function<void()> onLanguageChanged);
+
+        /**
+         * @brief Register the Translations-panel toggle and its open-state query
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @param toggle Flip the Translations panel's visibility
+         * @param isOpen Return whether the panel is currently visible (menu check)
+         */
+        void setTranslationsToggle(std::function<void()> toggle, std::function<bool()> isOpen);
+
+        /**
+         * @brief Register the entity create / duplicate / delete handlers.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Backs the "Entities" menu. IDERenderer passes the same callables it
+         * uses for the tree context menu, so both routes share one code path.
+         *
+         * @param callbacks The handler set (moved from)
+         */
+        void setEntityMenuCallbacks(EntityMenuCallbacks callbacks);
+
+        /**
          * @brief Render any pending modal dialogs from the NavigationService
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -270,16 +426,13 @@ namespace ADS::IDE {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jan 2026
          *
-         * Renders the complete menu bar with all menus (File, Edit, View, Options,
-         * and Help). This method orchestrates the rendering of all menu components
-         * by calling individual render methods for each menu section.
+         * Walks the data-driven menu table (see buildMenus()) rendering each
+         * top-level menu in order.
          *
          * @note Should be called within an active ImGui::BeginMenuBar() context
-         * @see renderFileMenu()
-         * @see renderEditMenu()
-         * @see renderViewMenu()
-         * @see renderOptionsMenu()
-         * @see renderHelpMenu()
+         * @see buildMenus()
+         * @see renderMenu()
+         * @see renderEntry()
          */
         void render();
     };

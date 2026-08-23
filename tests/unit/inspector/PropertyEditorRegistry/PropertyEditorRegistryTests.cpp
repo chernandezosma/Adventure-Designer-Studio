@@ -54,6 +54,7 @@ TEST(PropertyEditorRegistry, DefaultConstruction_RegistersAllDefaultEditors)
     EXPECT_TRUE(registry.hasEditor(PropertyType::Enum));
     EXPECT_TRUE(registry.hasEditor(PropertyType::Color));
     EXPECT_TRUE(registry.hasEditor(PropertyType::Vector2));
+    EXPECT_TRUE(registry.hasEditor(PropertyType::Select));
 }
 
 TEST(PropertyEditorRegistry, HasEditor_UnknownType_ReturnsFalseUntilRegistered)
@@ -144,4 +145,21 @@ TEST(EditResult, Modified_HasChangedTrueAndCarriesValue)
 
     EXPECT_TRUE(result.changed);
     EXPECT_EQ(std::get<std::string>(result.newValue), "new value");
+}
+
+TEST(EditResult, RequestFileDialog_SetsFlagAndExtensions_LeavesChangedFalse)
+{
+    EditResult result = EditResult::requestFileDialog({"png", "jpg"});
+
+    EXPECT_TRUE(result.fileDialogRequested);
+    EXPECT_EQ(result.fileDialogExtensions, (std::vector<std::string>{"png", "jpg"}));
+    EXPECT_FALSE(result.changed);
+}
+
+TEST(EditResult, Unchanged_DoesNotRequestFileDialog)
+{
+    EditResult result = EditResult::unchanged();
+
+    EXPECT_FALSE(result.fileDialogRequested);
+    EXPECT_TRUE(result.fileDialogExtensions.empty());
 }

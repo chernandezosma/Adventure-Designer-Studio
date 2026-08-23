@@ -51,11 +51,13 @@ namespace ADS::Inspector {
      * @version Jan 2026
      *
      * @param maxLen Maximum string length
+     * @param multiline True to show the expand-to-dialog "…" button
      * @return PropertyConstraints Configured constraints
      */
-    PropertyConstraints PropertyConstraints::string(size_t maxLen) {
+    PropertyConstraints PropertyConstraints::string(size_t maxLen, bool multiline) {
         PropertyConstraints constraints;
         constraints.maxLength = maxLen;
+        constraints.multiline = multiline;
         return constraints;
     }
 
@@ -71,6 +73,33 @@ namespace ADS::Inspector {
     PropertyConstraints PropertyConstraints::enumeration(std::vector<std::string> values) {
         PropertyConstraints constraints;
         constraints.enumValues = std::move(values);
+        return constraints;
+    }
+
+    /**
+     * @brief Create constraints for a file-path string type
+     *
+     * @param extensions Allowed file extensions, no dots (e.g. "png")
+     * @return PropertyConstraints Configured constraints
+     */
+    PropertyConstraints PropertyConstraints::filePath(std::vector<std::string> extensions) {
+        PropertyConstraints constraints;
+        constraints.isFilePath = true;
+        constraints.fileExtensions = std::move(extensions);
+        return constraints;
+    }
+
+    /**
+     * @brief Create constraints for a translatable multiline string type
+     *
+     * @param maxLen Maximum string length, per language
+     * @return PropertyConstraints Configured constraints
+     */
+    PropertyConstraints PropertyConstraints::translatableText(size_t maxLen) {
+        PropertyConstraints constraints;
+        constraints.maxLength = maxLen;
+        constraints.multiline = true;
+        constraints.translatable = true;
         return constraints;
     }
 

@@ -83,6 +83,9 @@ of how the project is structured before diving into the source code.
   object/weapon/element in the game world.
 - [`schemas/scene.md`](schemas/scene.md) — Scene schema: a game location —
   container for items, exits, and triggers.
+- [`schemas/translations.md`](schemas/translations.md) — `.trn` file: the
+  standalone per-language store of the game's authored translatable strings,
+  a sibling of the `.ads` file.
 
 ## Conventions used across all documents
 

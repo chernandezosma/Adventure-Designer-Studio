@@ -32,12 +32,11 @@ triggers it defines.
   "scenes": [
     {
       "id": "<SceneId — uint8_t via Id<SceneTag>>",
-      "name": "<Text, 128>",
-      "descrptions": "<Descriptions> — see common-structures.md#decriptions-definition",
+      "name": "<String, 128>",
+      "descriptions": "<Descriptions> — see common-structures.md#decriptions-definition",
       "image": "<String> — filename or base64-encoded image",
-      "affordances": "<uint8_t> — see affordance bitmap below",
+      "affordance": "<affordance[]> — see Affordances definitions below",
       "flags": "<uint8_t> — see Flags bitmap below",
-      "state": "<uint8_t> — id into the States catalog below",
       "exits": {
         "comment": "Each direction holds a SceneId or null if no exit exists",
         "north": "<SceneId | null>",
@@ -64,10 +63,15 @@ triggers it defines.
 `Id<SceneTag>` template, consistent with `ObjectId` and `EventId`.
 See [Id implementation](#id-implementation).
 
-<font color="#C27AFF">name</font>: This is the human readable item's name. It
-will show in the game as the item's name. It will be treated as a string with a
-max length of 128 bytes, but internally will be stored as <uint32_t>, and it
-represents a LexEngine id.
+<font color="#C27AFF">name</font>: The scene's human-readable name — shown as the
+scene's label in the IDE and anywhere the engine needs to name the scene
+itself. A literal `<String>` with a maximum length of 128 bytes — unlike
+`item.name` or `character.name`, it is not a LexEngine entry: the scene name
+is not player-input vocabulary (the player never types it to navigate), so it
+does not go through the LexEngine's NLP/vocabulary pipeline. Whether it is
+translated per language is entirely the author's decision, made outside this
+schema (e.g. by compiling a different `name` per target language build), the
+same treatment as [game.title](game.md#details).
 
 <font color="#C27AFF">Descriptions</font>: Group of text fields describing the
 scene from different sensory perspectives. See the
@@ -77,19 +81,16 @@ shared [Texts definition](common-structures.md#decriptions-definition) in
 <font color="#C27AFF">image</font>: This field will be a filename or
 base64-encoded image used in the IDE and optionally.
 
-<font color="#C27AFF">affordances</font>: Static `uint8_t` bitmap declared by
-the author at design time. Never modified at runtime.
-See [Affordance bitmap](#affordance-bitmap).
+<font color="#C27AFF">affordance</font>: An array of `<affordance>` entries —
+see [Affordances definitions](#affordances-definitions) below, and
+item.md's identical `affordance` field, which this mirrors. Set by the
+author at design time. Unrelated to `triggers` below, which resolves
+fixed engine-defined event keys to `EventId`s, not author-named triggers.
 
 <font color="#C27AFF">flags</font>: Dynamic `uint8_t` bitmap written by the
 engine during play. Zero-initialised at load time. Independent boolean flags
-that may be set simultaneously alongside any active `state`.
+that may be set simultaneously.
 See [Flags bitmap](#flags-bitmap).
-
-<font color="#C27AFF">state</font>: This is the scene condition, `<uint8_t>`
-that holds the `id`
-of the scene's single currently-active environmental condition, see
-[Environmental States](#environmental-states).
 
 <font color="#C27AFF">exits</font>: Fixed set of 10 named directions. Each holds
 a `SceneId`
@@ -118,50 +119,41 @@ section, every single interpreter that the importer support will have its own
 section.
 ---
 
-## Affordance bitmap
+## Affordances definitions
 
-Affordances are static properties of the scene, set by the author and never
-changed at runtime.
+Same shape as item.md's `affordance` field: an array pairing an
+author-chosen name with the trigger names it fires.
 
+```json
+{
+  "affordance": [
+    {
+      "name": "<string:128>",
+      "trigger": [
+        "on_<name>",
+        "on_<name>"
+      ]
+    }
+  ]
+}
 ```
-    7   6   5   4   3   2   1   0
-    --------------------------------
-    |   |   |   |   |   |   |   |
-    |   |   |   |   |   |   |   |---> Dark      — no ambient light; player needs a light source.
-    |   |   |   |   |   |   |-------> Lightable — darkness can be resolved by the player.
-    |   |   |   |   |   |-----------> Visitable — scene is known/reachable. 
-    |   |   |   |   |---------------> (Reserved)
-    |   |   |   |-------------------> (Reserved)
-    |   |   |-----------------------> (Reserved)
-    |   |---------------------------> (User defined 1)
-    |-------------------------------> (User defined 2)
-```
 
-### Affordance notes
-
-<font color="#C27AFF">Dark</font>: The scene has no ambient light. The engine
-will block normal descriptions and actions unless a light source is present in
-the scene or carried by the player.
-
-<font color="#C27AFF">Lightable</font>: The scene contains a means by which the
-player can introduce light (a fireplace, a torch bracket, a switch). This
-affordance signals to the author and the IDE that a light-source item should be
-placed here; it does not itself provide light.
-
-<font color="#C27AFF">Visitable</font>: The scene exists in the game world and
-may be referenced or seen (through a window, mentioned in dialogue, visible on a
-map) but is currently unreachable by normal navigation. The engine may lift this
-restriction via a trigger.
+`name` is free text, not a fixed enum. Concepts formerly modeled as scene
+affordance bits — e.g. "Dark" (no ambient light; the player needs a light
+source), "Lightable" (the scene holds a means to introduce light), or
+"Visitable" (known/reachable but not currently accessible by normal
+navigation) — are examples of names an author may use here, resolved via
+whatever trigger names they attach. The author is responsible for defining
+those trigger names and the logic that later resolves them.
 
 ---
 
 ## Flags bitmap
 
 Flag bits are dynamic. All bits are zero at load time. The engine writes them
-during play; the author never sets them directly in the authoring schema. Unlike
-`state` below, flags are independent booleans — any combination may be active
-simultaneously (a scene can be Visited and Lit at the same time, regardless of
-its current `state`).
+during play; the author never sets them directly in the authoring schema. Flags
+are independent booleans — any combination may be active simultaneously (a
+scene can be Visited and Lit at the same time).
 
 ```
     7   6   5   4   3   2   1   0
@@ -178,17 +170,6 @@ its current `state`).
 ```
 
 The Flags could be grow by adding some ones.
-
----
-
-## Environmental States
-
-Before continuing with this section, we need to have a look to the base info for
-the [State Catalog Pattern](common-structures.md#state-catalog-pattern). Scenes
-use that pattern to define their own catalog of environmental conditions (dark,
-flooded, collapsing, etc.). After that we need to know that in this case, the
-first position (0) is reserved for `None` to indicate that the scene has no
-remarkable state, so to speak, is a normal scene.
 ---
 
 ## Triggers
@@ -206,18 +187,8 @@ needs. An event with no handler in a given scene is silently ignored.
 
 ### Global triggers
 
-These triggers are referenced by an <uint8_t> and internally, at IDE, we will
-use that value to match which will fire the event.
-
-| id   | Trigger           | Fires when                                      |
-|------|-------------------|-------------------------------------------------|
-| 0x01 | `on_enter`        | Player arrives in the scene                     |
-| 0x02 | `on_exit`         | Player leaves the scene                         |
-| 0x03 | `on_examine`      | Player examines the scene (LOOK / EXAMINE)      |
-| 0x04 | `on_turn`         | Each game turn while the player is in the scene |
-| 0x05 | `on_item_taken`   | An item is picked up from this scene            |
-| 0x06 | `on_item_dropped` | An item is dropped into this scene              |
-| 0x07 | `on_item_used`    | An item is used while in this scene             |
+See the [Global Triggers](common-structures.md#global-triggers) There are defined 
+all triggers and its corresponding to each entity. 
 
 ### Declaring handlers
 

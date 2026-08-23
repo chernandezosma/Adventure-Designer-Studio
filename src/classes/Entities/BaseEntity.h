@@ -18,9 +18,13 @@
 #define ADS_BASE_ENTITY_H
 
 #include <string>
-#include "Data/BaseData.h"
+#include "Data/IIdentifiable.h"
 #include "Inspector/IInspectable.h"
 #include "Inspector/PropertyEvent.h"
+
+namespace ADS::Core {
+    class Project;
+}
 
 namespace ADS::Entities {
     /**
@@ -32,12 +36,23 @@ namespace ADS::Entities {
      * Provides common implementation for IInspectable interface,
      * including event dispatcher management and property change
      * notification helpers. Holds a non-owning pointer to a
-     * Data::BaseData struct, which is the authoritative storage for
-     * id and name. The DataObject is owned by Core::Project.
+     * Data::IIdentifiable, the tag-erased interface implemented by every
+     * BaseData<Tag> instantiation, which is the authoritative storage for
+     * id and name. The DataObject is owned by Core::Project. Concrete
+     * entities (Scene, Item, Character) additionally expose their own
+     * typed id accessor (e.g. Scene::getSceneId()) for callers that need
+     * the underlying ADS::Types::Id<Tag> rather than its display string.
      */
     class BaseEntity : public Inspector::IInspectable {
     protected:
-        Data::BaseData* m_baseData; ///< Non-owning pointer to the backing DataObject
+        Data::IIdentifiable* m_baseData; ///< Non-owning pointer to the backing DataObject
+
+        /// Non-owning pointer to the owning Project, set via setProject()
+        /// right after construction. Used by concrete entities to resolve
+        /// cross-entity option lists (e.g. "every scene in the project")
+        /// for Select-type properties. May be nullptr for entities not
+        /// constructed through Core::Project (e.g. isolated unit tests).
+        Core::Project* m_project = nullptr;
 
         /// Event dispatcher for property changes
         Inspector::PropertyEventDispatcher m_eventDispatcher;
@@ -60,6 +75,23 @@ namespace ADS::Entities {
             const Inspector::PropertyValue& newValue
         );
 
+        /**
+         * @brief Translate a translation key via the process-wide active i18n instance
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Shared by every concrete entity's getPropertyDescriptors() to
+         * translate display names, category names, descriptions, and
+         * option labels. Falls back to returning @p key unchanged when no
+         * i18n instance is active (e.g. isolated unit tests that never
+         * construct ADS::Core::App) — never throws or crashes.
+         *
+         * @param key Dotted translation key (e.g. "SCENE.PROP_NAME")
+         * @return std::string Translated text, or @p key if untranslated
+         */
+        static std::string translate(const std::string& key);
+
     public:
         /**
          * @brief Construct a new BaseEntity backed by the given DataObject
@@ -67,10 +99,11 @@ namespace ADS::Entities {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Mar 2026
          *
-         * @param data Non-owning pointer to the BaseData struct. Must not be null
+         * @param data Non-owning pointer to the BaseData<Tag> struct (as its
+         *             tag-erased IIdentifiable interface). Must not be null
          *             and must outlive this entity (Core::Project guarantees this).
          */
-        explicit BaseEntity(Data::BaseData* data);
+        explicit BaseEntity(Data::IIdentifiable* data);
 
         /**
          * @brief Virtual destructor
@@ -110,9 +143,15 @@ namespace ADS::Entities {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Mar 2026
          *
-         * @return const std::string& Entity ID read from the backing DataObject
+         * Tag-erased, generic form of the entity id, for code (e.g. UI
+         * panels) that treats Scene/Item/Character ids uniformly as
+         * strings. See the concrete entity's typed id accessor (e.g.
+         * Scene::getSceneId()) when the underlying ADS::Types::Id<Tag> is
+         * needed instead.
+         *
+         * @return std::string Entity ID read from the backing DataObject
          */
-        const std::string& getId() const;
+        std::string getId() const;
 
         /**
          * @brief Set the display name
@@ -126,6 +165,28 @@ namespace ADS::Entities {
          * @param name New display name
          */
         void setName(const std::string& name);
+
+        /**
+         * @brief Set the owning Project back-pointer
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Called by Core::Project right after constructing this entity.
+         *
+         * @param project Non-owning pointer to the owning Project
+         */
+        void setProject(Core::Project* project);
+
+        /**
+         * @brief Get the owning Project back-pointer
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return Core::Project* Non-owning pointer, or nullptr if unset
+         */
+        [[nodiscard]] Core::Project* getProject() const;
 
     protected:
         /**

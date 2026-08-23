@@ -71,6 +71,11 @@ namespace ADS::Inspector::Editors {
          * @return std::string Editor identifier string
          */
         std::string getEditorId() const override;
+
+    private:
+        /// Backing value for the "…" type-an-exact-value popup on the slider
+        /// path. Only one such popup is ever open, so a single member is safe.
+        int m_dialogValue = 0;
     };
 }
 

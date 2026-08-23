@@ -14,6 +14,12 @@
 #include "MenuBarRenderer.h"
 #include "imgui.h"
 #include <SDL3/SDL.h>
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+#include "spdlog/spdlog.h"
+#include "languages.h"
 #include "../themes/DarkTheme.h"
 #include "../themes/LightTheme.h"
 
@@ -41,185 +47,317 @@ namespace ADS::IDE {
         m_translationManager(this->getTranslationManager())
     {
         // Locale is now managed in IDEBase
+        buildMenus();
     }
 
     /**
-     * @brief Render the File menu
+     * @brief Get the NavigationService owned by this menu bar
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
-     *
-     * Displays the File menu containing file operations. Creates menu items for:
-     * - New (Ctrl+N): Creates a new file via NavigationService
-     * - Open (Ctrl+O): Opens an existing file via NavigationService
-     * - Save (Ctrl+S): Saves the current file (placeholder implementation)
-     * - Exit (Alt+F4): Closes the application via handleExit()
-     *
-     * All menu labels are retrieved from the translation manager for i18n support.
-     *
-     * @note Should be called within an active ImGui menu bar context
-     * @see NavigationService::fileNewHandler()
-     * @see NavigationService::fileOpenHandler()
-     * @see handleExit()
+     * @version May 2026
      */
-    void MenuBarRenderer::renderFileMenu()
+    NavigationService *MenuBarRenderer::getNavigationService() const
     {
-        if (ImGui::BeginMenu(m_translationManager->_t("MENU.FILE_HEADER").data())) {
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_NEW").data(), "Ctrl+N")) {
-                this->m_navigationService->fileNewHandler();
-            }
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_OPEN").data(), "Ctrl+O")) {
-                this->m_navigationService->fileOpenHandler();
-            }
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_SAVE").data(), "Ctrl+S")) {
-                // Handle save
-            }
+        return m_navigationService.get();
+    }
+
+    /**
+     * @brief Populate m_menus with the File / Edit / View / Options / Help table
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * Called once from the constructor. This is the whole menu bar: adding an
+     * item means adding one MenuEntry row here. Every handler calls through the
+     * member callbacks / owned NavigationService, which are all valid for the
+     * lifetime of this object, so building before setTranslationsToggle() etc.
+     * have run is safe.
+     */
+    void MenuBarRenderer::buildMenus()
+    {
+        NavigationService* nav = m_navigationService.get();
+        auto hasProject = [nav] { return nav->hasActiveProject(); };
+
+        // One "Entities ▸ <Kind>" submenu: Create, then Duplicate ▸ / Delete ▸
+        // lists rendered live from m_entityListProvider.
+        auto entityKindMenu = [this, hasProject](const char* labelKey, EntityKind kind) {
+            return MenuEntry{
+                .kind     = MenuEntryKind::Submenu,
+                .labelKey = labelKey,
+                .enabled  = hasProject,
+                .children = {
+                    MenuEntry{.labelKey = "TREE.CONTEXT_CREATE",
+                              .onClick = [this, kind] {
+                                  if (m_onEntityCreate) m_onEntityCreate(kind);
+                              }},
+                    MenuEntry{.kind = MenuEntryKind::Custom,
+                              .custom = [this, kind] {
+                                  renderEntityListSubmenu(kind, "TREE.CONTEXT_DUPLICATE", false);
+                              }},
+                    MenuEntry{.kind = MenuEntryKind::Custom,
+                              .custom = [this, kind] {
+                                  renderEntityListSubmenu(kind, "TREE.CONTEXT_DELETE", true);
+                              }},
+                }};
+        };
+
+        m_menus = {
+            // ---- File --------------------------------------------------------
+            MenuDef{
+                "MENU.FILE_HEADER", {
+                MenuEntry{.labelKey = "MENU.FILE_NEW", .shortcut = "Ctrl+N", .onClick = [nav] { nav->fileNewHandler(); }},
+                MenuEntry{.labelKey = "MENU.FILE_OPEN", .shortcut = "Ctrl+O", .onClick = [nav] { nav->fileOpenHandler(); }},
+                // Save / Save As are project-scoped — greyed out on the empty
+                // start screen.
+                MenuEntry{.labelKey = "MENU.FILE_SAVE", .shortcut = "Ctrl+S", .onClick = [nav] { nav->fileSaveHandler(); },.enabled = hasProject},
+                MenuEntry{.labelKey = "MENU.FILE_SAVE_AS", .shortcut = "Ctrl+Shift+S",.onClick = [nav] { nav->fileSaveAsHandler(); },.enabled = hasProject},
+                MenuEntry{.kind = MenuEntryKind::Separator},
+                MenuEntry{.labelKey = "MENU.FILE_EXIT", .shortcut = "Alt+F4",.onClick = [this] { handleExit(); }},
+            }},
+
+            // ---- Edit (placeholders) ---------------------------------------
+            MenuDef{"MENU.EDIT_HEADER", {
+                MenuEntry{.labelKey = "MENU.EDIT_UNDO", .shortcut = "Ctrl+Z"},
+                MenuEntry{.labelKey = "MENU.EDIT_REDO", .shortcut = "Shift+Ctrl+Z"},
+                MenuEntry{.kind = MenuEntryKind::Separator},
+                MenuEntry{.labelKey = "MENU.EDIT_COPY", .shortcut = "Ctrl+C"},
+                MenuEntry{.labelKey = "MENU.EDIT_CUT", .shortcut = "Ctrl+X"},
+                MenuEntry{.labelKey = "MENU.EDIT_PASTE", .shortcut = "Ctrl+V"},
+            }},
+
+            // ---- Entities -------------------------------------------------
+            // One submenu per entity kind, each with Create (direct) plus
+            // Duplicate ▸ / Delete ▸ submenus that list the current entities.
+            // Same handlers as ProjectTreePanel's context menu. The whole menu
+            // is greyed out (cannot open) until a project is loaded.
+            MenuDef{"MENU.ENTITIES_HEADER", {
+                entityKindMenu("TREE.SECTION_SCENES",     EntityKind::Scene),
+                entityKindMenu("TREE.SECTION_CHARACTERS", EntityKind::Character),
+                entityKindMenu("TREE.SECTION_ITEMS",      EntityKind::Item),
+                entityKindMenu("TREE.SECTION_STATES",     EntityKind::State),
+            }, hasProject},
+
+            // ---- View ------------------------------------------------------
+            MenuDef{"MENU.VIEW_HEADER", {
+                // MenuEntry{.labelKey = "MENU.VIEW_ZOOM_IN", .shortcut = "Ctrl++"},
+                // MenuEntry{.labelKey = "MENU.VIEW_ZOOM_OUT", .shortcut = "Ctrl+-"},
+                MenuEntry{.kind = MenuEntryKind::Separator},
+                MenuEntry{.kind = MenuEntryKind::Toggle,.labelKey = "MENU.VIEW_TRANSLATIONS",
+                    .onClick = [this] {
+                        if (m_onToggleTranslations) m_onToggleTranslations();
+                    }, .checked = [this] {
+                       return m_translationsIsOpen && m_translationsIsOpen();
+                    }
+                },
+                MenuEntry{.kind = MenuEntryKind::Separator},
+                MenuEntry{.labelKey = "MENU.VIEW_RESET_LAYOUT", .onClick = [this] { m_layoutManager->resetLayout(); }},
+            }},
+
+            // ---- Options -------------------------------------------------
+            MenuDef{"MENU.OPTIONS_HEADER", {
+                // The language submenu is dynamic (loaded locales) with bespoke
+                // switch logic — it renders itself.
+                MenuEntry{.kind = MenuEntryKind::Custom,
+                          .custom = [this] { renderLanguageMenu(); }},
+                MenuEntry{.kind = MenuEntryKind::Separator},
+                MenuEntry{.kind = MenuEntryKind::Submenu, .labelKey = "MENU.VIEW_THEME",
+                  .children = {
+                      MenuEntry{.labelKey = "MENU.VIEW_DARK_THEME", .onClick = [this] { handleThemeChange(true); }},
+                      MenuEntry{.labelKey = "MENU.VIEW_LIGHT_THEME", .onClick = [this] { handleThemeChange(false); }},
+                  }},
+            }},
+
+            // ---- Help ----------------------------------------------------
+            MenuDef{"MENU.HELP_HEADER", {
+                MenuEntry{.labelKey = "MENU.HELP_ABOUT"}, // About dialog: TODO
+            }},
+        };
+    }
+
+    /**
+     * @brief Render one menu entry according to its MenuEntryKind
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param e The entry to render
+     */
+    void MenuBarRenderer::renderEntry(const MenuEntry& e)
+    {
+        if (e.kind == MenuEntryKind::Separator) {
             ImGui::Separator();
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.FILE_EXIT").data(), "Alt+F4")) {
-                handleExit();
-            }
-            ImGui::EndMenu();
+            return;
         }
-    }
-
-    /**
-     * @brief Render the Edit menu
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
-     *
-     * Displays the Edit menu containing standard editing operations. Creates menu items for:
-     * - Undo (Ctrl+Z): Undo last action (placeholder implementation)
-     * - Redo (Shift+Ctrl+Z): Redo previously undone action (placeholder implementation)
-     * - Copy (Ctrl+C): Copy selection to clipboard (placeholder implementation)
-     * - Cut (Ctrl+X): Cut selection to clipboard (placeholder implementation)
-     * - Paste (Ctrl+V): Paste from clipboard (placeholder implementation)
-     *
-     * All menu labels are retrieved from the translation manager for i18n support.
-     *
-     * @note Should be called within an active ImGui menu bar context
-     * @note All edit operations currently contain placeholder implementations
-     */
-    void MenuBarRenderer::renderEditMenu()
-    {
-        if (ImGui::BeginMenu(m_translationManager->_t("MENU.EDIT_HEADER").data())) {
-
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_UNDO").data(), "Ctrl+Z")) {
-
+        if (e.kind == MenuEntryKind::Custom) {
+            if (e.custom) {
+                e.custom();
             }
-
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_REDO").data(), "Shift+Ctrl+Z")) {
-
-            }
-            ImGui::Separator();
-
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_COPY").data(), "Ctrl+C")) {
-
-            }
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_CUT").data(), "Ctrl+X")) {
-
-            }
-
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.EDIT_PASTE").data(), "Ctrl+V")) {
-
-            }
-            ImGui::EndMenu();
+            return;
         }
-    }
 
-    /**
-     * @brief Render the View menu
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
-     *
-     * Displays the View menu containing view-related operations. Creates menu items for:
-     * - Zoom In (Ctrl++): Increase view zoom level (placeholder implementation)
-     * - Zoom Out (Ctrl+-): Decrease view zoom level (placeholder implementation)
-     * - Reset Layout: Restores the default IDE layout via LayoutManager
-     *
-     * All menu labels are retrieved from the translation manager for i18n support.
-     *
-     * @note Should be called within an active ImGui menu bar context
-     * @see LayoutManager::resetLayout()
-     */
-    void MenuBarRenderer::renderViewMenu()
-    {
-        if (ImGui::BeginMenu(m_translationManager->_t("MENU.VIEW_HEADER").data())) {
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_ZOOM_IN").data(), "Ctrl++")) {
-
-            }
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_ZOOM_OUT").data(), "Ctrl+-")) {
-
-            }
-
-            ImGui::Separator();
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_RESET_LAYOUT").data())) {
-                m_layoutManager->resetLayout();
-            }
-            ImGui::EndMenu();
+        const bool on = !e.enabled || e.enabled();
+        if (!on) {
+            ImGui::BeginDisabled();
         }
-    }
 
-    /**
-     * @brief Render the Options menu
-     *
-     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
-     *
-     * Displays the Options menu containing application settings. Creates menu items for:
-     * - Language Selector: Opens language selection dialog (placeholder implementation)
-     * - Theme submenu:
-     *   - Dark Theme: Applies dark color scheme via handleThemeChange()
-     *   - Light Theme: Applies light color scheme via handleThemeChange()
-     *
-     * All menu labels are retrieved from the translation manager for i18n support.
-     *
-     * @note Should be called within an active ImGui menu bar context
-     * @see handleThemeChange()
-     */
-    void MenuBarRenderer::renderOptionsMenu()
-    {
-        if (ImGui::BeginMenu(m_translationManager->_t("MENU.OPTIONS_HEADER").data())) {
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data())) {
-
-            }
-            ImGui::Separator();
-            ImGui::Separator();
-            if (ImGui::BeginMenu(m_translationManager->_t("MENU.VIEW_THEME").data())) {
-                if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_DARK_THEME").data())) {
-                    handleThemeChange(true);
+        switch (e.kind) {
+            case MenuEntryKind::Action:
+                if (ImGui::MenuItem(m_translationManager->_t(e.labelKey).data(), e.shortcut)) {
+                    if (e.onClick) {
+                        e.onClick();
+                    }
                 }
-                if (ImGui::MenuItem(m_translationManager->_t("MENU.VIEW_LIGHT_THEME").data())) {
-                    handleThemeChange(false);
+                break;
+
+            case MenuEntryKind::Toggle: {
+                const bool checked = e.checked && e.checked();
+                if (ImGui::MenuItem(m_translationManager->_t(e.labelKey).data(),
+                                    e.shortcut, checked)) {
+                    if (e.onClick) {
+                        e.onClick();
+                    }
                 }
-                ImGui::EndMenu();
+                break;
             }
-            ImGui::EndMenu();
+
+            case MenuEntryKind::Submenu:
+                if (ImGui::BeginMenu(m_translationManager->_t(e.labelKey).data())) {
+                    for (const MenuEntry& child : e.children) {
+                        renderEntry(child);
+                    }
+                    ImGui::EndMenu();
+                }
+                break;
+
+            default:
+                break;
         }
 
+        if (!on) {
+            ImGui::EndDisabled();
+        }
     }
 
     /**
-     * @brief Render the Help menu
+     * @brief Render one top-level menu from its MenuDef
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Jan 2026
+     * @version Aug 2026
      *
-     * Displays the Help menu containing help-related items. Creates menu items for:
-     * - About: Shows application information dialog (placeholder implementation)
-     *
-     * All menu labels are retrieved from the translation manager for i18n support.
-     *
-     * @note Should be called within an active ImGui menu bar context
+     * @param menu The menu to render
      */
-    void MenuBarRenderer::renderHelpMenu()
+    void MenuBarRenderer::renderMenu(const MenuDef& menu)
     {
-        if (ImGui::BeginMenu(m_translationManager->_t("MENU.HELP_HEADER").data())) {
-            if (ImGui::MenuItem(m_translationManager->_t("MENU.HELP_ABOUT").data())) {
-                // Show about dialog
+        const bool on = !menu.enabled || menu.enabled();
+        if (!on) {
+            ImGui::BeginDisabled();
+        }
+        if (ImGui::BeginMenu(m_translationManager->_t(menu.headerKey).data())) {
+            for (const MenuEntry& entry : menu.entries) {
+                renderEntry(entry);
             }
             ImGui::EndMenu();
+        }
+        if (!on) {
+            ImGui::EndDisabled();
+        }
+    }
+
+    /**
+     * @brief Render the Options > Language submenu
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * Offers only the languages that are actually loaded
+     * (i18n::getAvailableLanguages()); picking one switches the IDE UI live and
+     * writes UI_LANGUAGE to .env so the choice survives a restart.
+     */
+    void MenuBarRenderer::renderLanguageMenu()
+    {
+        if (!ImGui::BeginMenu(m_translationManager->_t("MENU.OPTIONS_LANGUAGE_SELECTOR").data())) {
+            return;
+        }
+
+        const std::string current = m_translationManager->getCurrentLocale().locale;
+
+        // Sort by display name for a stable, readable list.
+        std::vector<std::string> codes = m_translationManager->getAvailableLanguages();
+        std::sort(codes.begin(), codes.end(),
+                  [](const std::string& a, const std::string& b) {
+                      return ADS::Constants::Languages::getLanguageName(a)
+                           < ADS::Constants::Languages::getLanguageName(b);
+                  });
+
+        for (const std::string& code : codes) {
+            std::string label = ADS::Constants::Languages::getLanguageName(code);
+            if (label.empty()) {
+                label = code;
+            }
+
+            if (ImGui::MenuItem(label.c_str(), nullptr, code == current)) {
+                if (code == current) {
+                    continue;
+                }
+                try {
+                    m_translationManager->setLocale(code);
+                } catch (const std::exception& e) {
+                    spdlog::warn("Language switch to '{}' failed: {}", code, e.what());
+                    continue;
+                }
+                m_translationManager->reloadTranslations();
+
+                if (Environment* env = getEnvironment()) {
+                    env->set("UI_LANGUAGE", code);
+                }
+                if (m_onLanguageChanged) {
+                    m_onLanguageChanged();
+                }
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+
+    /**
+     * @brief Render a "Duplicate ▸" / "Delete ▸" submenu listing entities
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     *
+     * @param kind     Entity type the submenu operates on
+     * @param labelKey i18n key for the submenu label
+     * @param isDelete  true → delete route, false → duplicate route
+     */
+    void MenuBarRenderer::renderEntityListSubmenu(EntityKind kind, const char* labelKey,
+                                                  bool isDelete)
+    {
+        std::vector<std::pair<std::string, std::string>> items;
+        if (m_entityListProvider) {
+            items = m_entityListProvider(kind);
+        }
+
+        const bool empty = items.empty();
+        if (empty) {
+            ImGui::BeginDisabled();
+        }
+        if (ImGui::BeginMenu(m_translationManager->_t(labelKey).data())) {
+            for (const auto& [id, label] : items) {
+                // "##id" keeps the MenuItem id unique when two entities share
+                // a display name.
+                const std::string shown = label + "##" + id;
+                if (ImGui::MenuItem(shown.c_str())) {
+                    if (isDelete) {
+                        if (m_onEntityDelete) m_onEntityDelete(kind, id);
+                    } else {
+                        if (m_onEntityDuplicate) m_onEntityDuplicate(kind, id);
+                    }
+                }
+            }
+            ImGui::EndMenu();
+        }
+        if (empty) {
+            ImGui::EndDisabled();
         }
     }
 
@@ -320,6 +458,92 @@ namespace ADS::IDE {
     }
 
     /**
+     * @brief Register a callback fired when the IDE UI language changes
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param onLanguageChanged Callable invoked after a successful language switch
+     */
+    void MenuBarRenderer::setLanguageChangedCallback(std::function<void()> onLanguageChanged)
+    {
+        m_onLanguageChanged = std::move(onLanguageChanged);
+    }
+
+    /**
+     * @brief Register the Translations-panel toggle and its open-state query
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param toggle Flip the Translations panel's visibility
+     * @param isOpen Return whether the panel is currently visible
+     */
+    void MenuBarRenderer::setTranslationsToggle(std::function<void()> toggle,
+                                               std::function<bool()> isOpen)
+    {
+        m_onToggleTranslations = std::move(toggle);
+        m_translationsIsOpen = std::move(isOpen);
+    }
+
+    /**
+     * @brief Register the entity create / duplicate / delete handlers
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     *
+     * @param callbacks The handler set (moved from)
+     */
+    void MenuBarRenderer::setEntityMenuCallbacks(EntityMenuCallbacks callbacks)
+    {
+        m_onEntityCreate     = std::move(callbacks.onCreate);
+        m_onEntityDuplicate  = std::move(callbacks.onDuplicate);
+        m_onEntityDelete     = std::move(callbacks.onDelete);
+        m_entityListProvider = std::move(callbacks.listEntities);
+    }
+
+    /**
+     * @brief Forward the project-file-path provider to the NavigationService
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param getPath Callable returning the saved path, or std::nullopt when
+     *                the project has never been saved
+     * @see NavigationService::setProjectPathProvider()
+     */
+    void MenuBarRenderer::setProjectPathProvider(std::function<std::optional<std::string>()> getPath)
+    {
+        m_navigationService->setProjectPathProvider(std::move(getPath));
+    }
+
+    /**
+     * @brief Forward the default-directory provider to the NavigationService
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param getDir Callable returning the folder the native pickers open in
+     */
+    void MenuBarRenderer::setDefaultDirProvider(std::function<std::string()> getDir)
+    {
+        m_navigationService->setDefaultDirProvider(std::move(getDir));
+    }
+
+    /**
+     * @brief Forward the save-picker pre-fill provider to the NavigationService
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param getPrefill Callable returning a full `.ads` path to seed the picker
+     */
+    void MenuBarRenderer::setSavePrefillProvider(std::function<std::string()> getPrefill)
+    {
+        m_navigationService->setSavePrefillProvider(std::move(getPrefill));
+    }
+
+    /**
      * @brief Render any pending modal dialogs from the NavigationService
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -359,23 +583,18 @@ namespace ADS::IDE {
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jan 2026
      *
-     * Renders the complete menu bar by sequentially calling all menu render methods.
-     * This method orchestrates the rendering of the File, Edit, View, Options, and
-     * Help menus in the correct order.
+     * Walks the data-driven menu table built by buildMenus(), rendering each
+     * top-level menu in order.
      *
      * @note Should be called within an active ImGui::BeginMenuBar() context
-     * @see renderFileMenu()
-     * @see renderEditMenu()
-     * @see renderViewMenu()
-     * @see renderOptionsMenu()
-     * @see renderHelpMenu()
+     * @see buildMenus()
+     * @see renderMenu()
+     * @see renderEntry()
      */
     void MenuBarRenderer::render()
     {
-        renderFileMenu();
-        renderEditMenu();
-        renderViewMenu();
-        renderOptionsMenu();
-        renderHelpMenu();
+        for (const MenuDef& menu : m_menus) {
+            renderMenu(menu);
+        }
     }
 }

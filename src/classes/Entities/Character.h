@@ -17,6 +17,10 @@
 #ifndef ADS_CHARACTER_ENTITY_H
 #define ADS_CHARACTER_ENTITY_H
 
+#include <optional>
+#include <string>
+#include <vector>
+
 #include "BaseEntity.h"
 #include "Data/CharacterData.h"
 
@@ -25,17 +29,46 @@ namespace ADS::Entities {
      * @brief Inspector adapter for a game character (player or NPC)
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Mar 2026
+     * @version Aug 2026
      *
      * Character acts as the inspector adapter layer: it defines how character
      * properties are presented in the inspector UI, validates incoming values,
      * and delegates all persistent storage to the backing Data::CharacterData
-     * struct owned by Core::Project.
+     * struct owned by Core::Project. Property set follows
+     * docs/core/schemas/character.md.
      */
     class Character : public BaseEntity
     {
     private:
         Data::CharacterData *m_data; ///< Non-owning pointer to the backing CharacterData
+
+        /**
+         * @brief Build the option-label list for every state in the project
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Options provider for the "state" property. Empty if getProject() is
+         * unset. Lists every state (not just "free" ones) — a Character's
+         * "state" is a plain reference. Mirrors Entities::Scene and
+         * Entities::Item.
+         *
+         * @return std::vector<std::string> One label per state, in project order
+         */
+        std::vector<std::string> buildStateOptionLabels() const;
+
+        /**
+         * @brief Build the option-label list for every scene in the project
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Options provider for the "initial scene" dropdown. Empty if
+         * getProject() is unset. Mirrors Entities::Scene / Entities::Item.
+         *
+         * @return std::vector<std::string> One label per scene, in project order
+         */
+        std::vector<std::string> buildSceneOptionLabels() const;
 
     public:
         /**
@@ -49,6 +82,16 @@ namespace ADS::Entities {
          */
         explicit Character(Data::CharacterData *data);
 
+        /**
+         * @brief Get the typed character identifier
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Mar 2026
+         *
+         * @return ADS::Types::CharacterId The character's typed identifier
+         */
+        ADS::Types::CharacterId getCharacterId() const;
+
         // IInspectable interface
 
         /**
@@ -57,7 +100,7 @@ namespace ADS::Entities {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Mar 2026
          *
-         * @return std::string Always returns "Character"
+         * @return std::string Translated "Character" type name
          */
         std::string getTypeName() const override;
 
@@ -65,10 +108,7 @@ namespace ADS::Entities {
          * @brief Get the list of property descriptors for this character
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
-         *
-         * Returns metadata for all editable character properties, organised by
-         * category, for use by the inspector panel.
+         * @version Aug 2026
          *
          * @return std::vector<Inspector::PropertyDescriptor> Property descriptors
          */
@@ -78,7 +118,7 @@ namespace ADS::Entities {
          * @brief Get the current value of a property by ID
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
          * @param propertyId The unique property identifier string
          * @return Inspector::PropertyValue Current value, or std::monostate if unknown
@@ -89,10 +129,7 @@ namespace ADS::Entities {
          * @brief Set the value of a property by ID
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
-         *
-         * Validates the type of @p value against the expected type for
-         * @p propertyId before writing. Fires a property-changed event on success.
+         * @version Aug 2026
          *
          * @param propertyId The unique property identifier string
          * @param value The new value (must match the property's expected type)
@@ -103,70 +140,48 @@ namespace ADS::Entities {
         // Character-specific getters/setters (operate on DataObject)
 
         /**
-         * @brief Get the character's backstory and description text
+         * @brief Get the character's sensory descriptions (LexEngine text ids)
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
-         * @return const std::string& Backstory and description text
+         * @return const Data::Descriptions& LexEngine text-id references
          */
-        const std::string &getDescription() const;
+        const Data::Descriptions &getDescriptions() const;
 
         /**
-         * @brief Set the character's backstory and description text
+         * @brief Set the character's sensory descriptions (LexEngine text ids)
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
          * Fires a property-changed event if the value actually changed.
          *
-         * @param desc The new description text
+         * @param descriptions The new descriptions
          */
-        void setDescription(const std::string &desc);
+        void setDescriptions(const Data::Descriptions &descriptions);
 
         /**
-         * @brief Get the current health points
+         * @brief Get the author-typed draft text backing the descriptions group
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
-         * @return int Current health point value
+         * @return const Data::DescriptionTexts& Draft description text
          */
-        int getHealth() const;
+        const Data::DescriptionTexts &getDescriptionTexts() const;
 
         /**
-         * @brief Set the current health points
+         * @brief Set the author-typed draft text backing the descriptions group
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
          * Fires a property-changed event if the value actually changed.
          *
-         * @param health The new health point value
+         * @param texts The new draft description text
          */
-        void setHealth(int health);
-
-        /**
-         * @brief Get the maximum health points
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
-         *
-         * @return int Maximum health point value
-         */
-        int getMaxHealth() const;
-
-        /**
-         * @brief Set the maximum health points
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
-         *
-         * Fires a property-changed event if the value actually changed.
-         *
-         * @param maxHealth The new maximum health point value
-         */
-        void setMaxHealth(int maxHealth);
+        void setDescriptionTexts(const Data::DescriptionTexts &texts);
 
         /**
          * @brief Check whether this character is the player character
@@ -191,6 +206,50 @@ namespace ADS::Entities {
         void setPlayer(bool isPlayer);
 
         /**
+         * @brief Get the character's capacities (load + life/stamina/sanity)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @return const Data::Capacities& Current capacity values
+         */
+        const Data::Capacities &getCapacities() const;
+
+        /**
+         * @brief Set the character's capacities (load + life/stamina/sanity)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Fires a property-changed event if the value actually changed.
+         *
+         * @param capacities The new capacity values
+         */
+        void setCapacities(const Data::Capacities &capacities);
+
+        /**
+         * @brief Get the character's current state
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @return const std::optional<ADS::Types::StateId>& Current state id, or std::nullopt
+         */
+        const std::optional<ADS::Types::StateId> &getState() const;
+
+        /**
+         * @brief Set the character's current state
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Fires a property-changed event if the value actually changed.
+         *
+         * @param state The new state id, or std::nullopt to clear it
+         */
+        void setState(const std::optional<ADS::Types::StateId> &state);
+
+        /**
          * @brief Get the color used for this character's dialog text
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -213,26 +272,48 @@ namespace ADS::Entities {
         void setDialogColor(const ADS::Types::Color &color);
 
         /**
-         * @brief Get the path to the character portrait image
+         * @brief Get the path to the character's main (full-body) image
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
-         * @return const std::string& File path to the portrait image
+         * @return const std::string& File path to the main image
          */
-        const std::string &getPortraitPath() const;
+        const std::string &getImagePath() const;
 
         /**
-         * @brief Set the path to the character portrait image
+         * @brief Set the path to the character's main (full-body) image
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
          * Fires a property-changed event if the value actually changed.
          *
-         * @param path The new portrait image file path
+         * @param path The new main image file path
          */
-        void setPortraitPath(const std::string &path);
+        void setImagePath(const std::string &path);
+
+        /**
+         * @brief Get the path to the character's avatar image
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @return const std::string& File path to the avatar image
+         */
+        const std::string &getAvatarPath() const;
+
+        /**
+         * @brief Set the path to the character's avatar image
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Fires a property-changed event if the value actually changed.
+         *
+         * @param path The new avatar image file path
+         */
+        void setAvatarPath(const std::string &path);
 
         /**
          * @brief Get the ID of the scene where this character starts
@@ -240,9 +321,9 @@ namespace ADS::Entities {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Mar 2026
          *
-         * @return const std::string& Starting scene ID
+         * @return const std::optional<ADS::Types::SceneId>& Starting scene ID, or std::nullopt
          */
-        const std::string &getStartingSceneId() const;
+        const std::optional<ADS::Types::SceneId> &getInitialSceneId() const;
 
         /**
          * @brief Set the ID of the scene where this character starts
@@ -252,9 +333,31 @@ namespace ADS::Entities {
          *
          * Fires a property-changed event if the value actually changed.
          *
-         * @param sceneId The new starting scene ID
+         * @param sceneId The new starting scene ID, or std::nullopt to clear it
          */
-        void setStartingSceneId(const std::string &sceneId);
+        void setInitialSceneId(const std::optional<ADS::Types::SceneId> &sceneId);
+
+        /**
+         * @brief Get the character's affordances
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @return const std::vector<Data::Affordance>& The character's affordances
+         */
+        const std::vector<Data::Affordance>& getAffordances() const;
+
+        /**
+         * @brief Set the character's affordances
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Fires a property-changed event if the value actually changed.
+         *
+         * @param affordances The new affordance list
+         */
+        void setAffordances(const std::vector<Data::Affordance>& affordances);
     };
 }
 

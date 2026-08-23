@@ -16,16 +16,20 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include "Data/CharacterData.h"
 #include "Entities/Character.h"
 
 using namespace ADS;
+using ADS::Types::CharacterId;
+using ADS::Types::SceneId;
 
 namespace {
     Data::CharacterData makeCharacterData()
     {
         Data::CharacterData data;
-        data.setId("char-01");
+        data.setId(CharacterId(1));
         data.setName("Hero");
         return data;
     }
@@ -39,23 +43,40 @@ TEST(Character, GetTypeName_ReturnsCharacter)
     EXPECT_EQ(character.getTypeName(), "Character");
 }
 
-TEST(Character, GetPropertyDescriptors_ReturnsNineDescriptors)
+TEST(Character, GetPropertyDescriptors_ReturnsTwentyOneDescriptors)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
 
-    EXPECT_EQ(character.getPropertyDescriptors().size(), 9u);
+    // 17 base descriptors + 4 trigger keys (on_talk/on_die/on_heal/on_hurt)
+    EXPECT_EQ(character.getPropertyDescriptors().size(), 21u);
 }
 
-TEST(Character, GetPropertyValue_Health_ReturnsInt)
+TEST(Character, GetPropertyDescriptors_Capacities_RangeZeroTo255)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
 
-    auto value = character.getPropertyValue("health");
+    auto descriptors = character.getPropertyDescriptors();
+    auto life = std::find_if(descriptors.begin(), descriptors.end(),
+        [](const auto& d) { return d.getId() == "capLife"; });
+
+    ASSERT_NE(life, descriptors.end());
+    EXPECT_EQ(life->getConstraints().minValue, 0.0f);
+    EXPECT_EQ(life->getConstraints().maxValue, 255.0f);
+    EXPECT_EQ(life->getCategory(), "Capacities");
+}
+
+TEST(Character, GetPropertyValue_CapLife_ReturnsInt)
+{
+    Data::CharacterData data = makeCharacterData();
+    data.setCapacities({0, 90, 0, 0});
+    Entities::Character character(&data);
+
+    auto value = character.getPropertyValue("capLife");
 
     ASSERT_TRUE(std::holds_alternative<int>(value));
-    EXPECT_EQ(std::get<int>(value), 100);
+    EXPECT_EQ(std::get<int>(value), 90);
 }
 
 TEST(Character, GetPropertyValue_DialogColor_ReturnsImVec4)
@@ -90,41 +111,44 @@ TEST(Character, SetPropertyValue_IsPlayer_ValidType_Accepted)
     EXPECT_TRUE(data.isPlayer());
 }
 
-TEST(Character, SetPropertyValue_Health_WrongType_Rejected)
+TEST(Character, SetPropertyValue_CapLife_WrongType_Rejected)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
 
-    bool accepted = character.setPropertyValue("health", std::string("not an int"));
+    bool accepted = character.setPropertyValue("capLife", std::string("not an int"));
 
     EXPECT_FALSE(accepted);
-    EXPECT_EQ(data.getHealth(), 100);
+    EXPECT_EQ(data.getCapacities().life, 0);
 }
 
-TEST(Character, SetHealth_ChangedValue_FiresEvent)
+TEST(Character, SetPropertyValue_CapLife_UpdatesUnderlyingDataAndFiresEvent)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
     bool fired = false;
     character.getEventDispatcher().subscribe([&](const Inspector::PropertyChangedEvent& e) {
         fired = true;
-        EXPECT_EQ(e.propertyId, "health");
+        EXPECT_EQ(e.propertyId, "capacities");
     });
 
-    character.setHealth(42);
+    bool accepted = character.setPropertyValue("capLife", 42);
 
+    EXPECT_TRUE(accepted);
     EXPECT_TRUE(fired);
-    EXPECT_EQ(character.getHealth(), 42);
+    EXPECT_EQ(character.getCapacities().life, 42);
 }
 
-TEST(Character, SetMaxHealth_UpdatesUnderlyingData)
+TEST(Character, SetCapacities_SameValue_DoesNotFireEvent)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
+    bool fired = false;
+    character.getEventDispatcher().subscribe([&](const Inspector::PropertyChangedEvent&) { fired = true; });
 
-    character.setMaxHealth(250);
+    character.setCapacities(character.getCapacities());
 
-    EXPECT_EQ(character.getMaxHealth(), 250);
+    EXPECT_FALSE(fired);
 }
 
 TEST(Character, SetPlayer_UpdatesUnderlyingData)
@@ -152,36 +176,30 @@ TEST(Character, SetDialogColor_ChangedValue_FiresEventWithImVec4Payload)
     EXPECT_FLOAT_EQ(std::get<ImVec4>(capturedNew).x, 0.1f);
 }
 
-TEST(Character, SetDialogColor_SameValue_DoesNotFireEvent)
+TEST(Character, SetImageAvatarAndInitialSceneId_UpdateUnderlyingData)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
-    bool fired = false;
-    character.getEventDispatcher().subscribe([&](const Inspector::PropertyChangedEvent&) { fired = true; });
 
-    character.setDialogColor(character.getDialogColor());
+    character.setImagePath("assets/hero_full.png");
+    character.setAvatarPath("assets/hero_face.png");
+    character.setInitialSceneId(SceneId(1));
 
-    EXPECT_FALSE(fired);
+    EXPECT_EQ(character.getImagePath(), "assets/hero_full.png");
+    EXPECT_EQ(character.getAvatarPath(), "assets/hero_face.png");
+    EXPECT_EQ(character.getInitialSceneId(), SceneId(1));
 }
 
-TEST(Character, SetPortraitPathAndStartingSceneId_UpdateUnderlyingData)
+TEST(Character, PropertyValue_DescriptionsNormal_RoundTripsLocalizedTextThroughInspectorContract)
 {
     Data::CharacterData data = makeCharacterData();
     Entities::Character character(&data);
+    Inspector::LocalizedText texts = {{"es_ES", "Un aventurero curtido."}, {"en_US", "A grizzled adventurer."}};
 
-    character.setPortraitPath("assets/hero.png");
-    character.setStartingSceneId("scene-01");
+    bool accepted = character.setPropertyValue("descriptionsNormal", texts);
 
-    EXPECT_EQ(character.getPortraitPath(), "assets/hero.png");
-    EXPECT_EQ(character.getStartingSceneId(), "scene-01");
-}
-
-TEST(Character, SetDescription_UpdatesUnderlyingData)
-{
-    Data::CharacterData data = makeCharacterData();
-    Entities::Character character(&data);
-
-    character.setDescription("A grizzled adventurer.");
-
-    EXPECT_EQ(character.getDescription(), "A grizzled adventurer.");
+    EXPECT_TRUE(accepted);
+    auto value = character.getPropertyValue("descriptionsNormal");
+    ASSERT_TRUE(std::holds_alternative<Inspector::LocalizedText>(value));
+    EXPECT_EQ(std::get<Inspector::LocalizedText>(value), texts);
 }

@@ -62,9 +62,12 @@ namespace ADS::Core {
 
         /**
          * Pointer to the main application window.
-         * Used for event handling and rendering operations.
+         * Used for event handling and rendering operations. Static so it
+         * can be reached the same way as m_environment/m_translationsManager/
+         * m_fontManager — directly from anywhere in the IDE layer, e.g. to
+         * resolve a native window handle for NFD dialog parenting.
          */
-        UI::Window *m_mainWindow{};
+        static UI::Window *m_mainWindow;
 
         /**
          * SDL renderer for the main window.
@@ -140,8 +143,18 @@ namespace ADS::Core {
         void render();
 
     public:
+        /**
+         * Construct the App instance, load the environment and initialize
+         * the translation system.
+         *
+         * @see init()
+         */
         App();
 
+        /**
+         * Destroy the App instance and release the environment and IDE
+         * renderer.
+         */
         ~App();
 
         /**
@@ -317,6 +330,16 @@ namespace ADS::Core {
          * @see run(), processEvents(), render()
          */
         void setMainWindow(UI::Window *window);
+
+        /**
+         * @brief Get the main application window
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return UI::Window* Pointer to the main window, or nullptr before setMainWindow() is called
+         */
+        static UI::Window *getMainWindow();
     };
 }
 

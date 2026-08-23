@@ -35,7 +35,9 @@ namespace ADS::Inspector {
         String,     ///< Text string
         Color,      ///< RGBA color (ImVec4)
         Vector2,    ///< 2D vector (ImVec2)
-        Enum        ///< Enumeration (selection from predefined values)
+        Enum,       ///< Enumeration (selection from predefined values)
+        Select,     ///< Single- or multi-select from a (possibly dynamic) option list
+        AffordanceList ///< Editable list of named affordances, each with its own trigger-name list
     };
 
     /**
@@ -56,6 +58,8 @@ namespace ADS::Inspector {
             case PropertyType::Color:   return "Color";
             case PropertyType::Vector2: return "Vector2";
             case PropertyType::Enum:    return "Enum";
+            case PropertyType::Select:  return "Select";
+            case PropertyType::AffordanceList: return "AffordanceList";
             default:                    return "Unknown";
         }
     }

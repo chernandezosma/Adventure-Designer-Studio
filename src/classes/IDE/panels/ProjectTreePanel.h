@@ -31,7 +31,7 @@ namespace ADS::IDE::Panels {
      * @version May 2026
      */
     enum class NodeType {
-        Scene, NPC, Item, Puzzle, Variable, Audio,
+        Scene, NPC, Item, Puzzle, Variable, Audio, State, Chain,
         // Sub-node types (children of a parent entity)
         SceneDescription, SceneOptions,
         NPCDialogs, NPCStats,
@@ -157,6 +157,24 @@ namespace ADS::IDE::Panels {
          */
         const std::string& getSelectedNodeId() const { return m_selectedId; }
 
+        /**
+         * @brief Mark a node as selected without going through a tree click
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Used when an entity is created programmatically (the "+" quick-add,
+         * not a tree click) so the new row highlights the same way clicking
+         * it would — see IDERenderer::createEntity().
+         *
+         * @param id Id of the node to select
+         * @param type Node type paired with @p id
+         */
+        void setSelectedNode(const std::string& id, NodeType type) {
+            m_selectedId = id;
+            m_selectedType = type;
+        }
+
         // ------------------------------------------------------------------
         // Callbacks — wire to the rest of the IDE after construction
         // ------------------------------------------------------------------
@@ -171,10 +189,10 @@ namespace ADS::IDE::Panels {
         std::function<void(NodeType)> onAddNode;
 
         /** Called when the user requests deletion of a node. */
-        std::function<void(const std::string& nodeId)> onDeleteNode;
+        std::function<void(const std::string& nodeId, NodeType)> onDeleteNode;
 
-        /** Called when the user requests duplication of a node. */
-        std::function<void(const std::string& nodeId)> onDuplicateNode;
+        /** Called when the user requests duplication of a node (new id + name). */
+        std::function<void(const std::string& nodeId, NodeType)> onDuplicateNode;
 
     private:
         // ------------------------------------------------------------------
@@ -208,10 +226,14 @@ namespace ADS::IDE::Panels {
          * @param label    Section header text (shown in uppercase).
          * @param color    Accent colour for the header icon and text.
          * @param icon     FontAwesome icon character for the section.
+         * @param addType  Node type the header's right-aligned "+" button
+         *                 creates — fires @c onAddNode(addType), the same
+         *                 path as "+ New ▸ <type>" in the footer.
          * @param nodes    Node list to render when the section is open.
          * @param expanded In/out flag tracking the collapsed state.
          */
         void renderSection(const char* label, ImVec4 color, const char* icon,
+                           NodeType addType,
                            std::vector<TreeNode>& nodes, bool& expanded);
 
         /**
@@ -293,6 +315,7 @@ namespace ADS::IDE::Panels {
         // ------------------------------------------------------------------
 
         std::string m_selectedId;
+        NodeType    m_selectedType = NodeType::Scene; ///< Paired with m_selectedId — id alone isn't unique across sections (Scene/Character/Item each have their own id sequence)
         char        m_searchBuf[256] = {};
 
         bool m_secScenes   = true;
@@ -301,6 +324,8 @@ namespace ADS::IDE::Panels {
         bool m_secPuzzles  = true;
         bool m_secVars     = true;
         bool m_secAudio    = true;
+        bool m_secStates   = true;
+        bool m_secChains   = true;
 
         // ------------------------------------------------------------------
         // Node lists — populated by rebuildFromProject()
@@ -313,6 +338,8 @@ namespace ADS::IDE::Panels {
         std::vector<TreeNode>  m_puzzles;
         std::vector<TreeNode>  m_variables;
         std::vector<TreeNode>  m_audio;
+        std::vector<TreeNode>  m_states;
+        std::vector<TreeNode>  m_chains;
     };
 
 } // namespace ADS::IDE::Panels

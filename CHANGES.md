@@ -26,8 +26,11 @@ Use `[x]` for completed items and `[ ]` for pending ones.
 - [x] Item CRUD (`addItem`, `removeItem`, `findItem`, `getItems`)
 - [x] File path tracking (`isSaved`, `getFilePath`, `setFilePath`, `clearFilePath`)
 - [x] DataObject collections (`getSceneData`, `getCharacterData`, `getItemData`) for serialisation
-- [ ] Project serialisation — save project to `.ads` file
-- [ ] Project deserialisation — load project from `.ads` file
+- [x] Project serialisation — save project to `.ads` file (`Core::ProjectSerializer`, nlohmann_json)
+- [x] Project deserialisation — load `.ads`, rebuild entity adapters via `Project::addX`
+- [x] `Data::GameData` expanded per `game.md` — title, synopsis, author, version, languages (default + supported)
+- [x] Game-content translations — sibling `<project>.trn` JSON (`Core::TranslationCatalog` +
+  `TranslationSerializer`); per-language draft text moved out of `.ads`. See `docs/core/schemas/translations.md`
 
 ### DataObject Layer
 
@@ -95,10 +98,12 @@ Use `[x]` for completed items and `[ ]` for pending ones.
 
 ### Menu Bar
 
-- [x] File → New Project (with unsaved-changes confirmation)
-- [x] File → Open Project (native file picker)
-- [x] File → Save Project (native file picker)
-- [ ] File → Save As (distinct from Save when a path is already set)
+- [x] File → New Project — modal collecting name, game languages, author, version (with unsaved-changes confirmation)
+- [x] File → Open Project (native file picker → `ProjectSerializer::load`)
+- [x] File → Save Project (saves straight to the known path, else Save As)
+- [x] File → Save As (always shows the native save picker)
+- [x] Options → Language — live IDE UI language switch, persisted to `.env` as `UI_LANGUAGE`
+- [x] View → Translations — toggles the game-content Translation panel (also a toolbar button)
 - [ ] Edit menu actions (undo, redo, cut, copy, paste)
 - [ ] Help menu (about dialog, documentation link)
 

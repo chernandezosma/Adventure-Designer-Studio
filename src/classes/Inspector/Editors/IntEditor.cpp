@@ -23,7 +23,11 @@
  */
 
 #include "IntEditor.h"
+#include "EditorLayout.h"
 #include "imgui.h"
+
+#include <algorithm>
+#include <string>
 
 namespace ADS::Inspector::Editors {
     /**
@@ -64,8 +68,7 @@ namespace ADS::Inspector::Editors {
         ImGui::PushID(descriptor.getId().c_str());
 
         // Two-column layout: label on left, widget on right
-        ImGui::Columns(2, nullptr, false);
-        ImGui::SetColumnWidth(0, std::max(80.0f, ImGui::GetContentRegionAvail().x * 0.38f));
+        beginPropertyColumns(descriptor);
 
         // Label column
         ImGui::AlignTextToFramePadding();
@@ -81,32 +84,76 @@ namespace ADS::Inspector::Editors {
             ImGui::BeginDisabled();
         }
 
-        ImGui::SetNextItemWidth(-1);
         const auto& constraints = descriptor.getConstraints();
+        const bool hasRange = constraints.hasNumericConstraints() &&
+                              constraints.minValue.has_value() &&
+                              constraints.maxValue.has_value();
 
-        if (constraints.hasNumericConstraints() &&
-            constraints.minValue.has_value() &&
-            constraints.maxValue.has_value()) {
-            // Use slider when we have both min and max
-            int minVal = static_cast<int>(constraints.minValue.value());
-            int maxVal = static_cast<int>(constraints.maxValue.value());
-            ImGui::SliderInt(
-                "##value",
-                &value,
-                minVal,
-                maxVal
-            );
+        bool widgetHovered = false;
+
+        if (hasRange) {
+            const int minVal = static_cast<int>(constraints.minValue.value());
+            const int maxVal = static_cast<int>(constraints.maxValue.value());
+
+            // Slider, leaving room for the "…" button. AlwaysClamp keeps a
+            // value typed straight into the slider bounded to [min, max].
+            ImGui::SetNextItemWidth(-28.0f);
+            ImGui::SliderInt("##value", &value, minVal, maxVal, "%d",
+                             ImGuiSliderFlags_AlwaysClamp);
+            widgetHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal);
+
+            // "…" button → dialog to type an exact value within [min, max].
+            ImGui::SameLine();
+            if (!readOnly && ImGui::Button("...", ImVec2(24.0f, 0.0f))) {
+                m_dialogValue = value;
+                ImGui::OpenPopup("###EditNumberDialog");
+            }
+
+            std::string caption = descriptor.getDisplayName();
+            if (!descriptor.getCategory().empty()) {
+                caption = descriptor.getCategory() + " / " + caption;
+            }
+            caption += "###EditNumberDialog";
+
+            ImGui::SetNextWindowPos(ImGui::GetMainViewport()->GetCenter(),
+                                    ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_TitleBg,       IPropertyEditor::dialogAccent());
+            ImGui::PushStyleColor(ImGuiCol_TitleBgActive, IPropertyEditor::dialogAccent());
+            ImGui::PushStyleColor(ImGuiCol_Text,          IPropertyEditor::dialogTextColor());
+            const bool numberDialogOpen = ImGui::BeginPopupModal(
+                caption.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::PopStyleColor(3);
+            if (numberDialogOpen) {
+                // ImGui never auto-closes a modal on Escape; do it ourselves,
+                // matching the Cancel button (no revert needed — the value is
+                // only written back on OK).
+                if (ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows)
+                    && ImGui::IsKeyPressed(ImGuiKey_Escape, false)) {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::Text("%d – %d", minVal, maxVal);
+                ImGui::SetNextItemWidth(220.0f);
+                ImGui::InputInt("##number_input", &m_dialogValue);
+                ImGui::Spacing();
+                if (ImGui::Button(IPropertyEditor::tr("DIALOG.OK").c_str(), ImVec2(90, 0))) {
+                    value = std::clamp(m_dialogValue, minVal, maxVal);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button(IPropertyEditor::tr("DIALOG.CANCEL").c_str(), ImVec2(90, 0))) {
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::EndPopup();
+            }
         } else {
             // Use drag for unconstrained or partially constrained values
             float speed = 1.0f;
             if (constraints.step.has_value()) {
                 speed = constraints.step.value();
             }
-            ImGui::DragInt(
-                "##value",
-                &value,
-                speed
-            );
+            ImGui::SetNextItemWidth(-1);
+            ImGui::DragInt("##value", &value, speed);
+            widgetHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal);
 
             // Apply constraints if only one bound is specified
             if (constraints.minValue.has_value() && value < static_cast<int>(constraints.minValue.value())) {
@@ -122,7 +169,7 @@ namespace ADS::Inspector::Editors {
         }
 
         // Show tooltip on widget hover
-        if (!descriptor.getDescription().empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+        if (!descriptor.getDescription().empty() && widgetHovered) {
             ImGui::SetTooltip("%s", descriptor.getDescription().c_str());
         }
 

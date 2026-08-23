@@ -66,6 +66,10 @@ elseif (MSVC)
     set(CMAKE_CXX_FLAGS_TEST "/Zi /Od /DEBUG:FULL /DTEST_MODE")     ### NUEVO ###
     # Prevent Windows min/max macros from conflicting with std::min/std::max and boost
     add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN)
+    # Compile source and treat narrow string literals as UTF-8, independent of
+    # the OS ANSI codepage — keeps narrow-string encoding unambiguous alongside
+    # PathService's UTF-8 path handling.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 endif ()
 
 # ----------------------------------------------------------
@@ -86,9 +90,18 @@ add_custom_target(copy_public_folder ALL
 # ----------------------------------------------------------
 # --- Copy .env file
 # ----------------------------------------------------------
+# .env is git-ignored and may be absent on a fresh checkout; fall back to the
+# tracked .env.example so the build never fails on a missing source file.
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.env)
+    set(ADS_ENV_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/.env)
+else ()
+    set(ADS_ENV_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/.env.example)
+    message(WARNING "No .env found - copying .env.example instead")
+endif ()
+
 add_custom_target(copy_env_file ALL
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_SOURCE_DIR}/.env
+        ${ADS_ENV_SOURCE}
         ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/.env
         COMMENT "Copying .env file to build directory"
 )
@@ -98,6 +111,7 @@ add_custom_target(copy_env_file ALL
 # ----------------------------------------------------------
 find_package(OpenGL REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
+find_package(SDL3_image CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
@@ -128,6 +142,7 @@ set(Headers
         src/exceptions/json/json_parse_exception.h
         src/constants/languages.h
         src/constants/System.h
+        src/constants/image_formats.h
         src/classes/i18n/i18n.h
         src/classes/env/env.h
         src/include/adsString.h
@@ -165,6 +180,8 @@ set(Sources
         src/classes/IDE/navigation/ToolBarRenderer.h
         src/classes/IDE/DesignTokens.h
         src/classes/IDE/DesignTokens.cpp
+        src/classes/IDE/TextureCache.cpp
+        src/classes/IDE/TextureCache.h
         src/classes/IDE/panels/BasePanel.cpp
         src/classes/IDE/panels/BasePanel.h
         src/classes/IDE/panels/StatusBarPanel.cpp
@@ -175,6 +192,16 @@ set(Sources
         src/classes/IDE/panels/InspectorPanel.h
         src/classes/IDE/panels/WorkingAreaPanel.cpp
         src/classes/IDE/panels/WorkingAreaPanel.h
+        src/classes/IDE/panels/TranslationPanel.cpp
+        src/classes/IDE/panels/TranslationPanel.h
+        src/classes/IDE/dialogs/NewProjectDialog.cpp
+        src/classes/IDE/dialogs/NewProjectDialog.h
+        src/classes/IDE/dialogs/ModalScaffold.cpp
+        src/classes/IDE/dialogs/ModalScaffold.h
+        src/classes/IDE/dialogs/LanguagesDialog.cpp
+        src/classes/IDE/dialogs/LanguagesDialog.h
+        src/classes/IDE/dialogs/ExpandableTextInput.cpp
+        src/classes/IDE/dialogs/ExpandableTextInput.h
         src/classes/IDE/IDEBase.cpp
         src/classes/IDE/IDEBase.h
         src/classes/IDE/themes/Theme.cpp
@@ -200,6 +227,9 @@ set(Sources
         src/classes/Inspector/IInspectable.h
         # Inspector editors
         src/classes/Inspector/Editors/IPropertyEditor.h
+        src/classes/Inspector/Editors/EditorLayout.h
+        src/classes/Inspector/Editors/SelectEditor.cpp
+        src/classes/Inspector/Editors/SelectEditor.h
         src/classes/Inspector/Editors/StringEditor.cpp
         src/classes/Inspector/Editors/StringEditor.h
         src/classes/Inspector/Editors/IntEditor.cpp
@@ -214,13 +244,25 @@ set(Sources
         src/classes/Inspector/Editors/ColorEditor.h
         src/classes/Inspector/Editors/Vector2Editor.cpp
         src/classes/Inspector/Editors/Vector2Editor.h
+        src/classes/Inspector/Editors/AffordanceListEditor.cpp
+        src/classes/Inspector/Editors/AffordanceListEditor.h
         # Portable types (no rendering dependency)
         src/classes/Types/Color.h
+        src/classes/Types/Id.h
         # DataObject layer (pure data, serialisable)
+        src/classes/Data/IIdentifiable.h
         src/classes/Data/BaseData.h
+        src/classes/Data/Descriptions.h
+        src/classes/Data/Capacities.h
+        src/classes/Data/Affordance.h
+        src/classes/Data/Effect.h
+        src/classes/Data/GameData.h
+        src/classes/Data/SceneData.cpp
         src/classes/Data/SceneData.h
         src/classes/Data/CharacterData.h
         src/classes/Data/ItemData.h
+        src/classes/Data/StateData.h
+        src/classes/Data/StateChainData.h
         # Entity classes (inspector adapters)
         src/classes/Entities/BaseEntity.cpp
         src/classes/Entities/BaseEntity.h
@@ -230,9 +272,23 @@ set(Sources
         src/classes/Entities/Character.h
         src/classes/Entities/Item.cpp
         src/classes/Entities/Item.h
+        src/classes/Entities/State.cpp
+        src/classes/Entities/State.h
+        src/classes/Entities/StateChain.cpp
+        src/classes/Entities/StateChain.h
         # Core classes
         src/classes/Core/Project.cpp
         src/classes/Core/Project.h
+        src/classes/Core/ProjectSerializer.cpp
+        src/classes/Core/ProjectSerializer.h
+        src/classes/Core/DataSerialization.h
+        src/classes/Core/PathService.cpp
+        src/classes/Core/PathService.h
+        src/classes/Core/TranslationCatalog.cpp
+        src/classes/Core/TranslationCatalog.h
+        src/classes/Core/TranslationSerializer.cpp
+        src/classes/Core/TranslationSerializer.h
+        src/exceptions/core/project_serialization_exception.h
         # LexEngine system (vocabulary compiler)
         src/classes/LexEngine/types.h
         src/classes/LexEngine/LexEntry.cpp
@@ -259,6 +315,7 @@ target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
         imgui::imgui
         SDL3::SDL3
+        $<IF:$<TARGET_EXISTS:SDL3_image::SDL3_image-shared>,SDL3_image::SDL3_image-shared,SDL3_image::SDL3_image-static>
         spdlog::spdlog
         fmt::fmt
         Boost::uuid

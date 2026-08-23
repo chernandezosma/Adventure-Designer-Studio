@@ -43,18 +43,25 @@ add_library(ads_inspector STATIC
         ../src/classes/Inspector/Editors/EnumEditor.cpp
         ../src/classes/Inspector/Editors/ColorEditor.cpp
         ../src/classes/Inspector/Editors/Vector2Editor.cpp
+        ../src/classes/Inspector/Editors/SelectEditor.cpp
+        ../src/classes/Inspector/Editors/AffordanceListEditor.cpp
 )
 target_include_directories(ads_inspector PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/classes
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/constants
+        ${CMAKE_CURRENT_SOURCE_DIR}/../lib/IconFontCppHeaders
 )
 target_link_libraries(ads_inspector PUBLIC imgui::imgui)
 
 # Entities library (inspector adapters over DataObjects)
 add_library(ads_entities STATIC
+        ../src/classes/Data/SceneData.cpp
         ../src/classes/Entities/BaseEntity.cpp
         ../src/classes/Entities/Scene.cpp
         ../src/classes/Entities/Character.cpp
         ../src/classes/Entities/Item.cpp
+        ../src/classes/Entities/State.cpp
+        ../src/classes/Entities/StateChain.cpp
 )
 target_include_directories(ads_entities PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/classes
@@ -75,13 +82,20 @@ target_include_directories(ads_lexengine PUBLIC
 target_link_libraries(ads_lexengine PUBLIC nlohmann_json::nlohmann_json spdlog::spdlog)
 
 # Core library (Project — owns DataObjects + entity adapters)
+find_package(SDL3 CONFIG REQUIRED)
+
 add_library(ads_core STATIC
         ../src/classes/Core/Project.cpp
+        ../src/classes/Core/ProjectSerializer.cpp
+        ../src/classes/Core/PathService.cpp
+        ../src/classes/Core/TranslationCatalog.cpp
+        ../src/classes/Core/TranslationSerializer.cpp
 )
 target_include_directories(ads_core PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/../src/classes
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/exceptions
 )
-target_link_libraries(ads_core PUBLIC ads_entities ads_lexengine spdlog::spdlog fmt::fmt)
+target_link_libraries(ads_core PUBLIC ads_entities ads_lexengine nlohmann_json::nlohmann_json spdlog::spdlog fmt::fmt SDL3::SDL3)
 
 # ============================================================================
 # Gather all test sources

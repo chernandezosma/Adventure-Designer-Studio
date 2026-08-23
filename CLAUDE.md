@@ -101,6 +101,13 @@ libx11-dev libxft-dev libxext-dev libwayland-dev
 libxkbcommon-dev libegl1-mesa-dev libibus-1.0-dev
 ```
 
+Also required: `libgtk-3-dev`. The `nativefiledialog-extended` dependency
+builds from the overlay port at `vcpkg-overlays/nativefiledialog-extended`
+(`NFD_PORTAL=OFF`), which uses GTK3's file chooser instead of the default
+xdg-desktop-portal backend — the portal backend's dialog is a separate
+process window whose placement the app cannot control (it can appear pinned
+to a screen corner instead of centered over the app window).
+
 ### GCC 15 / libsystemd
 
 vcpkg's `libsystemd` fails with GCC 15 (`-Werror=override-init` in `errno-to-name.h`).
