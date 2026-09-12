@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -30,6 +31,8 @@
 
 namespace ADS::Constants::Languages {
     // POSIX locale codes (standard format)
+    //
+    // SPANISH
     constexpr std::string_view SPANISH_ARGENTINA = "es_AR";
     constexpr std::string_view SPANISH_BOLIVIA = "es_BO";
     constexpr std::string_view SPANISH_CHILE = "es_CL";
@@ -51,11 +54,13 @@ namespace ADS::Constants::Languages {
     constexpr std::string_view SPANISH_URUGUAY = "es_UY";
     constexpr std::string_view SPANISH_VENEZUELA = "es_VE";
 
+    // ENGLISH
     constexpr std::string_view ENGLISH_UNITED_KINGDOM = "en_GB"; // Changed from en_UK to standard en_GB
     constexpr std::string_view ENGLISH_UNITED_STATES = "en_US";
     constexpr std::string_view ENGLISH_CANADA = "en_CA";
     constexpr std::string_view ENGLISH_AUSTRALIA = "en_AU";
 
+    // FRENCH
     constexpr std::string_view FRENCH_BELGIUM = "fr_BE";
     constexpr std::string_view FRENCH_CANADA = "fr_CA";
     constexpr std::string_view FRENCH_SWITZERLAND = "fr_CH";
@@ -63,23 +68,40 @@ namespace ADS::Constants::Languages {
     constexpr std::string_view FRENCH_LUXEMBOURG = "fr_LU";
     constexpr std::string_view FRENCH_MONACO = "fr_MC";
 
+    // GERMAN
     constexpr std::string_view GERMAN_AUSTRIA = "de_AT";
     constexpr std::string_view GERMAN_SWITZERLAND = "de_CH";
     constexpr std::string_view GERMAN_GERMANY = "de_DE";
     constexpr std::string_view GERMAN_LUXEMBOURG = "de_LU";
 
+    // DUTCH
     constexpr std::string_view DUTCH_BELGIUM = "nl_BE";
     constexpr std::string_view DUTCH_NETHERLANDS = "nl_NL";
+
+    // ITALIAN
     constexpr std::string_view ITALIAN_ITALY = "it_IT";
     constexpr std::string_view ITALIAN_SWITZERLAND = "it_CH";
+
+    // PORTUGUESE
     constexpr std::string_view PORTUGUESE_BRAZIL = "pt_BR";
     constexpr std::string_view PORTUGUESE_PORTUGAL = "pt_PT";
+
+    // NORDIC LANGUAGES:
+    constexpr std::string_view DANISH_DENMARK = "da_DK";
+    constexpr std::string_view NORWEGIAN_NORWAY = "no_NO";
+    constexpr std::string_view FINNISH_FINLAND = "fi_FI";
     constexpr std::string_view SWEDISH_FINLAND = "sv_FI";
     constexpr std::string_view SWEDISH_SWEDEN = "sv_SE";
-    constexpr std::string_view POLISH_POLAND = "pl_PL";
+
+    // CENTRAL EUROPE
     constexpr std::string_view RUSSIAN_RUSSIA = "ru_RU";
+    constexpr std::string_view POLISH_POLAND = "pl_PL";
+    constexpr std::string_view CZECH_CZECHIA = "cs_CZ";
+    constexpr std::string_view HUNGARIAN_HUNGARY = "hu_HU";
+    constexpr std::string_view GREEK_GREECE = "el_GR";
     constexpr std::string_view ROMANIAN_ROMANIA = "ro_RO";
 
+    // FALLBACK
     constexpr std::string_view DEFAULT_FALLBACK = "es_ES";
 
     // WIN32 platform locale strings
@@ -134,6 +156,13 @@ namespace ADS::Constants::Languages {
         constexpr std::string_view POLISH_POLAND = "Polish_Poland";
         constexpr std::string_view RUSSIAN_RUSSIA = "Russian_Russia";
         constexpr std::string_view ROMANIAN_ROMANIA = "Romanian_Romania";
+
+        constexpr std::string_view DANISH_DENMARK = "Danish_Denmark";
+        constexpr std::string_view NORWEGIAN_NORWAY = "Norwegian_Norway";
+        constexpr std::string_view FINNISH_FINLAND = "Finnish_Finland";
+        constexpr std::string_view CZECH_CZECHIA = "Czech_Czech Republic";
+        constexpr std::string_view HUNGARIAN_HUNGARY = "Hungarian_Hungary";
+        constexpr std::string_view GREEK_GREECE = "Greek_Greece";
     }
 #endif
 
@@ -194,6 +223,15 @@ namespace ADS::Constants::Languages {
                 {PORTUGUESE_BRAZIL, "Português (Brasil)"},
                 {PORTUGUESE_PORTUGAL, "Português (Portugal)"},
 
+                // Danish
+                {DANISH_DENMARK, "Dansk (Danmark)"},
+
+                // Norwegian
+                {NORWEGIAN_NORWAY, "Norsk (Norge)"},
+
+                // Finnish
+                {FINNISH_FINLAND, "Suomi (Suomi)"},
+
                 // Swedish
                 {SWEDISH_FINLAND, "Svenska (Finland)"},
                 {SWEDISH_SWEDEN, "Svenska (Sverige)"},
@@ -204,9 +242,116 @@ namespace ADS::Constants::Languages {
                 // Russian
                 {RUSSIAN_RUSSIA, "Русский (Россия)"},
 
+                // Czech
+                {CZECH_CZECHIA, "Čeština (Česko)"},
+
+                // Hungarian
+                {HUNGARIAN_HUNGARY, "Magyar (Magyarország)"},
+
+                // Greek
+                {GREEK_GREECE, "Ελληνικά (Ελλάδα)"},
+
                 // Romanian
                 {ROMANIAN_ROMANIA, "Română (România)"},
             });
+
+    /**
+     * @brief A language catalog entry pairing a stable numeric id with its
+     *        BCP-47/POSIX code and display name.
+     *
+     * IDs are append-only: once assigned, an id must never be reassigned or
+     * reused, since it is persisted in compiled game output. See
+     * docs/core/schemas/game.md, "language" field and "Language catalog".
+     */
+    struct LanguageEntry {
+        std::uint8_t id;
+        std::string_view code;
+        std::string_view name;
+    };
+
+    constexpr auto languageCatalog = std::to_array<LanguageEntry>({
+        // Spanish
+        {0, SPANISH_ARGENTINA, "Español (Argentina)"},
+        {1, SPANISH_BOLIVIA, "Español (Bolivia)"},
+        {2, SPANISH_CHILE, "Español (Chile)"},
+        {3, SPANISH_COLOMBIA, "Español (Colombia)"},
+        {4, SPANISH_COSTA_RICA, "Español (Costa Rica)"},
+        {5, SPANISH_DOMINICAN_REPUBLIC, "Español (República Dominicana)"},
+        {6, SPANISH_ECUADOR, "Español (Ecuador)"},
+        {7, SPANISH_SPAIN, "Español (España)"},
+        {8, SPANISH_GUATEMALA, "Español (Guatemala)"},
+        {9, SPANISH_HONDURAS, "Español (Honduras)"},
+        {10, SPANISH_MEXICO, "Español (Mexico)"},
+        {11, SPANISH_NICARAGUA, "Español (Nicaragua)"},
+        {12, SPANISH_PANAMA, "Español (Panama)"},
+        {13, SPANISH_PERU, "Español (Peru)"},
+        {14, SPANISH_PUERTO_RICO, "Español (Puerto Rico)"},
+        {15, SPANISH_PARAGUAY, "Español (Paraguay)"},
+        {16, SPANISH_EL_SALVADOR, "Español (El Salvador)"},
+        {17, SPANISH_UNITED_STATES, "Español (Estados Unidos)"},
+        {18, SPANISH_URUGUAY, "Español (Uruguay)"},
+        {19, SPANISH_VENEZUELA, "Español (Venezuela)"},
+
+        // English
+        {20, ENGLISH_UNITED_KINGDOM, "English (United Kingdom)"},
+        {21, ENGLISH_UNITED_STATES, "English (United States)"},
+        {22, ENGLISH_CANADA, "English (Canada)"},
+        {23, ENGLISH_AUSTRALIA, "English (Australia)"},
+
+        // French
+        {24, FRENCH_BELGIUM, "Français (Belgique)"},
+        {25, FRENCH_CANADA, "Français (Canada)"},
+        {26, FRENCH_SWITZERLAND, "Français (Suisse)"},
+        {27, FRENCH_FRANCE, "Français (France)"},
+        {28, FRENCH_LUXEMBOURG, "Français (Luxembourg)"},
+        {29, FRENCH_MONACO, "Français (Monaco)"},
+
+        // German
+        {30, GERMAN_AUSTRIA, "Deutsch (Österreich)"},
+        {31, GERMAN_SWITZERLAND, "Deutsch (Schweiz)"},
+        {32, GERMAN_GERMANY, "Deutsch (Deutschland)"},
+        {33, GERMAN_LUXEMBOURG, "Deutsch (Luxemburg)"},
+
+        // Dutch
+        {34, DUTCH_BELGIUM, "Nederlands (België)"},
+        {35, DUTCH_NETHERLANDS, "Nederlands (Nederland)"},
+
+        // Italian
+        {36, ITALIAN_ITALY, "Italiano (Italia)"},
+        {37, ITALIAN_SWITZERLAND, "Italiano (Svizzera)"},
+
+        // Portuguese
+        {38, PORTUGUESE_BRAZIL, "Português (Brasil)"},
+        {39, PORTUGUESE_PORTUGAL, "Português (Portugal)"},
+
+        // Swedish
+        {40, SWEDISH_FINLAND, "Svenska (Finland)"},
+        {41, SWEDISH_SWEDEN, "Svenska (Sverige)"},
+
+        // Polish
+        {42, POLISH_POLAND, "Polski (Polska)"},
+
+        // Russian
+        {43, RUSSIAN_RUSSIA, "Русский (Россия)"},
+
+        // Romanian
+        {44, ROMANIAN_ROMANIA, "Română (România)"},
+
+        // Newly added — appended, never interleaved, so existing ids never shift
+        {45, DANISH_DENMARK, "Dansk (Danmark)"},
+        {46, NORWEGIAN_NORWAY, "Norsk (Norge)"},
+        {47, FINNISH_FINLAND, "Suomi (Suomi)"},
+        {48, CZECH_CZECHIA, "Čeština (Česko)"},
+        {49, HUNGARIAN_HUNGARY, "Magyar (Magyarország)"},
+        {50, GREEK_GREECE, "Ελληνικά (Ελλάδα)"},
+    });
+
+    static_assert(languageCatalog.size() == languages.size(),
+                  "languageCatalog and languages must stay in sync");
+    static_assert(languageCatalog[7].code == SPANISH_SPAIN,
+                  "languageCatalog id 7 must remain SPANISH_SPAIN");
+    static_assert(languageCatalog[50].code == GREEK_GREECE,
+                  "languageCatalog id 50 must remain GREEK_GREECE");
 
 #ifdef _WIN32
     // WIN32 to POSIX locale mapping
@@ -272,7 +417,15 @@ namespace ADS::Constants::Languages {
         // Other
         {Win32::POLISH_POLAND, POLISH_POLAND},
         {Win32::RUSSIAN_RUSSIA, RUSSIAN_RUSSIA},
-        {Win32::ROMANIAN_ROMANIA, ROMANIAN_ROMANIA}
+        {Win32::ROMANIAN_ROMANIA, ROMANIAN_ROMANIA},
+
+        // Nordic / Central Europe
+        {Win32::DANISH_DENMARK, DANISH_DENMARK},
+        {Win32::NORWEGIAN_NORWAY, NORWEGIAN_NORWAY},
+        {Win32::FINNISH_FINLAND, FINNISH_FINLAND},
+        {Win32::CZECH_CZECHIA, CZECH_CZECHIA},
+        {Win32::HUNGARIAN_HUNGARY, HUNGARIAN_HUNGARY},
+        {Win32::GREEK_GREECE, GREEK_GREECE}
     };
 #endif
 
@@ -315,6 +468,12 @@ namespace ADS::Constants::Languages {
         if (baseName.find("Russian") == 0) return "ru_RU";
         if (baseName.find("Swedish") == 0) return "sv_SE";
         if (baseName.find("Romanian") == 0) return "ro_RO";
+        if (baseName.find("Danish") == 0) return "da_DK";
+        if (baseName.find("Norwegian") == 0) return "no_NO";
+        if (baseName.find("Finnish") == 0) return "fi_FI";
+        if (baseName.find("Czech") == 0) return "cs_CZ";
+        if (baseName.find("Hungarian") == 0) return "hu_HU";
+        if (baseName.find("Greek") == 0) return "el_GR";
 #else
         // Unix/Linux/macOS: assume already in POSIX format
         // Just validate it exists in our supported languages
@@ -397,13 +556,73 @@ namespace ADS::Constants::Languages {
             FRENCH_LUXEMBOURG, FRENCH_MONACO,
             GERMAN_AUSTRIA, GERMAN_SWITZERLAND, GERMAN_GERMANY, GERMAN_LUXEMBOURG,
             DUTCH_BELGIUM, DUTCH_NETHERLANDS, ITALIAN_ITALY, ITALIAN_SWITZERLAND,
-            PORTUGUESE_BRAZIL, PORTUGUESE_PORTUGAL, SWEDISH_FINLAND, SWEDISH_SWEDEN,
-            POLISH_POLAND, RUSSIAN_RUSSIA, ROMANIAN_ROMANIA
+            PORTUGUESE_BRAZIL, PORTUGUESE_PORTUGAL,
+            DANISH_DENMARK, NORWEGIAN_NORWAY, FINNISH_FINLAND,
+            SWEDISH_FINLAND, SWEDISH_SWEDEN,
+            POLISH_POLAND, RUSSIAN_RUSSIA, CZECH_CZECHIA, HUNGARIAN_HUNGARY, GREEK_GREECE,
+            ROMANIAN_ROMANIA
         });
         return locales;
     }
 
-    // Optional stream operator for debugging
+    /**
+     * @brief Gets the BCP-47/POSIX code for a given numeric language id.
+     *
+     * @param id The numeric language id (see Language catalog in
+     *           docs/core/schemas/game.md)
+     *
+     * @return The language code (e.g., "es_ES") or empty string if the id is
+     *         not found in the catalog
+     */
+    [[nodiscard]] inline std::string getLanguageCodeById(const std::uint8_t id) {
+        const auto it = std::find_if(
+            languageCatalog.cbegin(), languageCatalog.cend(),
+            [id](const LanguageEntry &entry) { return entry.id == id; });
+
+        return it != languageCatalog.cend() ? std::string(it->code) : std::string{};
+    }
+
+    /**
+     * @brief Gets the full display name for a given numeric language id.
+     *
+     * @param id The numeric language id (see Language catalog in
+     *           docs/core/schemas/game.md)
+     *
+     * @return The full language name or empty string if the id is not found
+     */
+    [[nodiscard]] inline std::string getLanguageNameById(const std::uint8_t id) {
+        const auto it = std::find_if(
+            languageCatalog.cbegin(), languageCatalog.cend(),
+            [id](const LanguageEntry &entry) { return entry.id == id; });
+
+        return it != languageCatalog.cend() ? std::string(it->name) : std::string{};
+    }
+
+    /**
+     * @brief Gets the numeric language id for a given BCP-47/POSIX code.
+     *
+     * @param code The language code (e.g., "es_ES")
+     *
+     * @return The numeric id, or std::nullopt if the code is not found in
+     *         the catalog
+     */
+    [[nodiscard]] inline std::optional<std::uint8_t> getLanguageIdByCode(const std::string_view code) {
+        const auto it = std::find_if(
+            languageCatalog.cbegin(), languageCatalog.cend(),
+            [code](const LanguageEntry &entry) { return entry.code == code; });
+
+        if (it != languageCatalog.cend()) {
+            return it->id;
+        }
+        return std::nullopt;
+    }
+
+    /**
+     * @brief Stream an std::optional<T> for debugging
+     * @param os Output stream to write to
+     * @param opt Value to stream, or nullopt
+     * @return std::ostream& The same stream, for chaining
+     */
     template<typename T>
     std::ostream &operator<<(std::ostream &os, const std::optional<T> &opt) {
         return opt ? (os << *opt) : (os << "nullopt");

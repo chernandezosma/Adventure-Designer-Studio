@@ -143,7 +143,7 @@ namespace ADS::Inspector {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jan 2026
          *
-         * Registers editors for: String, Int, Float, Bool, Enum, Color, Vector2
+         * Registers editors for: String, Int, Float, Bool, Enum, Color, Vector2, Select
          */
         void registerDefaultEditors();
 

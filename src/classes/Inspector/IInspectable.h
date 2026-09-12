@@ -17,6 +17,7 @@
 #ifndef ADS_IINSPECTABLE_H
 #define ADS_IINSPECTABLE_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include "PropertyDescriptor.h"
@@ -126,6 +127,41 @@ namespace ADS::Inspector {
          * @return PropertyEventDispatcher& Reference to the event dispatcher
          */
         virtual PropertyEventDispatcher& getEventDispatcher() = 0;
+
+        /**
+         * @brief Set a user-typed label for a "user-defined" bitmap bit option
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Optional capability hook — the one non-pure member of this
+         * interface. Only inspectables with a bitmap field that reserves
+         * author-chosen bits (currently just Scene's affordances/flags)
+         * need to override it; everything else keeps this no-op default
+         * rather than each unrelated implementer stubbing it out.
+         *
+         * @param propertyId The Select property id owning the bitmap, e.g. "affordances"
+         * @param bitPosition Bit position within that bitmap
+         * @param label The new label text
+         * @return bool True if accepted/stored
+         */
+        virtual bool setUserDefinedOptionLabel(
+            const std::string& /*propertyId*/, uint8_t /*bitPosition*/, const std::string& /*label*/
+        ) { return false; }
+
+        /**
+         * @brief Get the previously stored label for a "user-defined" bitmap bit option
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param propertyId The Select property id owning the bitmap, e.g. "affordances"
+         * @param bitPosition Bit position within that bitmap
+         * @return std::string The stored label, or "" if unset/unsupported
+         */
+        virtual std::string getUserDefinedOptionLabel(
+            const std::string& /*propertyId*/, uint8_t /*bitPosition*/
+        ) const { return {}; }
     };
 }
 

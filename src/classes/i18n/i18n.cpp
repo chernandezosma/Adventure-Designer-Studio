@@ -26,6 +26,7 @@
 
 #include "../../exceptions/filesystem/file_not_found_exception.h"
 #include "../../exceptions/json/json_parse_exception.h"
+#include "Core/PathService.h"
 #include "adsString.h"
 #include "spdlog/spdlog.h"
 
@@ -61,7 +62,7 @@ namespace ADS::i18n {
     {
         // Validate base folder
         if (!std::filesystem::exists(this->baseFolder)) {
-            throw translation_file_exception("Translation directory does not exist: " + this->baseFolder.string());
+            throw translation_file_exception("Translation directory does not exist: " + Core::PathService::toUtf8(this->baseFolder));
         }
 
         // Validate fallback language
@@ -251,7 +252,7 @@ namespace ADS::i18n {
                 file.close();
                 unordered_map<string, string> languageTranslations;
 
-                if (this->parseJsonContent("", content, languageTranslations, filePath.string())) {
+                if (this->parseJsonContent("", content, languageTranslations, Core::PathService::toUtf8(filePath))) {
                     this->translations[language] = std::move(languageTranslations);
 
                     return true;
@@ -264,13 +265,13 @@ namespace ADS::i18n {
                 // Other JSON errors
                 spdlog::error(std::format(
                     "JSON error loading {} translations from '{}': {}",
-                    language, filePath.string(), e.what())
+                    language, Core::PathService::toUtf8(filePath), e.what())
                 );
                 return false;
             } catch (const std::ios_base::failure &e) {
                 spdlog::error(std::format(
                     "Failed to read {} translation file '{}': {} (error code: {})",
-                    language, filePath.string(), e.what(), e.code().value())
+                    language, Core::PathService::toUtf8(filePath), e.what(), e.code().value())
                 );
                 return false;
             }
@@ -782,7 +783,7 @@ namespace ADS::i18n {
 
         if (useExisting) {
             filesystem::path filePath = this->baseFolder / (language + ".json");
-            spdlog::info(std::format("File {} exists", filePath.string()));
+            spdlog::info(std::format("File {} exists", Core::PathService::toUtf8(filePath)));
             // std::cout << "File " << filePath << " exists" << std::endl;
             try {
                 ofstream file(filePath, std::ios::trunc);
@@ -875,5 +876,33 @@ namespace ADS::i18n {
 
         sort(missing.begin(), missing.end());
         return missing;
+    }
+
+    i18n *i18n::s_activeInstance = nullptr;
+
+    /**
+     * @brief Set the process-wide active i18n instance
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @param instance Non-owning pointer to the instance to expose, or nullptr to clear it
+     */
+    void i18n::setActiveInstance(i18n *instance)
+    {
+        s_activeInstance = instance;
+    }
+
+    /**
+     * @brief Get the process-wide active i18n instance
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @return i18n* Non-owning pointer, or nullptr if none is active
+     */
+    i18n *i18n::getActiveInstance()
+    {
+        return s_activeInstance;
     }
 }

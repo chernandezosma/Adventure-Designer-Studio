@@ -19,27 +19,42 @@
 #include "Data/ItemData.h"
 
 using namespace ADS::Data;
+using ADS::Types::ObjectId;
+using ADS::Types::SceneId;
+using ADS::Types::StateId;
 
 TEST(ItemData, DefaultConstruction_HasExpectedDefaults)
 {
     ItemData item;
 
-    EXPECT_TRUE(item.getDescription().empty());
+    EXPECT_TRUE(item.getDescriptionTexts().normal.empty());
     EXPECT_EQ(item.getItemType(), 0);
-    EXPECT_TRUE(item.isPickable());
-    EXPECT_FALSE(item.isUsable());
-    EXPECT_EQ(item.getQuantity(), 1);
-    EXPECT_TRUE(item.getIconPath().empty());
-    EXPECT_TRUE(item.getStartingSceneId().empty());
+    EXPECT_TRUE(item.getAffordances().empty());
+    EXPECT_FALSE(item.isContainer());
+    EXPECT_EQ(item.getWeight(), 0);
+    EXPECT_EQ(item.getSlots(), 1);
+    EXPECT_EQ(item.getServiceLife(), 0);
+    EXPECT_TRUE(item.getImagePath().empty());
+    EXPECT_TRUE(item.getContainerItemIds().empty());
+    EXPECT_TRUE(item.getCombinableWithIds().empty());
+    EXPECT_TRUE(item.getSynonyms().empty());
+    EXPECT_TRUE(item.getAbbreviatures().empty());
+    EXPECT_EQ(item.getDamageEffect(), Effect{});
+    EXPECT_EQ(item.getHealEffect(), Effect{});
+    EXPECT_FALSE(item.getInitialSceneId().has_value());
+    EXPECT_FALSE(item.getState().has_value());
 }
 
-TEST(ItemData, SetDescription_UpdatesDescription)
+TEST(ItemData, SetDescriptionTexts_UpdatesNormalSlot)
 {
     ItemData item;
 
-    item.setDescription("A rusty old key.");
+    DescriptionTexts texts;
+    texts.normal = {{"es_ES", "Una llave oxidada."}, {"en_US", "A rusty old key."}};
+    item.setDescriptionTexts(texts);
 
-    EXPECT_EQ(item.getDescription(), "A rusty old key.");
+    LocalizedText expected = {{"es_ES", "Una llave oxidada."}, {"en_US", "A rusty old key."}};
+    EXPECT_EQ(item.getDescriptionTexts().normal, expected);
 }
 
 TEST(ItemData, SetItemType_UpdatesType)
@@ -51,47 +66,116 @@ TEST(ItemData, SetItemType_UpdatesType)
     EXPECT_EQ(item.getItemType(), 2);
 }
 
-TEST(ItemData, SetPickable_UpdatesFlag)
+TEST(ItemData, SetAffordances_UpdatesList)
 {
     ItemData item;
 
-    item.setPickable(false);
+    item.setAffordances({{"Takeable", {"on_pickup", "on_drop"}}, {"Openable", {"on_open"}}});
 
-    EXPECT_FALSE(item.isPickable());
+    ASSERT_EQ(item.getAffordances().size(), 2u);
+    EXPECT_EQ(item.getAffordances()[0].name, "Takeable");
+    EXPECT_EQ(item.getAffordances()[0].triggers, (std::vector<std::string>{"on_pickup", "on_drop"}));
+    EXPECT_EQ(item.getAffordances()[1].name, "Openable");
 }
 
-TEST(ItemData, SetUsable_UpdatesFlag)
+TEST(ItemData, SetContainer_RoundTrips)
 {
     ItemData item;
 
-    item.setUsable(true);
+    EXPECT_FALSE(item.isContainer());
 
-    EXPECT_TRUE(item.isUsable());
+    item.setContainer(true);
+    EXPECT_TRUE(item.isContainer());
+
+    item.setContainer(false);
+    EXPECT_FALSE(item.isContainer());
 }
 
-TEST(ItemData, SetQuantity_UpdatesQuantity)
+TEST(ItemData, SetWeight_UpdatesWeight)
 {
     ItemData item;
 
-    item.setQuantity(5);
+    item.setWeight(200);
 
-    EXPECT_EQ(item.getQuantity(), 5);
+    EXPECT_EQ(item.getWeight(), 200);
 }
 
-TEST(ItemData, SetIconPath_UpdatesPath)
+TEST(ItemData, SetSlots_UpdatesSlots)
 {
     ItemData item;
 
-    item.setIconPath("assets/key.png");
+    item.setSlots(3);
 
-    EXPECT_EQ(item.getIconPath(), "assets/key.png");
+    EXPECT_EQ(item.getSlots(), 3);
 }
 
-TEST(ItemData, SetStartingSceneId_UpdatesId)
+TEST(ItemData, SetServiceLife_UpdatesServiceLife)
 {
     ItemData item;
 
-    item.setStartingSceneId("scene-01");
+    item.setServiceLife(50);
 
-    EXPECT_EQ(item.getStartingSceneId(), "scene-01");
+    EXPECT_EQ(item.getServiceLife(), 50);
+}
+
+TEST(ItemData, SetImagePath_UpdatesPath)
+{
+    ItemData item;
+
+    item.setImagePath("assets/key.png");
+
+    EXPECT_EQ(item.getImagePath(), "assets/key.png");
+}
+
+TEST(ItemData, SetContainerAndCombinableIds_UpdateIndependently)
+{
+    ItemData item;
+
+    item.setContainerItemIds({ObjectId(4), ObjectId(5)});
+    item.setCombinableWithIds({ObjectId(6)});
+
+    ASSERT_EQ(item.getContainerItemIds().size(), 2u);
+    EXPECT_EQ(item.getContainerItemIds()[0], ObjectId(4));
+    ASSERT_EQ(item.getCombinableWithIds().size(), 1u);
+    EXPECT_EQ(item.getCombinableWithIds()[0], ObjectId(6));
+}
+
+TEST(ItemData, SetSynonymsAndAbbreviatures_RoundTrip)
+{
+    ItemData item;
+
+    item.setSynonyms({"lantern", "lamp"});
+    item.setAbbreviatures({"lant"});
+
+    EXPECT_EQ(item.getSynonyms(), (std::vector<std::string>{"lantern", "lamp"}));
+    EXPECT_EQ(item.getAbbreviatures(), (std::vector<std::string>{"lant"}));
+}
+
+TEST(ItemData, SetEffects_RoundTrip)
+{
+    ItemData item;
+
+    Effect dmg{1, 20, 83, 15, 2, 1};
+    item.setDamageEffect(dmg);
+
+    EXPECT_EQ(item.getDamageEffect(), dmg);
+    EXPECT_EQ(item.getHealEffect(), Effect{});
+}
+
+TEST(ItemData, SetInitialSceneId_UpdatesId)
+{
+    ItemData item;
+
+    item.setInitialSceneId(SceneId(1));
+
+    EXPECT_EQ(item.getInitialSceneId(), SceneId(1));
+}
+
+TEST(ItemData, SetState_UpdatesState)
+{
+    ItemData item;
+
+    item.setState(StateId(2));
+
+    EXPECT_EQ(item.getState(), StateId(2));
 }

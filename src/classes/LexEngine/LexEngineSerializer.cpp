@@ -30,12 +30,24 @@
 
 #include "spdlog/spdlog.h"
 
+#include "Core/PathService.h"
+
 namespace ADS::LexEngine {
 
     namespace {
         constexpr int kCurrentVersion = 1;
     } // namespace
 
+    /**
+     * @brief Serialise one LexEntry to its canonical JSON representation
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param entry Entry to serialise
+     * @return nlohmann::json Object with id, lang, canonical, role, types,
+     *         synonyms, frequency, raw_count, and synonym_meta
+     */
     nlohmann::json LexEngineSerializer::toJson(const LexEntry& entry) {
         nlohmann::json j;
         j["id"]        = entry.id;
@@ -62,6 +74,20 @@ namespace ADS::LexEngine {
         return j;
     }
 
+    /**
+     * @brief Deserialise one LexEntry from its canonical JSON representation
+     *
+     * An absent synonym_meta block is treated per the documented default:
+     * every id listed in synonyms is restored as
+     * {confidence: 1.0, confirmed: true}.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param json Canonical JSON object previously produced by toJson()
+     * @return LexEntry Reconstructed entry — compiled_token is
+     *         Token::UNASSIGNED until LexEngine::index() runs again
+     */
     LexEntry LexEngineSerializer::fromJson(const nlohmann::json& json) {
         LexEntry entry;
         entry.id        = json.at("id").get<LexEntryId>();
@@ -101,6 +127,17 @@ namespace ADS::LexEngine {
         return entry;
     }
 
+    /**
+     * @brief Serialise an entire LexEngine (every language) to one JSON document
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param engine Engine to serialise
+     * @return nlohmann::json Object with "version" (currently 1) and a flat
+     *         "entries" array covering every language — each element is the
+     *         same shape produced by toJson(const LexEntry&)
+     */
     nlohmann::json LexEngineSerializer::toJson(const LexEngine& engine) {
         nlohmann::json entries = nlohmann::json::array();
 
@@ -116,6 +153,19 @@ namespace ADS::LexEngine {
         return document;
     }
 
+    /**
+     * @brief Restore every entry from a whole-engine JSON document into engine
+     *
+     * Reconstructs each entry via fromJson() and inserts it through
+     * LexEngine::restoreEntry(), preserving ids. Only "version": 1
+     * documents are currently supported.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param engine Engine to populate — existing entries are left untouched
+     * @param document Document previously produced by toJson(const LexEngine&)
+     */
     void LexEngineSerializer::fromJson(LexEngine& engine, const nlohmann::json& document) {
         if (document.at("version").get<int>() != kCurrentVersion) {
             spdlog::warn("LexEngineSerializer: unsupported document version {}, expected {}",
@@ -130,11 +180,21 @@ namespace ADS::LexEngine {
         }
     }
 
+    /**
+     * @brief Write an engine's whole vocabulary to a JSON file on disk
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param engine Engine to serialise
+     * @param path Destination file path — overwritten if it already exists
+     * @return bool True on success, false if the file could not be written
+     */
     bool LexEngineSerializer::saveToFile(const LexEngine& engine, const std::filesystem::path& path) {
         try {
             std::ofstream file(path, std::ios::trunc);
             if (!file.is_open()) {
-                spdlog::error("LexEngineSerializer: failed to open '{}' for writing", path.string());
+                spdlog::error("LexEngineSerializer: failed to open '{}' for writing", Core::PathService::toUtf8(path));
                 return false;
             }
 
@@ -143,14 +203,24 @@ namespace ADS::LexEngine {
 
             return true;
         } catch (const std::ios_base::failure& e) {
-            spdlog::error("LexEngineSerializer: failed to write '{}': {}", path.string(), e.what());
+            spdlog::error("LexEngineSerializer: failed to write '{}': {}", Core::PathService::toUtf8(path), e.what());
             return false;
         }
     }
 
+    /**
+     * @brief Load a whole vocabulary from a JSON file on disk into engine
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param engine Engine to populate
+     * @param path Source file path
+     * @return bool True on success, false if the file is missing, unreadable, or malformed
+     */
     bool LexEngineSerializer::loadFromFile(LexEngine& engine, const std::filesystem::path& path) {
         if (!std::filesystem::exists(path)) {
-            spdlog::error("LexEngineSerializer: file '{}' does not exist", path.string());
+            spdlog::error("LexEngineSerializer: file '{}' does not exist", Core::PathService::toUtf8(path));
             return false;
         }
 
@@ -164,10 +234,10 @@ namespace ADS::LexEngine {
 
             return true;
         } catch (const nlohmann::json::exception& e) {
-            spdlog::error("LexEngineSerializer: malformed JSON in '{}': {}", path.string(), e.what());
+            spdlog::error("LexEngineSerializer: malformed JSON in '{}': {}", Core::PathService::toUtf8(path), e.what());
             return false;
         } catch (const std::ios_base::failure& e) {
-            spdlog::error("LexEngineSerializer: failed to read '{}': {}", path.string(), e.what());
+            spdlog::error("LexEngineSerializer: failed to read '{}': {}", Core::PathService::toUtf8(path), e.what());
             return false;
         }
     }

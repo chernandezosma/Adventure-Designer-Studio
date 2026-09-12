@@ -24,6 +24,9 @@
 
 #include "BasePanel.h"
 
+#include "imgui.h"
+
+#include "IDE/DesignTokens.h"
 #include "app.h"
 
 namespace ADS::IDE::Panels {
@@ -109,8 +112,57 @@ namespace ADS::IDE::Panels {
         return this->m_translationsManager;
     };
 
+    /**
+     * @brief Get the ImGui window label combining title and stable ID
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Returns a string in the form "Translated Title###stable_id" so that
+     * ImGui uses the stable ID for docking/identity while displaying the
+     * translated title in the title bar.
+     *
+     * @return std::string ImGui label with ### separator
+     */
     std::string BasePanel::getImGuiLabel() const {
-        return m_windowTitle + "###" + m_windowName;
+        // Resolve the title every call so the dock tab follows a live UI
+        // language switch. "###" keeps the window identity stable regardless
+        // of the visible text.
+        std::string title = m_windowTitle;
+        if (!m_titleKey.empty() && m_translationsManager != nullptr) {
+            title = m_translationsManager->_t(m_titleKey);
+        }
+        return title + "###" + m_windowName;
+    }
+
+    /**
+     * @brief Open this panel's ImGui window with the shared caption styling
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param p_open Optional visibility flag ImGui toggles via the close box
+     * @param flags  ImGuiWindowFlags (passed straight through)
+     * @return bool ImGui::Begin's return
+     */
+    bool BasePanel::beginWindow(bool* p_open, int flags) {
+        // Force light caption text while ImGui renders the (blue) title bar,
+        // then restore the theme's normal text colour for the body.
+        ImGui::PushStyleColor(ImGuiCol_Text, Colors::C_CAPTION_TEXT);
+        const bool open = ImGui::Begin(getImGuiLabel().c_str(), p_open,
+                                       static_cast<ImGuiWindowFlags>(flags));
+        ImGui::PopStyleColor();
+        return open;
+    }
+
+    /**
+     * @brief Close a window opened with beginWindow()
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     */
+    void BasePanel::endWindow() {
+        ImGui::End();
     }
 
 }

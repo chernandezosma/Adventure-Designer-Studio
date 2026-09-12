@@ -236,6 +236,11 @@ namespace ADS::UI {
         this->io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;        // Enable Docking
         this->io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;      // Enable Multi-Viewport / Platform Windows
 
+        // Let a plain click on a slider/drag switch it to keyboard entry, so
+        // the inspector's numeric fields accept typed values without the
+        // Ctrl+click gesture (they still clamp — see IntEditor/FloatEditor).
+        this->io->ConfigDragClickToInputText = true;
+
         // Configure tooltip hover delay from environment or use default
         float tooltipDelay = Constants::System::DEFAULT_TOOLTIP_DELAY;
         Environment* env = Core::App::getEnv();

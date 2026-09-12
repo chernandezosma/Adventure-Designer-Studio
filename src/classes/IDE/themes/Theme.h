@@ -33,6 +33,15 @@ namespace ADS::IDE {
      */
     class Theme {
     public:
+        /**
+         * @brief Destroy the Theme object
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Virtual default destructor so a Theme is safely destroyed through
+         * a base-class pointer.
+         */
         virtual ~Theme() = default;
 
         /**

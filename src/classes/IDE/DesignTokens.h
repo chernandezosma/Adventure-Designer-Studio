@@ -87,6 +87,10 @@ namespace ADS::IDE::Colors {
     extern ImVec4 C_VAR;
     /** @brief #f08a5d — Audio */
     extern ImVec4 C_AUDIO;
+    /** @brief #adda68 — States */
+    extern ImVec4 C_STATE;
+    /** @brief #5dc9d3 — State chains */
+    extern ImVec4 C_CHAIN;
 
     // ------------------------------------------------------------------
     // State indicators
@@ -98,6 +102,21 @@ namespace ADS::IDE::Colors {
     extern ImVec4 C_WARN;
     /** @brief #5bc4a0 — ok / success */
     extern ImVec4 C_OK;
+
+    // ------------------------------------------------------------------
+    // Dialog chrome
+    // ------------------------------------------------------------------
+
+    /** @brief #2f5fb0 — modal caption bar fill (distinct from the dialog body) */
+    extern ImVec4 C_DIALOG_TITLE;
+
+    /** @brief #1c3a63 — docked-panel caption + dock-tab fill (deeper blue than
+     *  the dialogs, so modals still read as foreground) */
+    extern ImVec4 C_PANEL_TITLE;
+
+    /** @brief #f0f3f7 — text drawn on the blue caption bars; near-white in both
+     *  the light and the dark palette because the caption fill is always dark */
+    extern ImVec4 C_CAPTION_TEXT;
 
     // ------------------------------------------------------------------
     // Helpers
@@ -158,5 +177,51 @@ namespace ADS::IDE::Colors {
      * @version May 2026
      */
     void resetToDefaults();
+
+    // ------------------------------------------------------------------
+    // Theme palettes
+    // ------------------------------------------------------------------
+
+    /**
+     * @brief Switch the neutral tokens (BG*, BORDER*, TEXT*, entity accents)
+     *        to their dark values.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * Restores the palette that was active before the first useLightPalette()
+     * call (which may include values loaded from colors.ini). A no-op when the
+     * dark palette was never left. Called by DarkTheme::apply().
+     */
+    void useDarkPalette();
+
+    /**
+     * @brief Switch the neutral tokens to a light palette.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * The first call snapshots the current (dark) values so useDarkPalette()
+     * can restore them exactly. The blue caption tokens (C_DIALOG_TITLE /
+     * C_PANEL_TITLE) and C_CAPTION_TEXT are deliberately left unchanged — the
+     * caption bars stay branded blue with near-white text in both themes.
+     * Called by LightTheme::apply().
+     */
+    void useLightPalette();
+
+    /**
+     * @brief Map the current colour tokens onto the ImGui style.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * The single structural mapping shared by DarkTheme and LightTheme —
+     * each calls StyleColorsDark()/Light() and use{Dark,Light}Palette() first,
+     * then this. Because the mapping is identical, the theme's look is entirely
+     * a function of the token values.
+     *
+     * @param style The ImGui style to write into (usually ImGui::GetStyle()).
+     */
+    void applyStyle(ImGuiStyle& style);
 
 } // namespace ADS::IDE::Colors

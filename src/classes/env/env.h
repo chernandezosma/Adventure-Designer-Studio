@@ -19,6 +19,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace ADS {
 
@@ -46,6 +47,13 @@ namespace ADS {
          * Internal storage for environment variables as key-value pairs
          */
         unordered_map<string, string> environment;
+
+        /**
+         * Verbatim copy of every line read from the .env file, in order,
+         * including blank lines and comments. Populated by open(); used by
+         * set() to rewrite the file while preserving its layout.
+         */
+        vector<string> m_rawLines;
 
     public:
         /**
@@ -131,6 +139,30 @@ namespace ADS {
          * string debug = env.getOrDefault("DEBUG", "false");
          */
         string getOrDefault(const string& key, const string& defaultValue = "");
+
+        /**
+         * @brief Set or update a key in the .env file, preserving its layout
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Rewrites the .env file this Environment was loaded from. If @p key
+         * already exists, only the text after its first '=' is replaced; the
+         * original key spelling, indentation, comments, blank lines and key
+         * order are all kept. If @p key is absent, a blank separator line and
+         * `KEY=value` are appended. The value is wrapped in double quotes only
+         * when it contains whitespace or '#'. The in-memory value is updated
+         * too, so a subsequent get() returns the new value without re-reading.
+         *
+         * Key matching is case-insensitive, mirroring get().
+         *
+         * @param key   Environment variable name (matched case-insensitively)
+         * @param value New value to store
+         *
+         * @return true if the file was rewritten successfully
+         * @return false if the file could not be opened for writing
+         */
+        bool set(const string& key, const string& value);
 
         /**
          * @brief Return true if debug mode is on (.env). False otherwise

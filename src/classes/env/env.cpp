@@ -17,11 +17,13 @@
 
 #include "env.h"
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <utility>
 
 #include "adsString.h"
+#include "Core/PathService.h"
 #include "../../exceptions/filesystem/file_not_found_exception.h"
 
 namespace ADS {
@@ -47,7 +49,7 @@ namespace ADS {
         std::filesystem::path fullPath = projectRoot / filename;
 
         if (std::filesystem::exists(fullPath)) {
-            this->filename = fullPath.string();
+            this->filename = Core::PathService::toUtf8(fullPath);
         } else {
             // Fall back to direct path
             if (!std::filesystem::exists(filename)) {
@@ -81,13 +83,19 @@ namespace ADS {
     bool Environment::open()
     {
         std::string line;
-        std::ifstream file(std::string(this->filename));
+        std::ifstream file(Core::PathService::pathFromUtf8(this->filename));
 
         if (!file.is_open()) {
             return false;
         }
 
+        this->m_rawLines.clear();
+
         while (std::getline(file, line)) {
+            // Keep a verbatim copy of every line so set() can rewrite the
+            // file without disturbing comments, blank lines or key order.
+            this->m_rawLines.push_back(line);
+
             if (line.empty() || line[0] == '#') {
                 continue;
             }
@@ -97,17 +105,27 @@ namespace ADS {
                 continue;
             };
 
-            std::string key = line.substr(0, pos);
-            std::string value = line.substr(pos + 1);
+            // Trim surrounding whitespace from both sides — "KEY = value" and
+            // "KEY=value" must be equivalent, and a stray space in the value
+            // (e.g. "PROJECTS_DIR= /home/x") must not become part of a path.
+            std::string key   = trim(line.substr(0, pos));
+            std::string value = trim(line.substr(pos + 1));
 
-            // Removes spaces and quotes
-            if (!value.empty() && value.front() == '"') {
-                value.erase(0, 1);
+            // Strip one matching pair of surrounding quotes (single or double).
+            if (value.size() >= 2 &&
+                ((value.front() == '"'  && value.back() == '"') ||
+                 (value.front() == '\'' && value.back() == '\''))) {
+                value = value.substr(1, value.size() - 2);
             }
 
-            if (!value.empty() && value.back() == '"') {
-                value.pop_back();
+            if (key.empty()) {
+                continue;
             }
+
+            // Store under the upper-cased key so lookups (which upper-case the
+            // requested key) match regardless of how the .env spells it.
+            std::transform(key.begin(), key.end(), key.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 
             this->environment[key] = value;
 
@@ -174,6 +192,75 @@ namespace ADS {
     {
         string* value = get(key);
         return value ? *value : defaultValue;
+    }
+
+    /**
+     * @brief Set or update a key in the .env file, preserving its layout
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * See the header for the full contract. In short: replace the value of an
+     * existing key in place (keeping its line, comments and order) or append
+     * `KEY=value` after a blank line, then rewrite the whole file.
+     *
+     * @param key   Environment variable name (matched case-insensitively)
+     * @param value New value to store
+     * @return true on success, false if the file could not be written
+     */
+    bool Environment::set(const string& key, const string& value)
+    {
+        const auto toUpper = [](string s) {
+            std::transform(s.begin(), s.end(), s.begin(),
+                           [](unsigned char c) { return std::toupper(c); });
+            return s;
+        };
+
+        const string wantKey = toUpper(trim(key));
+
+        // Quote only when the value would otherwise be ambiguous on re-read.
+        const bool needsQuotes =
+            value.find_first_of(" \t#") != std::string::npos;
+        const string encoded = needsQuotes ? ("\"" + value + "\"") : value;
+
+        bool replaced = false;
+        for (auto& rawLine : this->m_rawLines) {
+            const string leftTrimmed = trim(rawLine, " \t");
+            if (leftTrimmed.empty() || leftTrimmed[0] == '#') {
+                continue;
+            }
+
+            const auto eqPos = rawLine.find('=');
+            if (eqPos == std::string::npos) {
+                continue;
+            }
+
+            if (toUpper(trim(rawLine.substr(0, eqPos))) != wantKey) {
+                continue;
+            }
+
+            // Keep everything up to and including '=', swap the rest.
+            rawLine = rawLine.substr(0, eqPos + 1) + encoded;
+            replaced = true;
+            break;
+        }
+
+        if (!replaced) {
+            this->m_rawLines.emplace_back("");
+            this->m_rawLines.push_back(wantKey + "=" + encoded);
+        }
+
+        std::ofstream out(Core::PathService::pathFromUtf8(this->filename), std::ios::trunc);
+        if (!out.is_open()) {
+            return false;
+        }
+        for (const auto& rawLine : this->m_rawLines) {
+            out << rawLine << '\n';
+        }
+        out.close();
+
+        this->environment[wantKey] = value;
+        return true;
     }
 
     /**

@@ -14,6 +14,7 @@
 #include "ToolBarRenderer.h"
 #include "imgui.h"
 #include "IconsFontAwesome4.h"
+#include "../DesignTokens.h"
 #include "../themes/DarkTheme.h"
 #include "../themes/LightTheme.h"
 
@@ -42,6 +43,32 @@ namespace ADS::IDE {
         m_buttonPadding(4.0f)
     {
         // Locale is now managed in IDEBase
+    }
+
+    /**
+     * @brief Share the NavigationService the toolbar's file buttons should drive
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @param service Non-owning pointer to the shared NavigationService
+     */
+    void ToolBarRenderer::setNavigationService(NavigationService *service)
+    {
+        m_navigationService = service;
+    }
+
+    /**
+     * @brief Register the Translations-panel toggle for the toolbar button
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param toggle Callable that flips the Translations panel's visibility
+     */
+    void ToolBarRenderer::setTranslationsToggle(std::function<void()> toggle)
+    {
+        m_onToggleTranslations = std::move(toggle);
     }
 
     /**
@@ -108,18 +135,29 @@ namespace ADS::IDE {
     void ToolBarRenderer::renderFileButtons()
     {
         if (renderIconButton(ICON_FA_FILE_O, m_translationManager->_t("MENU.FILE_NEW").data())) {
-            this->m_navigationService->fileNewHandler();
+            if (m_navigationService != nullptr) {
+                this->m_navigationService->fileNewHandler();
+            }
         }
 
         ImGui::SameLine();
         if (renderIconButton(ICON_FA_FOLDER_OPEN_O, m_translationManager->_t("MENU.FILE_OPEN").data())) {
-            this->m_navigationService->fileOpenHandler();
+            if (m_navigationService != nullptr) {
+                this->m_navigationService->fileOpenHandler();
+            }
         }
 
         ImGui::SameLine();
+        // Save is project-scoped — disabled on the empty start screen.
+        const bool hasProject =
+            m_navigationService != nullptr && m_navigationService->hasActiveProject();
+        ImGui::BeginDisabled(!hasProject);
         if (renderIconButton(ICON_FA_FLOPPY_O, m_translationManager->_t("MENU.FILE_SAVE").data())) {
-            // Handle save file
+            if (m_navigationService != nullptr) {
+                this->m_navigationService->fileSaveHandler();
+            }
         }
+        ImGui::EndDisabled();
     }
 
     /**
@@ -210,6 +248,13 @@ namespace ADS::IDE {
         if (renderIconButton(ICON_FA_REFRESH, m_translationManager->_t("MENU.VIEW_RESET_LAYOUT").data())) {
             m_layoutManager->resetLayout();
         }
+
+        ImGui::SameLine();
+        if (renderIconButton(ICON_FA_LANGUAGE, m_translationManager->_t("MENU.VIEW_TRANSLATIONS").data())) {
+            if (m_onToggleTranslations) {
+                m_onToggleTranslations();
+            }
+        }
     }
 
     /**
@@ -264,6 +309,10 @@ namespace ADS::IDE {
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(m_buttonPadding, 0.0f));
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(m_buttonPadding, m_buttonPadding));
 
+        // Fill the toolbar strip with the same colour the status bar uses (BG0),
+        // so the two chrome bands match top and bottom.
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, Colors::BG0);
+
         // Create a child region for the toolbar with fixed height
         ImGui::BeginChild("##ToolbarContent", ImVec2(0, getHeight()), false, ImGuiWindowFlags_NoScrollbar);
 
@@ -273,6 +322,7 @@ namespace ADS::IDE {
         // renderLanguageSelector();
 
         ImGui::EndChild();
+        ImGui::PopStyleColor();
         ImGui::PopStyleVar(2);
     }
 

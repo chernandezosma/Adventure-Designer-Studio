@@ -32,7 +32,49 @@ namespace ADS::Inspector::Editors {
     class StringEditor : public IPropertyEditor {
     private:
         static constexpr size_t DEFAULT_BUFFER_SIZE = 1024;
+        /// Scratch buffer backing the inline single-line/compact multiline
+        /// InputText widget (not the expand-to-dialog popup — see m_dialogBuffer).
         char m_buffer[DEFAULT_BUFFER_SIZE];
+
+        /// Scratch buffer for the multiline expand-to-dialog "…" popup
+        /// (PropertyConstraints::multiline). Larger than m_buffer since
+        /// long-form prose isn't bound by the compact field's maxLength
+        /// the same way. Reused across properties — safe because only one
+        /// modal popup can be interactively open at a time.
+        static constexpr size_t DIALOG_BUFFER_SIZE = 8192;
+        char m_dialogBuffer[DIALOG_BUFFER_SIZE];
+
+        /// Scratch state for a translatable field's dialog
+        /// (PropertyConstraints::translatable). Holds the full per-language
+        /// map being edited and the target language (always the project
+        /// default) m_dialogBuffer reflects. Reused across properties — safe
+        /// for the same reason as m_dialogBuffer (only one modal popup open
+        /// at a time).
+        LocalizedText m_dialogLocalizedText;
+        std::string m_dialogLanguage;
+
+        /**
+         * @brief Render a translatable String property
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Read-only inline preview of the default-language text, plus a
+         * "…" button opening a dialog with a single multiline box. Editing
+         * targets the project's default language only; multi-language
+         * authoring lives in the Translations panel. See
+         * PropertyConstraints::translatable.
+         *
+         * @param descriptor Property metadata
+         * @param currentValue Current value — expected to hold LocalizedText
+         * @param readOnly If true, the "…" button is disabled
+         * @return EditResult New LocalizedText map on change (OK), unchanged on Cancel
+         */
+        EditResult renderTranslatable(
+            const PropertyDescriptor& descriptor,
+            const PropertyValue& currentValue,
+            bool readOnly
+        );
 
     public:
         /**

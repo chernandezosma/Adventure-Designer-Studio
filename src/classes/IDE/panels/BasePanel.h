@@ -53,9 +53,18 @@ namespace ADS::IDE::Panels {
         std::string m_windowName;
 
         /**
-         * Translated display title shown in the window title bar
+         * Translated display title shown in the window title bar. Used only
+         * when m_titleKey is empty; otherwise getImGuiLabel() resolves the
+         * title live from m_titleKey so it follows a language switch.
          */
         std::string m_windowTitle;
+
+        /**
+         * i18n key for the dock-tab / window title. Set this (instead of
+         * assigning a translated m_windowTitle in the constructor) so the tab
+         * re-localises on the fly when the UI language changes.
+         */
+        std::string m_titleKey;
 
         /**
          * Panel visibility state
@@ -157,6 +166,35 @@ namespace ADS::IDE::Panels {
          * @return std::string ImGui label with ### separator
          */
         std::string getImGuiLabel() const;
+
+        /**
+         * @brief Open this panel's ImGui window with the shared caption styling
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Wraps ImGui::Begin(getImGuiLabel(), …) and forces the caption-bar
+         * text to Colors::C_CAPTION_TEXT (near-white) for the duration of the
+         * title-bar render only — the blue caption fill needs light text in
+         * both the dark and the light theme, and ImGui draws the title with
+         * the plain ImGuiCol_Text. Pair every call with endWindow().
+         *
+         * @param p_open Optional visibility flag ImGui toggles via the close box
+         * @param flags  ImGuiWindowFlags (passed straight through)
+         * @return bool ImGui::Begin's return — false when the window is collapsed
+         */
+        bool beginWindow(bool* p_open = nullptr, int flags = 0);
+
+        /**
+         * @brief Close a window opened with beginWindow()
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Call once for every beginWindow(), regardless of its return value
+         * (same contract as ImGui::Begin / ImGui::End).
+         */
+        void endWindow();
 
         /**
          * @brief Get the translations manager

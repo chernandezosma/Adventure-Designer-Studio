@@ -19,6 +19,10 @@
 #include "imgui.h"
 #include "spdlog/spdlog.h"
 #include <nfd.hpp>
+#include <filesystem>
+#include "UI/NfdWindowHandle.h"
+#include "app.h"
+#include "../dialogs/ModalScaffold.h"
 
 namespace ADS::IDE {
 
@@ -62,6 +66,91 @@ namespace ADS::IDE {
     {
         m_onOpenProject = std::move(onOpen);
         m_onSaveProject = std::move(onSave);
+    }
+
+    /**
+     * @brief Register the provider for the project's current file path
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param getPath Callable returning the saved path, or std::nullopt when
+     *                the project has never been saved
+     */
+    void NavigationService::setProjectPathProvider(std::function<std::optional<std::string>()> getPath)
+    {
+        m_getProjectPath = std::move(getPath);
+    }
+
+    /**
+     * @brief Register the provider for the native pickers' start folder
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param getDir Callable returning the folder the Open / Save As dialogs
+     *               should open in (the projects root), or an empty string
+     *               to leave it to the OS
+     */
+    void NavigationService::setDefaultDirProvider(std::function<std::string()> getDir)
+    {
+        m_defaultDir = std::move(getDir);
+    }
+
+    /**
+     * @brief Register the provider for the save picker's pre-filled path
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * @param getPrefill Callable returning a full `.ads` path to seed the
+     *                   Save / Save As dialog (folder + filename), or an
+     *                   empty string for no hint
+     */
+    void NavigationService::setSavePrefillProvider(std::function<std::string()> getPrefill)
+    {
+        m_getSavePrefill = std::move(getPrefill);
+    }
+
+    /**
+     * @brief Handle the File Save action
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     *
+     * If the project already has a file path, saves straight to it via the
+     * onSave callback (no dialog). Otherwise behaves like Save As, scheduling
+     * the deferred native save picker.
+     */
+    void NavigationService::fileSaveHandler()
+    {
+        spdlog::info("Call NavigationService::fileSaveHandler");
+
+        std::optional<std::string> existing;
+        if (m_getProjectPath) {
+            existing = m_getProjectPath();
+        }
+
+        if (existing && !existing->empty()) {
+            if (m_onSaveProject) m_onSaveProject(*existing);
+        } else {
+            // Never saved — fall back to Save As.
+            m_pendingSaveDialog = true;
+            m_pendingSaveAndNew = false;
+        }
+    }
+
+    /**
+     * @brief Handle the File Save As action — always shows the save picker
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Aug 2026
+     */
+    void NavigationService::fileSaveAsHandler()
+    {
+        spdlog::info("Call NavigationService::fileSaveAsHandler");
+        m_pendingSaveDialog = true;
+        m_pendingSaveAndNew = false;
     }
 
     /**
@@ -144,20 +233,32 @@ namespace ADS::IDE {
             m_confirmNewDialogOpen = false;
         }
 
-        // Centre the modal on screen
-        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        auto* tm = Core::App::getTranslationsManager();
 
-        if (ImGui::BeginPopupModal(NEW_PROJECT_POPUP_ID, nullptr,
-                                   ImGuiWindowFlags_AlwaysAutoResize))
+        ADS::IDE::ModalStyle style;
+        style.initialSize = ImVec2(420.0f, 0.0f);
+        style.autoResize  = true;
+        if (auto* fonts = Core::App::getFontManager()) {
+            style.captionFont = fonts->getFont("mediumFont");
+        }
+
+        if (ADS::IDE::beginModal(NEW_PROJECT_POPUP_ID, tm->_t("DIALOG.CONFIRM_NEW_CAPTION"), style))
         {
-            ImGui::Text("A project is already open.");
-            ImGui::Text("Do you want to save it before creating a new one?");
+            // Escape aborts, same as the Cancel button.
+            if (ADS::IDE::modalEscapeRequested()) {
+                spdlog::info("NavigationService: confirm-new — user pressed Escape");
+                ImGui::CloseCurrentPopup();
+                ADS::IDE::endModal();
+                return;
+            }
+
+            ImGui::TextUnformatted(tm->_t("DIALOG.CONFIRM_NEW_TITLE").c_str());
+            ImGui::TextUnformatted(tm->_t("DIALOG.CONFIRM_NEW_BODY").c_str());
             ImGui::Spacing();
             ImGui::Separator();
             ImGui::Spacing();
 
-            if (ImGui::Button("Save", ImVec2(90, 0))) {
+            if (ImGui::Button(tm->_t("DIALOG.CONFIRM_NEW_SAVE").c_str(), ImVec2(90, 0))) {
                 spdlog::info("NavigationService: confirm-new — user chose Save");
                 // Defer the NFD save dialog to processPendingDialogs().
                 // The confirm modal closes now so the compositor gets a clean
@@ -168,19 +269,19 @@ namespace ADS::IDE {
             }
             ImGui::SameLine();
 
-            if (ImGui::Button("Discard", ImVec2(90, 0))) {
+            if (ImGui::Button(tm->_t("DIALOG.CONFIRM_NEW_DISCARD").c_str(), ImVec2(90, 0))) {
                 spdlog::info("NavigationService: confirm-new — user chose Discard");
                 if (m_onNewProject) m_onNewProject();
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
 
-            if (ImGui::Button("Cancel", ImVec2(90, 0))) {
+            if (ImGui::Button(tm->_t("DIALOG.CONFIRM_NEW_CANCEL").c_str(), ImVec2(90, 0))) {
                 spdlog::info("NavigationService: confirm-new — user chose Cancel");
                 ImGui::CloseCurrentPopup();
             }
 
-            ImGui::EndPopup();
+            ADS::IDE::endModal();
         }
     }
 
@@ -188,13 +289,16 @@ namespace ADS::IDE {
      * @brief Execute any deferred native file dialogs
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Feb 2026
+     * @version May 2026
      *
-     * Checks m_pendingOpenDialog and m_pendingSaveDialog. For each flag that
-     * is set it opens the corresponding NFD dialog synchronously, forwards the
-     * result to the registered callback, and resets the flag. Because this
-     * method is called after SDL_RenderPresent the compositor already holds a
-     * clean frame, so blocking the thread here does not produce a gray window.
+     * First services any dialog already in flight: if its background thread
+     * (see UI::AsyncFileDialog) has finished, forwards its result to the
+     * registered callback. Then, if m_pendingOpenDialog/m_pendingSaveDialog is
+     * set and that dialog isn't already running, starts it on a background
+     * thread. Because this method is called after SDL_RenderPresent the
+     * compositor already holds a clean frame when the dialog opens, and
+     * because the NFD call itself never runs on the main thread, App::run()
+     * keeps rendering new frames for as long as the dialog stays open.
      *
      * If a save dialog was triggered by the "New project" confirmation modal
      * (m_pendingSaveAndNew is set) and the user confirms a path, m_onNewProject
@@ -203,47 +307,107 @@ namespace ADS::IDE {
      */
     void NavigationService::processPendingDialogs()
     {
-        nfdfilteritem_t filters[] = { { "ADS Project", "ads" } };
+        std::optional<std::string> openResult;
+        if (m_openDialog.poll(openResult)) {
+            if (openResult) {
+                spdlog::info("NavigationService: open path selected — {}", *openResult);
+                if (m_onOpenProject) m_onOpenProject(*openResult);
+            } else {
+                spdlog::info("NavigationService: open dialog cancelled or failed");
+            }
+        }
 
-        if (m_pendingOpenDialog) {
+        std::optional<std::string> saveResult;
+        if (m_saveDialog.poll(saveResult)) {
+            bool saveAndNew          = m_saveDialogWasSaveAndNew;
+            m_saveDialogWasSaveAndNew = false;
+
+            if (saveResult) {
+                spdlog::info("NavigationService: save path selected — {}", *saveResult);
+                if (m_onSaveProject) m_onSaveProject(*saveResult);
+                if (saveAndNew && m_onNewProject) m_onNewProject();
+            } else {
+                spdlog::info("NavigationService: save dialog cancelled or failed");
+            }
+        }
+
+        // Nothing to do on the vast majority of frames — bail before touching
+        // the window handle or the (potentially expensive) providers.
+        const bool openArmed = m_pendingOpenDialog && !m_openDialog.isRunning();
+        const bool saveArmed = m_pendingSaveDialog && !m_saveDialog.isRunning();
+        if (!openArmed && !saveArmed) {
+            return;
+        }
+
+        nfdwindowhandle_t parentWindow = ADS::UI::getNfdParentWindowHandle(
+            Core::App::getMainWindow() ? Core::App::getMainWindow()->getWindow() : nullptr);
+
+        // Folder the pickers should open in (projects root). Resolved here on the
+        // main thread — only now that a picker is actually being armed — and
+        // captured by value into the background-thread lambdas.
+        const std::string defaultDir = m_defaultDir ? m_defaultDir() : std::string{};
+
+        if (openArmed) {
             m_pendingOpenDialog = false;
 
-            NFD::Guard guard;
-            NFD::UniquePath outPath;
-            nfdresult_t result = NFD::OpenDialog(outPath, filters, 1);
+            m_openDialog.start([parentWindow, defaultDir]() -> std::optional<std::string> {
+                nfdfilteritem_t filters[] = { { "ADS Project", "ads" } };
+                NFD::Guard guard;
+                NFD::UniquePath outPath;
+                nfdresult_t result = NFD::OpenDialog(
+                    outPath, filters, 1,
+                    defaultDir.empty() ? nullptr : defaultDir.c_str(), parentWindow);
 
-            if (result == NFD_OKAY) {
-                spdlog::info("NavigationService: open path selected — {}",
-                             outPath.get());
-                if (m_onOpenProject) m_onOpenProject(outPath.get());
-            } else if (result == NFD_ERROR) {
-                spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
-            } else {
-                spdlog::info("NavigationService: open dialog cancelled by user");
-            }
+                if (result == NFD_OKAY) return std::string(outPath.get());
+                if (result == NFD_ERROR) spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
+                return std::nullopt;
+            });
         }
 
-        if (m_pendingSaveDialog) {
-            m_pendingSaveDialog = false;
-            bool saveAndNew     = m_pendingSaveAndNew;
-            m_pendingSaveAndNew = false;
+        if (saveArmed) {
+            m_pendingSaveDialog      = false;
+            m_saveDialogWasSaveAndNew = m_pendingSaveAndNew;
+            m_pendingSaveAndNew      = false;
 
-            NFD::Guard guard;
-            NFD::UniquePath savePath;
-            nfdresult_t result = NFD::SaveDialog(
-                savePath, filters, 1, nullptr, "project.ads");
-
-            if (result == NFD_OKAY) {
-                spdlog::info("NavigationService: save path selected — {}",
-                             savePath.get());
-                if (m_onSaveProject) m_onSaveProject(savePath.get());
-                if (saveAndNew && m_onNewProject) m_onNewProject();
-            } else if (result == NFD_ERROR) {
-                spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
-            } else {
-                spdlog::info("NavigationService: save dialog cancelled by user");
+            // Pre-fill the picker: the project's current path if it has one, else
+            // the suggested <projects-root>/<slug>/<slug>.ads. Split into folder +
+            // filename; fall back to the projects root + "project.ads".
+            std::string saveFolder = defaultDir;
+            std::string saveName   = "project.ads";
+            if (m_getSavePrefill) {
+                const std::string prefill = m_getSavePrefill();
+                if (!prefill.empty()) {
+                    const std::filesystem::path p(prefill);
+                    if (p.has_parent_path()) saveFolder = p.parent_path().string();
+                    if (p.has_filename())    saveName   = p.filename().string();
+                }
             }
+
+            m_saveDialog.start([parentWindow, saveFolder, saveName]() -> std::optional<std::string> {
+                nfdfilteritem_t filters[] = { { "ADS Project", "ads" } };
+                NFD::Guard guard;
+                NFD::UniquePath savePath;
+                nfdresult_t result = NFD::SaveDialog(
+                    savePath, filters, 1,
+                    saveFolder.empty() ? nullptr : saveFolder.c_str(),
+                    saveName.c_str(), parentWindow);
+
+                if (result == NFD_OKAY) return std::string(savePath.get());
+                if (result == NFD_ERROR) spdlog::error("NavigationService: NFD error — {}", NFD::GetError());
+                return std::nullopt;
+            });
         }
+    }
+
+    /**
+     * @brief Whether an Open or Save dialog is currently running
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     */
+    bool NavigationService::isDialogInProgress() const
+    {
+        return m_openDialog.isRunning() || m_saveDialog.isRunning();
     }
 
 } // ADS::IDE

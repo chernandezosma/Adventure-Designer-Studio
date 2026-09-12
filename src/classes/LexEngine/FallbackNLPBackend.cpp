@@ -101,6 +101,15 @@ namespace ADS::LexEngine {
 
     } // namespace
 
+    /**
+     * @brief Lowercase a word and strip common Latin diacritics
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param word Surface form to normalise
+     * @return std::string Lowercased, diacritic-stripped form
+     */
     std::string FallbackNLPBackend::normalise(std::string_view word) {
         std::string lowered;
         lowered.reserve(word.size());
@@ -124,6 +133,20 @@ namespace ADS::LexEngine {
         return folded;
     }
 
+    /**
+     * @brief Apply a lightweight suffix-stripping stem for the given language
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * Not a full Snowball implementation — a small per-language suffix
+     * table sufficient to group common inflected forms until a real
+     * NLP backend is wired in.
+     *
+     * @param normalisedWord Already-normalised (lowercase, no diacritics) word
+     * @param lang Language selecting the suffix ruleset (es/en/de/fr/pt); other codes pass through unchanged
+     * @return std::string Stemmed root
+     */
     std::string FallbackNLPBackend::stem(std::string_view normalisedWord, const LanguageCode& lang) {
         const std::string base = baseLang(lang);
         const auto& suffixes = suffixesFor(base);
@@ -140,6 +163,16 @@ namespace ADS::LexEngine {
         return std::string(normalisedWord);
     }
 
+    /**
+     * @brief Analyse a sentence using whitespace/punctuation tokenisation and stemming
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param sentence Full sentence text to analyse
+     * @param lang Language the sentence is written in — selects the stemming ruleset
+     * @return std::vector<NLPToken> One token per word or punctuation mark, in order
+     */
     std::vector<NLPToken> FallbackNLPBackend::analyse(std::string_view sentence, const LanguageCode& lang) {
         std::vector<NLPToken> tokens;
 

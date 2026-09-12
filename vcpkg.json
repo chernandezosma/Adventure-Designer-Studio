@@ -21,6 +21,10 @@
       "name": "imgui",
       "features": ["docking-experimental", "sdl3-binding", "sdl3-renderer-binding"]
     },
+    {
+      "name": "sdl3-image",
+      "features": ["png", "jpeg", "webp"]
+    },
     "spdlog",
     "fmt",
     "nlohmann-json",

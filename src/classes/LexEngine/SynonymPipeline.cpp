@@ -57,6 +57,17 @@ namespace ADS::LexEngine {
 
     } // namespace
 
+    /**
+     * @brief Layer 1 — strip a productive prefix/suffix and check the root exists
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param canonical Canonical form to reduce
+     * @param lang Language selecting the affix table
+     * @param lookup Read-only LexEngine view used to validate the candidate root
+     * @return LexEntryId Root entry id if a valid reduction was found, INVALID_ENTRY_ID otherwise
+     */
     LexEntryId SynonymPipeline::affixLayer(std::string_view canonical,
                                             const LanguageCode& lang,
                                             const ILexEngineLookup& lookup) {
@@ -77,11 +88,36 @@ namespace ADS::LexEngine {
         return INVALID_ENTRY_ID;
     }
 
+    /**
+     * @brief Layer 3 — semantic-similarity candidates
+     *
+     * Deferred: proposing candidates by semantic distance requires an
+     * embedding model that is not part of this pass. This layer exists
+     * so the pipeline shape matches the design document and future work
+     * has a single place to add the real implementation.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return std::vector<SynonymLink> Always empty in the current implementation
+     */
     std::vector<SynonymLink> SynonymPipeline::semanticLayer() {
         // Layer 3 (semantic similarity) is deferred — see class docs.
         return {};
     }
 
+    /**
+     * @brief Run all three layers for a newly-inserted or updated entry
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param canonical Canonical form of the entry being processed
+     * @param entryId Id of the entry being processed — excluded from its own candidate list
+     * @param lang Language of the entry
+     * @param lookup Read-only LexEngine view used to validate candidate roots and find stem siblings
+     * @return std::vector<SynonymLink> Proposed (unconfirmed) synonym links, possibly empty
+     */
     std::vector<SynonymLink> SynonymPipeline::run(std::string_view canonical,
                                                     LexEntryId entryId,
                                                     const LanguageCode& lang,

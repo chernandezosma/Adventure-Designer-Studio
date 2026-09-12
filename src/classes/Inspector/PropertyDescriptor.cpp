@@ -182,6 +182,129 @@ namespace ADS::Inspector {
     }
 
     /**
+     * @brief Mark a PropertyType::Select property as multi-select
+     *
+     * @param multiSelect True for a checklist-style multi-select
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setMultiSelect(bool multiSelect)
+    {
+        m_multiSelect = multiSelect;
+
+        return *this;
+    }
+
+    /**
+     * @brief Show a "+" button next to a single-select dropdown to create a new option inline
+     *
+     * @param allowCreateNew True to show the button
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setAllowCreateNew(bool allowCreateNew)
+    {
+        m_allowCreateNew = allowCreateNew;
+
+        return *this;
+    }
+
+    /**
+     * @brief Set a dynamic option-list provider for PropertyType::Select
+     *
+     * @param provider Callable returning the current option list
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setOptionsProvider(
+            std::function<std::vector<std::string>()> provider
+            )
+    {
+        m_optionsProvider = std::move(provider);
+
+        return *this;
+    }
+
+    /**
+     * @brief Set the preset-key provider for a PropertyType::AffordanceList field
+     *
+     * @param provider Callable returning the current preset-key list
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setPresetKeys(
+            std::function<std::vector<std::string>()> provider
+            )
+    {
+        m_presetKeysProvider = std::move(provider);
+
+        return *this;
+    }
+
+    /**
+     * @brief Mark which option indices are "user-defined" bitmap bits
+     *
+     * @param indexToBitPosition One (option index, bit position) pair per user-defined option
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setUserDefinedOptionBits(
+            std::vector<std::pair<int, uint8_t>> indexToBitPosition
+            )
+    {
+        m_userDefinedOptionBits = std::move(indexToBitPosition);
+
+        return *this;
+    }
+
+    /**
+     * @brief Set a one-level nested group name inside the category - lvalue version
+     *
+     * @param subcategory Nested group name (already translated)
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setSubcategory(const std::string& subcategory)
+    {
+        m_subcategory = subcategory;
+
+        return *this;
+    }
+
+    /**
+     * @brief Set a one-level nested group name inside the category - rvalue version
+     *
+     * @param subcategory Nested group name (already translated)
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setSubcategory(std::string&& subcategory)
+    {
+        m_subcategory = std::move(subcategory);
+
+        return *this;
+    }
+
+    /**
+     * @brief Set the i18n key for the empty-option-list notice - lvalue version
+     *
+     * @param key i18n key resolved by the Select/Enum editor when it has no options
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setEmptyOptionsText(const std::string& key)
+    {
+        m_emptyOptionsTextKey = key;
+
+        return *this;
+    }
+
+    /**
+     * @brief Set the i18n key for the empty-option-list notice - rvalue version
+     *
+     * @param key i18n key resolved by the Select/Enum editor when it has no options
+     * @return PropertyDescriptor& Reference for chaining
+     */
+    PropertyDescriptor &PropertyDescriptor::setEmptyOptionsText(std::string&& key)
+    {
+        m_emptyOptionsTextKey = std::move(key);
+
+        return *this;
+    }
+
+    /**
      * @brief Get the unique property ID
      * @return const std::string& Property identifier
      */
@@ -218,6 +341,24 @@ namespace ADS::Inspector {
     }
 
     /**
+     * @brief Get the nested subcategory name, if any
+     * @return const std::string& Subcategory name; empty when unset
+     */
+    const std::string &PropertyDescriptor::getSubcategory() const
+    {
+        return m_subcategory;
+    }
+
+    /**
+     * @brief Get the i18n key for the empty-option-list notice
+     * @return const std::string& i18n key (defaults to "INSPECTOR.NO_OPTIONS")
+     */
+    const std::string &PropertyDescriptor::getEmptyOptionsTextKey() const
+    {
+        return m_emptyOptionsTextKey;
+    }
+
+    /**
      * @brief Get the property type
      * @return PropertyType The property type
      */
@@ -242,6 +383,68 @@ namespace ADS::Inspector {
     bool PropertyDescriptor::isReadOnly() const
     {
         return m_readOnly;
+    }
+
+    /**
+     * @brief Check if a PropertyType::Select property is multi-select
+     * @return bool True for checklist-style multi-select
+     */
+    bool PropertyDescriptor::isMultiSelect() const
+    {
+        return m_multiSelect;
+    }
+
+    /**
+     * @brief Check whether a "+" create-new button should be shown next to a single-select dropdown
+     * @return bool True if the button should be shown
+     */
+    bool PropertyDescriptor::isAllowCreateNew() const
+    {
+        return m_allowCreateNew;
+    }
+
+    /**
+     * @brief Get the dynamic option-list provider, if set
+     * @return const std::function<std::vector<std::string>()>& May be empty/unset
+     */
+    const std::function<std::vector<std::string>()> &PropertyDescriptor::getOptionsProvider() const
+    {
+        return m_optionsProvider;
+    }
+
+    /**
+     * @brief Get the preset-key provider, if set
+     * @return const std::function<std::vector<std::string>()>& May be empty/unset
+     */
+    const std::function<std::vector<std::string>()> &PropertyDescriptor::getPresetKeysProvider() const
+    {
+        return m_presetKeysProvider;
+    }
+
+    /**
+     * @brief Check whether a Select option index is a user-defined bitmap bit
+     * @param optionIndex Index into the option list
+     * @return bool True if that option was marked via setUserDefinedOptionBits()
+     */
+    bool PropertyDescriptor::isUserDefinedOption(int optionIndex) const
+    {
+        for (const auto& [index, bitPosition] : m_userDefinedOptionBits) {
+            if (index == optionIndex) return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief Get the bit position a user-defined option index represents
+     * @param optionIndex Index into the option list
+     * @return uint8_t The bit position, or 0 if optionIndex isn't user-defined
+     */
+    uint8_t PropertyDescriptor::getUserDefinedOptionBit(int optionIndex) const
+    {
+        for (const auto& [index, bitPosition] : m_userDefinedOptionBits) {
+            if (index == optionIndex) return bitPosition;
+        }
+        return 0;
     }
 
     /**

@@ -50,11 +50,17 @@
 
 #include "Data/SceneData.h"
 #include "Data/CharacterData.h"
+#include "Data/GameData.h"
 #include "Data/ItemData.h"
+#include "Data/StateData.h"
+#include "Data/StateChainData.h"
 #include "Entities/Scene.h"
 #include "Entities/Character.h"
 #include "Entities/Item.h"
+#include "Entities/State.h"
+#include "Entities/StateChain.h"
 #include "LexEngine/LexEngine.h"
+#include "Types/Id.h"
 
 namespace ADS::Core {
 
@@ -71,18 +77,22 @@ namespace ADS::Core {
      */
     class Project {
     private:
-        std::string m_name;                                                      ///< Project display name
         std::optional<std::filesystem::path> m_filePath;                         ///< Path on disk — empty until first save
+        Data::GameData m_gameData;                                               ///< Project-wide game settings (game.md); m_gameData.title IS the project name
 
         // --- DataObject collections (owned, serialisable) ---
         std::vector<std::unique_ptr<Data::SceneData>>      m_sceneData;          ///< Owned scene DataObjects
         std::vector<std::unique_ptr<Data::CharacterData>>  m_characterData;      ///< Owned character DataObjects
         std::vector<std::unique_ptr<Data::ItemData>>       m_itemData;           ///< Owned item DataObjects
+        std::vector<std::unique_ptr<Data::StateData>>      m_stateData;          ///< Owned state-catalog DataObjects
+        std::vector<std::unique_ptr<Data::StateChainData>> m_chainData;          ///< Owned state-chain DataObjects
 
         // --- Entity adapter collections (owned, rebuilt on load) ---
         std::vector<std::unique_ptr<Entities::Scene>>      m_scenes;             ///< Owned scene entity adapters
         std::vector<std::unique_ptr<Entities::Character>>  m_characters;         ///< Owned character entity adapters
         std::vector<std::unique_ptr<Entities::Item>>       m_items;              ///< Owned item entity adapters
+        std::vector<std::unique_ptr<Entities::State>>      m_states;             ///< Owned state-catalog entity adapters
+        std::vector<std::unique_ptr<Entities::StateChain>> m_chains;             ///< Owned state-chain entity adapters
 
         // --- LexEngine (vocabulary compiler subsystem) ---
         // Default-initialised here, independent of the constructor's `name`
@@ -119,9 +129,15 @@ namespace ADS::Core {
          * @brief Get the project name
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
-         * @return const std::string& Reference to the internal project name string
+         * The project has no separate name of its own: this delegates to
+         * `getGameData().getTitle()`, which is the single source of truth
+         * (docs/core/schemas/game.md `game.title`). Shown as the project-tree
+         * root label and in the status bar.
+         *
+         * @return const std::string& The game title; empty only for a
+         *         hand-edited file with no `game.title`
          */
         [[nodiscard]] const std::string& getName() const;
 
@@ -129,9 +145,11 @@ namespace ADS::Core {
          * @brief Set the project name
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Mar 2026
+         * @version Aug 2026
          *
-         * @param name New human-readable display name
+         * Delegates to `getGameData().setTitle(name)` — see getName().
+         *
+         * @param name New human-readable display name / game title
          */
         void setName(const std::string& name);
 
@@ -193,7 +211,7 @@ namespace ADS::Core {
          * @return Entities::Scene* Non-owning pointer to the entity adapter,
          *         or nullptr if a scene with the same id already exists
          */
-        Entities::Scene* addScene(const std::string& id, const std::string& name);
+        Entities::Scene* addScene(ADS::Types::SceneId id, const std::string& name);
 
         /**
          * @brief Remove the scene with the given id
@@ -206,7 +224,7 @@ namespace ADS::Core {
          *
          * @param id Unique identifier of the scene to remove
          */
-        void removeScene(const std::string& id);
+        void removeScene(ADS::Types::SceneId id);
 
         /**
          * @brief Find a scene entity adapter by id
@@ -217,7 +235,7 @@ namespace ADS::Core {
          * @param id Unique identifier to search for
          * @return Entities::Scene* Non-owning pointer, or nullptr if not found
          */
-        [[nodiscard]] Entities::Scene* findScene(const std::string& id) const;
+        [[nodiscard]] Entities::Scene* findScene(ADS::Types::SceneId id) const;
 
         /**
          * @brief Get the full scene entity adapter collection (read-only)
@@ -252,7 +270,7 @@ namespace ADS::Core {
          * @return Entities::Character* Non-owning pointer to the entity adapter,
          *         or nullptr if a character with the same id already exists
          */
-        Entities::Character* addCharacter(const std::string& id, const std::string& name);
+        Entities::Character* addCharacter(ADS::Types::CharacterId id, const std::string& name);
 
         /**
          * @brief Remove the character with the given id
@@ -262,7 +280,7 @@ namespace ADS::Core {
          *
          * @param id Unique identifier of the character to remove
          */
-        void removeCharacter(const std::string& id);
+        void removeCharacter(ADS::Types::CharacterId id);
 
         /**
          * @brief Find a character entity adapter by id
@@ -273,7 +291,7 @@ namespace ADS::Core {
          * @param id Unique identifier to search for
          * @return Entities::Character* Non-owning pointer, or nullptr if not found
          */
-        [[nodiscard]] Entities::Character* findCharacter(const std::string& id) const;
+        [[nodiscard]] Entities::Character* findCharacter(ADS::Types::CharacterId id) const;
 
         /**
          * @brief Get the full character entity adapter collection (read-only)
@@ -308,7 +326,7 @@ namespace ADS::Core {
          * @return Entities::Item* Non-owning pointer to the entity adapter,
          *         or nullptr if an item with the same id already exists
          */
-        Entities::Item* addItem(const std::string& id, const std::string& name);
+        Entities::Item* addItem(ADS::Types::ObjectId id, const std::string& name);
 
         /**
          * @brief Remove the item with the given id
@@ -318,7 +336,7 @@ namespace ADS::Core {
          *
          * @param id Unique identifier of the item to remove
          */
-        void removeItem(const std::string& id);
+        void removeItem(ADS::Types::ObjectId id);
 
         /**
          * @brief Find an item entity adapter by id
@@ -329,7 +347,7 @@ namespace ADS::Core {
          * @param id Unique identifier to search for
          * @return Entities::Item* Non-owning pointer, or nullptr if not found
          */
-        [[nodiscard]] Entities::Item* findItem(const std::string& id) const;
+        [[nodiscard]] Entities::Item* findItem(ADS::Types::ObjectId id) const;
 
         /**
          * @brief Get the full item entity adapter collection (read-only)
@@ -351,6 +369,271 @@ namespace ADS::Core {
          */
         [[nodiscard]] const std::vector<std::unique_ptr<Data::ItemData>>& getItemData() const;
 
+        // --- State CRUD ---
+
+        /**
+         * @brief Create and add a new State (DataObject + entity adapter) to the project
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param id   Unique identifier for the state
+         * @param name Display name for the state
+         * @return Entities::State* Non-owning pointer to the entity adapter,
+         *         or nullptr if a state with the same id already exists
+         */
+        Entities::State* addState(ADS::Types::StateId id, const std::string& name);
+
+        /**
+         * @brief Remove the state with the given id
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param id Unique identifier of the state to remove
+         */
+        void removeState(ADS::Types::StateId id);
+
+        /**
+         * @brief Find a state entity adapter by id
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param id Unique identifier to search for
+         * @return Entities::State* Non-owning pointer, or nullptr if not found
+         */
+        [[nodiscard]] Entities::State* findState(ADS::Types::StateId id) const;
+
+        /**
+         * @brief Get the full state entity adapter collection (read-only)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return const std::vector<std::unique_ptr<Entities::State>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Entities::State>>& getStates() const;
+
+        /**
+         * @brief Get the full state DataObject collection (read-only, for serialisation)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return const std::vector<std::unique_ptr<Data::StateData>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Data::StateData>>& getStateData() const;
+
+        /**
+         * @brief Get the states available to reference as a "next" state or a chain's head
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * A state is "free" if no other state's @c next already points to
+         * it and no chain's @c head already points to it — every state can
+         * only be claimed by one place in one chain, so chains never branch
+         * or overlap. Two exceptions keep an already-assigned field from
+         * losing its own current value out from under it:
+         * @p excludeSelf (a State can't name itself as its own next) and
+         * @p keepEvenIfUsed (the field's own current value stays visible/
+         * selectable so re-opening the dropdown doesn't hide what's already
+         * chosen there).
+         *
+         * @param excludeSelf Id to omit outright (e.g. the State being
+         *                    edited), or std::nullopt for none
+         * @param keepEvenIfUsed Id to include regardless of "used" status
+         *                       (e.g. the field's current value), or
+         *                       std::nullopt for none
+         * @return std::vector<Entities::State*> Non-owning pointers, in project order
+         */
+        [[nodiscard]] std::vector<Entities::State*> getFreeStates(
+            std::optional<ADS::Types::StateId> excludeSelf = std::nullopt,
+            std::optional<ADS::Types::StateId> keepEvenIfUsed = std::nullopt
+        ) const;
+
+        // --- StateChain CRUD ---
+
+        /**
+         * @brief Create and add a new StateChain (DataObject + entity adapter) to the project
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param id   Unique identifier for the chain
+         * @param name Display name for the chain
+         * @return Entities::StateChain* Non-owning pointer to the entity
+         *         adapter, or nullptr if a chain with the same id already exists
+         */
+        Entities::StateChain* addChain(ADS::Types::ChainId id, const std::string& name);
+
+        /**
+         * @brief Remove the chain with the given id
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param id Unique identifier of the chain to remove
+         */
+        void removeChain(ADS::Types::ChainId id);
+
+        /**
+         * @brief Find a chain entity adapter by id
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @param id Unique identifier to search for
+         * @return Entities::StateChain* Non-owning pointer, or nullptr if not found
+         */
+        [[nodiscard]] Entities::StateChain* findChain(ADS::Types::ChainId id) const;
+
+        /**
+         * @brief Get the full chain entity adapter collection (read-only)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return const std::vector<std::unique_ptr<Entities::StateChain>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Entities::StateChain>>& getChains() const;
+
+        /**
+         * @brief Get the full chain DataObject collection (read-only, for serialisation)
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * @return const std::vector<std::unique_ptr<Data::StateChainData>>&
+         */
+        [[nodiscard]] const std::vector<std::unique_ptr<Data::StateChainData>>& getChainData() const;
+
+        // --- ID allocation ---
+
+        /**
+         * @brief Smallest unused scene id in this project.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Scans the current scene collection and returns the lowest value in
+         * `[1, 255]` not already taken, so a freshly created scene never
+         * collides with one loaded from disk. Falls back to `255` only when
+         * every id is in use.
+         *
+         * @return ADS::Types::SceneId The id to give the next new scene
+         */
+        [[nodiscard]] ADS::Types::SceneId nextSceneId() const;
+
+        /**
+         * @brief Smallest unused character id in this project.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @return ADS::Types::CharacterId The id to give the next new character
+         * @see nextSceneId()
+         */
+        [[nodiscard]] ADS::Types::CharacterId nextCharacterId() const;
+
+        /**
+         * @brief Smallest unused item id in this project.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @return ADS::Types::ObjectId The id to give the next new item
+         * @see nextSceneId()
+         */
+        [[nodiscard]] ADS::Types::ObjectId nextItemId() const;
+
+        /**
+         * @brief Smallest unused state id in this project.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @return ADS::Types::StateId The id to give the next new state
+         * @see nextSceneId()
+         */
+        [[nodiscard]] ADS::Types::StateId nextStateId() const;
+
+        /**
+         * @brief Smallest unused state-chain id in this project.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @return ADS::Types::ChainId The id to give the next new chain
+         * @see nextSceneId()
+         */
+        [[nodiscard]] ADS::Types::ChainId nextChainId() const;
+
+        // --- Duplication ---
+
+        /**
+         * @brief Deep-copy a scene into a new one.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Creates a scene with a fresh id (nextSceneId()) and @p newName, then
+         * copies every other field from the scene identified by @p sourceId via
+         * `Data::toJson` / `Data::applyJson` (the same round-trip the project
+         * serialiser uses). The "start scene" flag is intentionally **not**
+         * carried over — a project has exactly one start scene.
+         *
+         * @param sourceId Id of the scene to copy
+         * @param newName  Display name for the copy
+         * @return Entities::Scene* The new adapter, or nullptr if @p sourceId
+         *         is unknown or the id space is exhausted
+         */
+        Entities::Scene* duplicateScene(ADS::Types::SceneId sourceId,
+                                        const std::string& newName);
+
+        /**
+         * @brief Deep-copy a character into a new one.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * As duplicateScene(), but the "is player" flag is not carried over —
+         * a project has at most one player character.
+         *
+         * @param sourceId Id of the character to copy
+         * @param newName  Display name for the copy
+         * @return Entities::Character* The new adapter, or nullptr on failure
+         */
+        Entities::Character* duplicateCharacter(ADS::Types::CharacterId sourceId,
+                                                const std::string& newName);
+
+        /**
+         * @brief Deep-copy an item into a new one.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @param sourceId Id of the item to copy
+         * @param newName  Display name for the copy
+         * @return Entities::Item* The new adapter, or nullptr on failure
+         */
+        Entities::Item* duplicateItem(ADS::Types::ObjectId sourceId,
+                                      const std::string& newName);
+
+        /**
+         * @brief Deep-copy a state into a new one.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * @param sourceId Id of the state to copy
+         * @param newName  Display name for the copy
+         * @return Entities::State* The new adapter, or nullptr on failure
+         */
+        Entities::State* duplicateState(ADS::Types::StateId sourceId,
+                                        const std::string& newName);
+
         // --- LexEngine ---
 
         /**
@@ -366,6 +649,33 @@ namespace ADS::Core {
          * @return LexEngine::LexEngine& Reference to the owned LexEngine
          */
         [[nodiscard]] LexEngine::LexEngine& getLexEngine() const;
+
+        // --- Game settings ---
+
+        /**
+         * @brief Get the project-wide game settings (read-only).
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * A project has exactly one game entry (docs/core/schemas/game.md).
+         *
+         * @return const Data::GameData& The game settings
+         */
+        [[nodiscard]] const Data::GameData& getGameData() const;
+
+        /**
+         * @brief Get the project-wide game settings (mutable).
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * There is no entity adapter for game settings yet — callers edit the
+         * DataObject directly.
+         *
+         * @return Data::GameData& The game settings
+         */
+        [[nodiscard]] Data::GameData& getGameData();
     };
 
 } // namespace ADS::Core

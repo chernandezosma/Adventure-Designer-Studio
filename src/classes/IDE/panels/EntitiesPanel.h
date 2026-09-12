@@ -37,8 +37,11 @@ namespace ADS::IDE::Panels {
     class EntitiesPanel : public BasePanel {
     private:
 
+        /// Non-owning pointer to the entity currently selected in this panel, if any.
         Inspector::IInspectable* m_selectedEntity = nullptr;
+        /// Non-owning pointer to the active project, set via setProject().
         Core::Project* m_project = nullptr;
+        /// Invoked with the newly selected entity; set via setSelectionCallback().
         std::function<void(Inspector::IInspectable*)> m_onSelectionChanged;
 
         /**

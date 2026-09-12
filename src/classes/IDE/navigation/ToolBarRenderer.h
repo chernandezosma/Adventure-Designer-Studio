@@ -18,6 +18,8 @@
 #ifndef ADS_TOOLBAR_RENDERER_H
 #define ADS_TOOLBAR_RENDERER_H
 
+#include <functional>
+
 #include "NavigationConstants.h"
 #include "NavigationService.h"
 #include "../IDEBase.h"
@@ -50,10 +52,20 @@ namespace ADS::IDE {
         /**
          * @brief Service for handling navigation actions
          *
-         * Unique pointer to NavigationService that handles file operations
-         * and other navigation-related actions triggered from toolbar buttons.
+         * Non-owning pointer to the single NavigationService instance owned
+         * by MenuBarRenderer, shared via setNavigationService() so the
+         * toolbar's file buttons trigger the same deferred-dialog/callback
+         * pipeline as the File menu, rather than a second, unwired instance.
+         * Null until setNavigationService() is called.
          */
-        std::unique_ptr<NavigationService> m_navigationService;
+        NavigationService *m_navigationService = nullptr;
+
+        /**
+         * @brief Flip the Translations panel's visibility.
+         *
+         * Set via setTranslationsToggle(); null until then (button inert).
+         */
+        std::function<void()> m_onToggleTranslations;
 
         /**
          * @brief Translation manager for internationalization
@@ -171,14 +183,17 @@ namespace ADS::IDE {
          * @version Jan 2026
          *
          * Initializes the toolbar renderer with references to required services.
-         * Sets up the layout manager, creates the navigation service, obtains
-         * the translation manager from IDEBase, and initializes button dimensions
-         * (26.0f height, 4.0f padding).
+         * Sets up the layout manager, obtains the translation manager from
+         * IDEBase, and initializes button dimensions (26.0f height, 4.0f
+         * padding). Does NOT create a NavigationService — call
+         * setNavigationService() before rendering, or the file buttons will
+         * be inert (m_navigationService stays null).
          *
          * @param layoutManager Pointer to the layout manager for layout operations
          *
          * @note The translation manager is obtained through IDEBase inheritance
          * @see IDEBase::getTranslationManager()
+         * @see setNavigationService()
          */
         explicit ToolBarRenderer(LayoutManager *layoutManager);
 
@@ -188,10 +203,36 @@ namespace ADS::IDE {
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
          * @version Jan 2026
          *
-         * Default destructor. The NavigationService is automatically cleaned up
-         * through the unique_ptr.
+         * Default destructor. m_navigationService is non-owning — nothing
+         * to clean up here.
          */
         ~ToolBarRenderer() = default;
+
+        /**
+         * @brief Share the NavigationService the toolbar's file buttons should drive
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Must be called (typically with MenuBarRenderer::getNavigationService())
+         * before the toolbar is rendered — the New/Open buttons null-check
+         * this pointer defensively, but stay inert until it's set, so the
+         * File menu and toolbar act on one shared instance/dialog pipeline
+         * instead of a second, disconnected one.
+         *
+         * @param service Non-owning pointer to the shared NavigationService
+         */
+        void setNavigationService(NavigationService *service);
+
+        /**
+         * @brief Register the Translations-panel toggle for the 🌐 toolbar button
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * @param toggle Callable that flips the Translations panel's visibility
+         */
+        void setTranslationsToggle(std::function<void()> toggle);
 
         /**
          * @brief Render toolbar content inline (without creating a window)

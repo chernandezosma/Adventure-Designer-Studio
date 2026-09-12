@@ -22,12 +22,13 @@
 #include "Entities/Scene.h"
 
 using namespace ADS;
+using ADS::Types::SceneId;
 
 namespace {
     Data::SceneData makeSceneData()
     {
         Data::SceneData data;
-        data.setId("scene-01");
+        data.setId(SceneId(1));
         data.setName("Old Library");
         return data;
     }
@@ -41,14 +42,34 @@ TEST(Scene, GetTypeName_ReturnsScene)
     EXPECT_EQ(scene.getTypeName(), "Scene");
 }
 
-TEST(Scene, GetPropertyDescriptors_ReturnsTenDescriptors)
+TEST(Scene, GetSceneId_ReturnsTypedId)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    EXPECT_EQ(scene.getSceneId(), SceneId(1));
+}
+
+TEST(Scene, GetId_ReturnsStringifiedId)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    EXPECT_EQ(scene.getId(), "1");
+}
+
+TEST(Scene, GetPropertyDescriptors_ReturnsTwentyFourDescriptors)
 {
     Data::SceneData data = makeSceneData();
     Entities::Scene scene(&data);
 
     auto descriptors = scene.getPropertyDescriptors();
 
-    EXPECT_EQ(descriptors.size(), 10u);
+    // id(1) + General(name/isStartScene/state=3) + affordances(1) +
+    // image(1) + descriptions(4) + presentItemIds(1) + exits(10) +
+    // triggers(3: on_enter/on_exit/on_examine — on_turn is Game-only and
+    // on_item_taken/dropped/used moved to Item's own trigger map) = 24
+    EXPECT_EQ(descriptors.size(), 24u);
 }
 
 TEST(Scene, GetPropertyDescriptors_IdDescriptorIsReadOnly)
@@ -62,6 +83,19 @@ TEST(Scene, GetPropertyDescriptors_IdDescriptorIsReadOnly)
 
     ASSERT_NE(it, descriptors.end());
     EXPECT_TRUE(it->isReadOnly());
+}
+
+TEST(Scene, GetPropertyDescriptors_StateDescriptorAllowsCreateNew)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    auto descriptors = scene.getPropertyDescriptors();
+    auto it = std::find_if(descriptors.begin(), descriptors.end(),
+                            [](const auto& d) { return d.getId() == "state"; });
+
+    ASSERT_NE(it, descriptors.end());
+    EXPECT_TRUE(it->isAllowCreateNew());
 }
 
 TEST(Scene, GetPropertyValue_Name_ReturnsDataName)
@@ -87,30 +121,16 @@ TEST(Scene, GetPropertyValue_IsStartScene_ReturnsBool)
     EXPECT_TRUE(std::get<bool>(value));
 }
 
-TEST(Scene, GetPropertyValue_Width_ReturnsInt)
+TEST(Scene, GetPropertyValue_Image_ReturnsString)
 {
     Data::SceneData data = makeSceneData();
+    data.setImage("assets/library.png");
     Entities::Scene scene(&data);
 
-    auto value = scene.getPropertyValue("width");
+    auto value = scene.getPropertyValue("image");
 
-    ASSERT_TRUE(std::holds_alternative<int>(value));
-    EXPECT_EQ(std::get<int>(value), 800);
-}
-
-TEST(Scene, GetPropertyValue_BackgroundColor_ReturnsImVec4)
-{
-    Data::SceneData data = makeSceneData();
-    Entities::Scene scene(&data);
-
-    auto value = scene.getPropertyValue("backgroundColor");
-
-    ASSERT_TRUE(std::holds_alternative<ImVec4>(value));
-    ImVec4 color = std::get<ImVec4>(value);
-    EXPECT_FLOAT_EQ(color.x, 0.2f);
-    EXPECT_FLOAT_EQ(color.y, 0.2f);
-    EXPECT_FLOAT_EQ(color.z, 0.2f);
-    EXPECT_FLOAT_EQ(color.w, 1.0f);
+    ASSERT_TRUE(std::holds_alternative<std::string>(value));
+    EXPECT_EQ(std::get<std::string>(value), "assets/library.png");
 }
 
 TEST(Scene, GetPropertyValue_UnknownId_ReturnsMonostate)
@@ -134,17 +154,6 @@ TEST(Scene, SetPropertyValue_Name_ValidType_UpdatesAndReturnsTrue)
     EXPECT_EQ(data.getName(), "New Name");
 }
 
-TEST(Scene, SetPropertyValue_Width_WrongType_RejectedAndUnchanged)
-{
-    Data::SceneData data = makeSceneData();
-    Entities::Scene scene(&data);
-
-    bool accepted = scene.setPropertyValue("width", std::string("not an int"));
-
-    EXPECT_FALSE(accepted);
-    EXPECT_EQ(data.getWidth(), 800);
-}
-
 TEST(Scene, SetPropertyValue_UnknownId_ReturnsFalse)
 {
     Data::SceneData data = makeSceneData();
@@ -153,42 +162,20 @@ TEST(Scene, SetPropertyValue_UnknownId_ReturnsFalse)
     EXPECT_FALSE(scene.setPropertyValue("no-such-property", std::string("x")));
 }
 
-TEST(Scene, SetPropertyValue_BackgroundColor_ConvertsImVec4ToColor)
-{
-    Data::SceneData data = makeSceneData();
-    Entities::Scene scene(&data);
-
-    bool accepted = scene.setPropertyValue("backgroundColor", ImVec4(0.9f, 0.1f, 0.1f, 1.0f));
-
-    EXPECT_TRUE(accepted);
-    EXPECT_EQ(data.getBackgroundColor(), ADS::Types::Color(0.9f, 0.1f, 0.1f, 1.0f));
-}
-
-TEST(Scene, SetFakeProperty_FiresChangeEvent)
+TEST(Scene, SetStartScene_FiresChangeEvent)
 {
     Data::SceneData data = makeSceneData();
     Entities::Scene scene(&data);
     bool fired = false;
     scene.getEventDispatcher().subscribe([&](const Inspector::PropertyChangedEvent& e) {
         fired = true;
-        EXPECT_EQ(e.propertyId, "fakeProperty");
+        EXPECT_EQ(e.propertyId, "isStartScene");
     });
 
-    scene.setFakeProperty(true);
+    scene.setStartScene(true);
 
     EXPECT_TRUE(fired);
-    EXPECT_TRUE(scene.getFakeProperty());
-}
-
-TEST(Scene, SetDescription_UpdatesUnderlyingData)
-{
-    Data::SceneData data = makeSceneData();
-    Entities::Scene scene(&data);
-
-    scene.setDescription("A dusty old library.");
-
-    EXPECT_EQ(scene.getDescription(), "A dusty old library.");
-    EXPECT_EQ(data.getDescription(), "A dusty old library.");
+    EXPECT_TRUE(scene.isStartScene());
 }
 
 TEST(Scene, SetStartScene_UpdatesUnderlyingData)
@@ -201,56 +188,138 @@ TEST(Scene, SetStartScene_UpdatesUnderlyingData)
     EXPECT_TRUE(scene.isStartScene());
 }
 
-TEST(Scene, SetBackgroundColor_ChangedValue_FiresEventWithImVec4Payload)
+TEST(Scene, SetImage_UpdatesUnderlyingData)
 {
     Data::SceneData data = makeSceneData();
     Entities::Scene scene(&data);
-    Inspector::PropertyValue capturedOld, capturedNew;
-    scene.getEventDispatcher().subscribe([&](const Inspector::PropertyChangedEvent& e) {
-        capturedOld = e.oldValue;
-        capturedNew = e.newValue;
-    });
 
-    scene.setBackgroundColor(ADS::Types::Color(1.0f, 0.0f, 0.0f, 1.0f));
+    scene.setImage("assets/library.png");
 
-    ASSERT_TRUE(std::holds_alternative<ImVec4>(capturedNew));
-    EXPECT_FLOAT_EQ(std::get<ImVec4>(capturedNew).x, 1.0f);
-    ASSERT_TRUE(std::holds_alternative<ImVec4>(capturedOld));
-    EXPECT_FLOAT_EQ(std::get<ImVec4>(capturedOld).x, 0.2f);
+    EXPECT_EQ(scene.getImage(), "assets/library.png");
 }
 
-TEST(Scene, SetBackgroundColor_SameValue_DoesNotFireEvent)
+TEST(Scene, DescriptionsExitsItemsTriggers_AccessibleDirectlyAndThroughProperties)
 {
     Data::SceneData data = makeSceneData();
     Entities::Scene scene(&data);
-    bool fired = false;
-    scene.getEventDispatcher().subscribe([&](const Inspector::PropertyChangedEvent&) { fired = true; });
 
-    scene.setBackgroundColor(scene.getBackgroundColor());
+    Data::Descriptions desc{.normal = 1, .longText = 2};
+    scene.setDescriptions(desc);
+    EXPECT_EQ(scene.getDescriptions(), desc);
 
-    EXPECT_FALSE(fired);
+    Data::SceneData::Exits exits;
+    exits.north = SceneId(2);
+    scene.setExits(exits);
+    EXPECT_EQ(scene.getExits(), exits);
+
+    std::vector<ADS::Types::ObjectId> items = {ADS::Types::ObjectId(1)};
+    scene.setPresentItemIds(items);
+    EXPECT_EQ(scene.getPresentItemIds(), items);
+
+    scene.addTrigger(0x01, ADS::Types::EventId(5));
+    EXPECT_EQ(scene.getTriggers().at(0x01), std::vector<ADS::Types::EventId>{ADS::Types::EventId(5)});
+
+    // These fields are reachable both directly and through properties.
+    auto descriptors = scene.getPropertyDescriptors();
+    auto hasId = [&descriptors](const std::string& id) {
+        return std::any_of(descriptors.begin(), descriptors.end(),
+            [&id](const auto& d) { return d.getId() == id; });
+    };
+    EXPECT_TRUE(hasId("descriptionsNormal"));
+    EXPECT_TRUE(hasId("descriptionsLongText"));
+    EXPECT_TRUE(hasId("exitNorth"));
+    EXPECT_TRUE(hasId("presentItemIds"));
+    EXPECT_TRUE(hasId("triggerOnEnter"));
 }
 
-TEST(Scene, SetWidthAndHeight_UpdateUnderlyingData)
+TEST(Scene, GetPropertyValue_DescriptionTexts_ReturnsLocalizedText)
 {
     Data::SceneData data = makeSceneData();
     Entities::Scene scene(&data);
+    Data::DescriptionTexts texts{
+        .normal = {{"es_ES", "Una habitación polvorienta."}, {"en_US", "A dusty room."}},
+        .longText = {{"en_US", "Shelves line the walls."}},
+    };
+    scene.setDescriptionTexts(texts);
 
-    scene.setWidth(1024);
-    scene.setHeight(768);
+    auto normal = scene.getPropertyValue("descriptionsNormal");
+    ASSERT_TRUE(std::holds_alternative<Inspector::LocalizedText>(normal));
+    EXPECT_EQ(std::get<Inspector::LocalizedText>(normal), texts.normal);
 
-    EXPECT_EQ(scene.getWidth(), 1024);
-    EXPECT_EQ(scene.getHeight(), 768);
+    Inspector::LocalizedText newLongText = {{"en_US", "New long text."}};
+    bool accepted = scene.setPropertyValue("descriptionsLongText", newLongText);
+    EXPECT_TRUE(accepted);
+    EXPECT_EQ(scene.getDescriptionTexts().longText, newLongText);
 }
 
-TEST(Scene, SetBackgroundImagePathAndMusicPath_UpdateUnderlyingData)
+TEST(Scene, GetPropertyValue_State_NoProject_ReturnsEmptySelection)
 {
     Data::SceneData data = makeSceneData();
     Entities::Scene scene(&data);
 
-    scene.setBackgroundImagePath("assets/library.png");
-    scene.setMusicPath("assets/library.ogg");
+    auto value = scene.getPropertyValue("state");
 
-    EXPECT_EQ(scene.getBackgroundImagePath(), "assets/library.png");
-    EXPECT_EQ(scene.getMusicPath(), "assets/library.ogg");
+    ASSERT_TRUE(std::holds_alternative<Inspector::SelectValue>(value));
+    EXPECT_TRUE(std::get<Inspector::SelectValue>(value).selectedIndices.empty());
+    EXPECT_TRUE(std::get<Inspector::SelectValue>(value).options.empty());
+}
+
+TEST(Scene, SetPropertyValue_State_NoProject_ClearsState)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    bool accepted = scene.setPropertyValue("state", Inspector::SelectValue({0}, {}));
+
+    EXPECT_TRUE(accepted);
+    EXPECT_FALSE(data.getState().has_value());
+}
+
+TEST(Scene, GetSetState_TypedAccessor_RoundTrips)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    scene.setState(ADS::Types::StateId(4));
+
+    ASSERT_TRUE(scene.getState().has_value());
+    EXPECT_EQ(scene.getState(), ADS::Types::StateId(4));
+    EXPECT_EQ(data.getState(), ADS::Types::StateId(4));
+}
+
+TEST(Scene, GetPropertyValue_Exit_NoProject_ReturnsEmptySelection)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    auto value = scene.getPropertyValue("exitNorth");
+
+    ASSERT_TRUE(std::holds_alternative<Inspector::SelectValue>(value));
+    EXPECT_TRUE(std::get<Inspector::SelectValue>(value).selectedIndices.empty());
+    EXPECT_TRUE(std::get<Inspector::SelectValue>(value).options.empty());
+}
+
+TEST(Scene, GetPropertyValue_PresentItemIds_NoProject_ReturnsEmptySelection)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+    scene.setPresentItemIds({ADS::Types::ObjectId(1)});
+
+    auto value = scene.getPropertyValue("presentItemIds");
+
+    ASSERT_TRUE(std::holds_alternative<Inspector::SelectValue>(value));
+    // Without a Project back-pointer, the id can't be resolved to an
+    // option index — this documents that limitation rather than crashing.
+    EXPECT_TRUE(std::get<Inspector::SelectValue>(value).selectedIndices.empty());
+}
+
+TEST(Scene, GetPropertyValue_Trigger_AlwaysEmptyOptions)
+{
+    Data::SceneData data = makeSceneData();
+    Entities::Scene scene(&data);
+
+    auto value = scene.getPropertyValue("triggerOnEnter");
+
+    ASSERT_TRUE(std::holds_alternative<Inspector::SelectValue>(value));
+    EXPECT_TRUE(std::get<Inspector::SelectValue>(value).options.empty());
 }

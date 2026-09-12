@@ -23,6 +23,7 @@
  */
 
 #include "BaseEntity.h"
+#include "i18n/i18n.h"
 
 namespace ADS::Entities {
     /**
@@ -31,10 +32,11 @@ namespace ADS::Entities {
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Mar 2026
      *
-     * @param data Non-owning pointer to the BaseData struct. Must not be null
+     * @param data Non-owning pointer to the BaseData<Tag> struct (as its
+     *             tag-erased IIdentifiable interface). Must not be null
      *             and must outlive this entity (Core::Project guarantees this).
      */
-    BaseEntity::BaseEntity(Data::BaseData* data)
+    BaseEntity::BaseEntity(Data::IIdentifiable* data)
         : m_baseData(data) {
     }
 
@@ -89,15 +91,31 @@ namespace ADS::Entities {
     }
 
     /**
+     * @brief Translate a translation key via the process-wide active i18n instance
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @param key Dotted translation key (e.g. "SCENE.PROP_NAME")
+     * @return std::string Translated text, or @p key if untranslated
+     */
+    std::string BaseEntity::translate(const std::string& key) {
+        if (auto* t = i18n::i18n::getActiveInstance()) {
+            return t->_t(key);
+        }
+        return key;
+    }
+
+    /**
      * @brief Get the unique identifier
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Mar 2026
      *
-     * @return const std::string& Entity ID read from the backing DataObject
+     * @return std::string Entity ID read from the backing DataObject
      */
-    const std::string& BaseEntity::getId() const {
-        return m_baseData->getId();
+    std::string BaseEntity::getId() const {
+        return m_baseData->getIdString();
     }
 
     /**
@@ -117,5 +135,29 @@ namespace ADS::Entities {
             m_baseData->setName(name);
             notifyPropertyChanged("name", oldName, m_baseData->getName());
         }
+    }
+
+    /**
+     * @brief Set the owning Project back-pointer
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @param project Non-owning pointer to the owning Project
+     */
+    void BaseEntity::setProject(Core::Project* project) {
+        m_project = project;
+    }
+
+    /**
+     * @brief Get the owning Project back-pointer
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version May 2026
+     *
+     * @return Core::Project* Non-owning pointer, or nullptr if unset
+     */
+    Core::Project* BaseEntity::getProject() const {
+        return m_project;
     }
 }

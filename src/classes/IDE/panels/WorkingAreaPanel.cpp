@@ -41,7 +41,7 @@ namespace ADS::IDE::Panels {
      */
     WorkingAreaPanel::WorkingAreaPanel()
         : BasePanel("hWorkingArea") {
-        m_windowTitle = this->getTranslationsManager()->_t("WORKING_AREA");
+        m_titleKey = "WORKING_AREA";
         // Initialize script text with default content
         std::strcpy(m_scriptText,
                     ICON_FA_TREE " Forest Entrance\n"
@@ -137,10 +137,10 @@ namespace ADS::IDE::Panels {
             return;
         }
 
-        ImGui::Begin(getImGuiLabel().c_str());
+        beginWindow();
         ImGui::Text("%s", this->getTranslationsManager()->_t("MAIN_CONTENT_AREA").c_str());
         ImGui::Separator();
 
-        ImGui::End();
+        endWindow();
     }
 }

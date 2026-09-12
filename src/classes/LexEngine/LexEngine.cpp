@@ -43,12 +43,40 @@ namespace ADS::LexEngine {
         }
     } // namespace
 
+    /**
+     * @brief Analyse a sentence and record every lexical token it contains
+     *
+     * The incremental entry point the IDE calls as the author types.
+     * Punctuation and empty tokens returned by the backend are skipped.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param sentence Full sentence text to analyse
+     * @param lang Language the sentence is written in
+     * @param backend NLP backend used to tokenise and classify the sentence
+     */
     void LexEngine::feed(std::string_view sentence, const LanguageCode& lang, INLPBackend& backend) {
         for (const NLPToken& token : backend.analyse(sentence, lang)) {
             record(token);
         }
     }
 
+    /**
+     * @brief Look up an existing entry by lemma+language, or insert a new one
+     *
+     * On a hit, updates the existing entry's type observation and
+     * frequency. On a miss, creates a new entry, observes its type,
+     * accumulates its frequency, and runs the synonym pipeline against
+     * it. Tokens that are not lexical (NLPToken::isLexical() == false)
+     * are ignored and nullptr is returned.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param token Analysed word to record
+     * @return LexEntry* Non-owning pointer to the recorded entry, or nullptr if the token was filtered
+     */
     LexEntry* LexEngine::record(const NLPToken& token) {
         if (!token.isLexical()) {
             return nullptr;
@@ -87,6 +115,18 @@ namespace ADS::LexEngine {
         return entry;
     }
 
+    /**
+     * @brief Assign TokenIndex values to every entry, per language
+     *
+     * Sorts each language's entries by descending frequency (alphabetical
+     * tiebreak), assigns the top 254 entries a 1-byte TokenIndex
+     * (0x0001-0x00FE) and all remaining entries a 3-byte TokenIndex
+     * (0x0100-0xFFFE). Logs a warning for every ambiguous entry
+     * (LexEntry::isAmbiguous() == true).
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     */
     void LexEngine::index() {
         for (auto& [lang, entries] : m_entriesByLang) {
             std::sort(entries.begin(), entries.end(),
@@ -118,17 +158,43 @@ namespace ADS::LexEngine {
         }
     }
 
+    /**
+     * @brief Get the entry collection for one language, ordered by index() if it has run
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param lang Language to query
+     * @return const std::vector<std::unique_ptr<LexEntry>>& Entries for that language, empty if none recorded
+     */
     const std::vector<std::unique_ptr<LexEntry>>& LexEngine::getEntries(const LanguageCode& lang) const {
         static const std::vector<std::unique_ptr<LexEntry>> kEmpty;
         const auto it = m_entriesByLang.find(lang);
         return it != m_entriesByLang.end() ? it->second : kEmpty;
     }
 
+    /**
+     * @brief Find an entry by its stable design-time id
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param id Entry id to look up
+     * @return LexEntry* Non-owning pointer, or nullptr if not found
+     */
     LexEntry* LexEngine::findById(LexEntryId id) const {
         const auto it = m_byId.find(id);
         return it != m_byId.end() ? it->second : nullptr;
     }
 
+    /**
+     * @brief List every language that currently has at least one entry
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @return std::vector<LanguageCode> Languages present in the engine, in no particular order
+     */
     std::vector<LanguageCode> LexEngine::getLanguages() const {
         std::vector<LanguageCode> languages;
         languages.reserve(m_entriesByLang.size());
@@ -138,6 +204,23 @@ namespace ADS::LexEngine {
         return languages;
     }
 
+    /**
+     * @brief Insert an already-built entry while preserving its id
+     *
+     * For deserialization only — record() is the entry point for fresh,
+     * NLP-token-driven insertion. This method takes an entry already
+     * reconstructed by LexEngineSerializer::fromJson(), inserts it into
+     * m_entriesByLang/m_lookupIndex/m_byId under the given language,
+     * folds its raw_count into m_totalTokens, and advances m_nextId past
+     * its id so subsequent record() calls never reuse a restored id.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param entry Already-constructed entry to take ownership of
+     * @param lang Language to file the entry under
+     * @return LexEntry* Non-owning pointer to the inserted entry
+     */
     LexEntry* LexEngine::restoreEntry(LexEntry entry, const LanguageCode& lang) {
         auto owned = std::make_unique<LexEntry>(std::move(entry));
         LexEntry* raw = owned.get();
@@ -151,11 +234,32 @@ namespace ADS::LexEngine {
         return raw;
     }
 
+    /**
+     * @brief Resolve a canonical form to its owning entry id
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param form Canonical form to resolve
+     * @param lang Language to search within
+     * @return LexEntryId Owning entry id, or INVALID_ENTRY_ID if not found
+     */
     LexEntryId LexEngine::findEntryId(std::string_view form, const LanguageCode& lang) const {
         const auto it = m_lookupIndex.find(lookupKey(form, lang));
         return it != m_lookupIndex.end() ? it->second : INVALID_ENTRY_ID;
     }
 
+    /**
+     * @brief Collect the ids of every entry in a language sharing a given stem
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Mar 2026
+     *
+     * @param stemValue Stem value to match against LexEntry::stem
+     * @param lang Language to search within
+     * @param excluding Entry id to omit from the results
+     * @return std::vector<LexEntryId> Matching entry ids, possibly empty
+     */
     std::vector<LexEntryId> LexEngine::findByStem(std::string_view stemValue,
                                                  const LanguageCode& lang,
                                                  LexEntryId excluding) const {

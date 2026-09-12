@@ -23,6 +23,7 @@
  */
 
 #include "ColorEditor.h"
+#include "EditorLayout.h"
 #include "imgui.h"
 
 namespace ADS::Inspector::Editors {
@@ -63,8 +64,7 @@ namespace ADS::Inspector::Editors {
         ImGui::PushID(descriptor.getId().c_str());
 
         // Two-column layout: label on left, widget on right
-        ImGui::Columns(2, nullptr, false);
-        ImGui::SetColumnWidth(0, std::max(80.0f, ImGui::GetContentRegionAvail().x * 0.38f));
+        beginPropertyColumns(descriptor);
 
         // Label column
         ImGui::AlignTextToFramePadding();
@@ -93,12 +93,16 @@ namespace ADS::Inspector::Editors {
             flags
         );
 
+        // Captured on the colour widget itself, before anything else is drawn.
+        const bool widgetHovered =
+            ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal);
+
         if (readOnly) {
             ImGui::EndDisabled();
         }
 
         // Show tooltip on widget hover
-        if (!descriptor.getDescription().empty() && ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal)) {
+        if (!descriptor.getDescription().empty() && widgetHovered) {
             ImGui::SetTooltip("%s", descriptor.getDescription().c_str());
         }
 

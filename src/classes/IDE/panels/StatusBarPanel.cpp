@@ -18,10 +18,17 @@
 #include "IDE/DesignTokens.h"
 #include "imgui.h"
 #include <format>
+#include <string>
+#include <vector>
 
 namespace ADS::IDE::Panels {
 
 using namespace ADS::IDE::Colors;
+
+namespace {
+    /// App version used when the .env does not set ADS_VERSION.
+    constexpr const char* kFallbackVersion = "0.4.2";
+}
 
 // ---------------------------------------------------------------------------
 // Construction
@@ -29,16 +36,59 @@ using namespace ADS::IDE::Colors;
 
 StatusBarPanel::StatusBarPanel()
     : BasePanel("StatusBar")
-{}
+{
+    // Read once — the version never changes at runtime.
+    m_version = m_environment
+        ? m_environment->getOrDefault("ADS_VERSION", kFallbackVersion)
+        : std::string{kFallbackVersion};
+}
 
 // ---------------------------------------------------------------------------
 // Setters
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Set the display name of the active project.
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version May 2026
+ *
+ * @param name Project name shown in the status bar.
+ */
 void StatusBarPanel::setProjectName(const std::string& name)   { m_projectName = name; }
+
+/**
+ * @brief Set the name of the currently open file.
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version May 2026
+ *
+ * @param filename File name (not full path) shown in the status bar.
+ */
 void StatusBarPanel::setActiveFile(const std::string& filename) { m_activeFile  = filename; }
+
+/**
+ * @brief Set the editor cursor position displayed in the status bar.
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version May 2026
+ *
+ * @param line 1-based line number.
+ * @param col  1-based column number.
+ */
 void StatusBarPanel::setCursorPosition(int line, int col)       { m_line = line; m_col = col; }
 
+/**
+ * @brief Set the entity and diagnostic counts shown on the right side.
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version May 2026
+ *
+ * @param scenes   Number of scenes in the project.
+ * @param npcs     Number of NPCs in the project.
+ * @param warnings Number of compiler / lint warnings.
+ * @param errors   Number of compiler / lint errors.
+ */
 void StatusBarPanel::setCounts(int scenes, int npcs, int warnings, int errors)
 {
     m_scenes   = scenes;
@@ -51,6 +101,14 @@ void StatusBarPanel::setCounts(int scenes, int npcs, int warnings, int errors)
 // Accessors
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Return the fixed height of the status bar in pixels.
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version May 2026
+ *
+ * @return float Always 22.0f as per the design specification.
+ */
 float StatusBarPanel::getHeight() const
 {
     // Computed each call so DPI / font changes are reflected automatically.
@@ -62,11 +120,22 @@ float StatusBarPanel::getHeight() const
 // Render
 // ---------------------------------------------------------------------------
 
+/**
+ * @brief Render the status bar for the current frame.
+ *
+ * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+ * @version May 2026
+ *
+ * Positions a fixed 22-px window at the bottom of the main viewport.
+ * Left side: version · project name · active file · cursor position.
+ * Right side: entity counts and error / warning counts.
+ */
 void StatusBarPanel::render()
 {
     if (!m_isVisible)
         return;
 
+    auto* t = getTranslationsManager();
     const float h = getHeight();
     ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImVec2 pos  = {viewport->Pos.x, viewport->Pos.y + viewport->Size.y - h};
@@ -97,6 +166,7 @@ void StatusBarPanel::render()
 
     // Align text vertically in the bar
     float textY = (h - ImGui::GetTextLineHeight()) * 0.5f;
+
     ImGui::SetCursorPosY(textY);
 
     // ----- Left side --------------------------------------------------------
@@ -107,9 +177,11 @@ void StatusBarPanel::render()
         ImGui::SameLine(0, 8);
     };
 
-    ImGui::TextColored(TEXT0, "ADS 0.4.2");
+    ImGui::TextColored(TEXT0, "%s", std::format("{}: {}", t->_t("STATUSBAR.VERSION"), m_version).c_str());
     sep();
-    ImGui::TextColored(TEXT0, "%s", m_projectName.c_str());
+    const std::string projectLabel =
+        m_projectName.empty() ? t->_t("PROJECT.NO_PROJECT") : m_projectName;
+    ImGui::TextColored(TEXT0, "%s", projectLabel.c_str());
 
     if (!m_activeFile.empty()) {
         sep();
@@ -117,25 +189,27 @@ void StatusBarPanel::render()
     }
 
     sep();
-    ImGui::TextColored(TEXT1, "Línea %d, Col %d", m_line, m_col);
+    {
+        // auto* t = getTranslationsManager();
+        std::string cursor = std::format("{} {}, {} {}",
+            t->_t("STATUSBAR.LINE"), m_line, t->_t("STATUSBAR.COLUMN"), m_col);
+        ImGui::TextColored(TEXT1, "%s", cursor.c_str());
+    }
 
     // ----- Right side — measure first, then render at the correct X --------
 
     struct Seg { std::string text; ImVec4 color; };
     std::vector<Seg> right;
 
-    right.push_back({std::format("{} escenas", m_scenes), TEXT0});
-    right.push_back({"|", TEXT2});
-    right.push_back({std::format("{} NPC", m_npcs), TEXT0});
-
+    // Scene / NPC counters intentionally omitted — they duplicated the
+    // Project tree's own stats strip.
     if (m_warnings > 0 || m_errors > 0) {
-        right.push_back({"|", TEXT2});
         if (m_warnings > 0)
-            right.push_back({std::format("{} warns", m_warnings), C_WARN});
+            right.push_back({std::format("{} {}", m_warnings, t->_t("STATUSBAR.WARNINGS")), C_WARN});
         if (m_warnings > 0 && m_errors > 0)
             right.push_back({"·", TEXT2});
         if (m_errors > 0)
-            right.push_back({std::format("{} err", m_errors), C_ERROR});
+            right.push_back({std::format("{} {}", m_errors, t->_t("STATUSBAR.ERRORS")), C_ERROR});
     }
 
     // Calculate total width with 6 px gaps between segments
@@ -145,13 +219,15 @@ void StatusBarPanel::render()
         if (i + 1 < right.size()) totalW += 6.0f;
     }
 
-    float rightX = ImGui::GetWindowWidth() - totalW - 10.0f;
-    ImGui::SameLine(rightX);
-    ImGui::SetCursorPosY(textY);
+    if (!right.empty()) {
+        float rightX = ImGui::GetWindowWidth() - totalW - 10.0f;
+        ImGui::SameLine(rightX);
+        ImGui::SetCursorPosY(textY);
 
-    for (std::size_t i = 0; i < right.size(); ++i) {
-        ImGui::TextColored(right[i].color, "%s", right[i].text.c_str());
-        if (i + 1 < right.size()) ImGui::SameLine(0, 6);
+        for (std::size_t i = 0; i < right.size(); ++i) {
+            ImGui::TextColored(right[i].color, "%s", right[i].text.c_str());
+            if (i + 1 < right.size()) ImGui::SameLine(0, 6);
+        }
     }
 
     ImGui::PopStyleVar(2);

@@ -107,8 +107,28 @@ namespace ADS::UI {
         config.PixelSnapH = true; // Align to pixel boundaries
         // MergeMode is false by default - this is a standalone font
 
-        // Load the font with config
-        ImFont* font = this->io->Fonts->AddFontFromFileTTF(path.c_str(), size, &config);
+        // Glyph ranges to rasterise. Without an explicit range ImGui only builds
+        // U+0020–U+00FF, which covers English + the Latin-1 accents used by
+        // es/de/fr/it/pt but NOT Cyrillic — so a Russian UI renders as '?'.
+        // Build Latin + full Cyrillic + General Punctuation / currency once into
+        // a persistent vector (ImGui keeps the pointer until the atlas builds).
+        static ImVector<ImWchar> s_textRanges;
+        if (s_textRanges.empty()) {
+            ImFontGlyphRangesBuilder builder;
+            builder.AddRanges(this->io->Fonts->GetGlyphRangesDefault());   // Basic Latin + Latin-1
+            builder.AddRanges(this->io->Fonts->GetGlyphRangesCyrillic());  // Cyrillic (+ Latin-1)
+            static const ImWchar kExtras[] = {
+                0x2010, 0x205E, // General Punctuation: – — … “ ” ‹ › •
+                0x20A0, 0x20BF, // Currency Symbols: € ₽ …
+                0,
+            };
+            builder.AddRanges(kExtras);
+            builder.BuildRanges(&s_textRanges);
+        }
+
+        // Load the font with config + glyph ranges
+        ImFont* font = this->io->Fonts->AddFontFromFileTTF(
+            path.c_str(), size, &config, s_textRanges.Data);
 
         if (font == nullptr) {
             spdlog::error("Failed to load font '{}' from: {}", fontName, path);

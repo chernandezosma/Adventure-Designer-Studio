@@ -138,6 +138,23 @@ TEST_F(i18nTests, SetLocale_InvalidLocaleInfo_ThrowsLocaleException)
     EXPECT_THROW(translator.setLocale(invalid), locale_exception);
 }
 
+TEST_F(i18nTests, SetLocale_SupportedCodeWithoutTranslationFile_TranslatesViaFallbackNotRawKey)
+{
+    // fr_FR is in the language catalog but has no JSON file in this folder —
+    // the same shape as the IDE's 7-translated-locales vs 51-catalog-entries
+    // situation. Switching to it must degrade to the fallback language's
+    // string, and an unknown key must still round-trip to itself (never a
+    // partially-translated, key-leaking UI).
+    i18n translator(baseFolder, kFallback);
+    translator.addTranslation("menu.file.new", "Nuevo", kFallback);
+
+    translator.setLocale("fr_FR");
+
+    EXPECT_EQ(translator.getCurrentLocale().locale, "fr_FR");
+    EXPECT_EQ(translator._t("menu.file.new"), "Nuevo");
+    EXPECT_EQ(translator._t("totally.absent.key"), "totally.absent.key");
+}
+
 // =============================================================================
 // hasLanguage / addLanguage
 // =============================================================================

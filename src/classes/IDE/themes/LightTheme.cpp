@@ -15,6 +15,7 @@
  */
 
 #include "LightTheme.h"
+#include "IDE/DesignTokens.h"
 
 namespace ADS::IDE {
     /**
@@ -28,17 +29,14 @@ namespace ADS::IDE {
      * menu dropdown backgrounds and other UI elements.
      */
     void LightTheme::apply() {
-        // Apply ImGui's default light theme
+        // ImGui's light scheme as the base (fills colours applyStyle() does
+        // not touch — DragDropTarget, tables, plots, ModalWindowDimBg …),
+        // then swap the ADS tokens to their light values and run the same
+        // structural mapping DarkTheme uses. The only difference between the
+        // two themes is the token palette.
         ImGui::StyleColorsLight();
-
-        // Get style reference for customization
-        ImGuiStyle& style = ImGui::GetStyle();
-
-        // Customize menu dropdown background
-        style.Colors[ImGuiCol_PopupBg] = ImVec4(0.95f, 0.95f, 0.95f, 1.0f);
-
-        // Additional customizations can be added here
-        // Example: style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.90f, 0.90f, 0.90f, 1.0f);
+        ADS::IDE::Colors::useLightPalette();
+        ADS::IDE::Colors::applyStyle(ImGui::GetStyle());
     }
 
     /**

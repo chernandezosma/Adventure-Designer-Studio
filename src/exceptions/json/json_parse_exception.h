@@ -39,10 +39,10 @@ namespace ADS::Exceptions {
      */
     class json_parse_exception : public json::exception {
     private:
-        std::string m_file_path;
-        std::string m_key_path;
-        std::string m_full_message;
-        int m_error_id;
+        std::string m_file_path;    ///< Path to the JSON file being parsed
+        std::string m_key_path;     ///< Dot-separated key path within the JSON where the error occurred
+        std::string m_full_message; ///< Fully formatted message returned by what()
+        int m_error_id;             ///< Numeric error identifier from the underlying nlohmann::json exception
 
     public:
         /**

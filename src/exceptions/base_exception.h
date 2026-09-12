@@ -52,6 +52,12 @@ namespace ADS::Exceptions {
          */
         int line;
 
+        /**
+         * The message on its own, without the "[file:line] - " prefix that
+         * what() adds. For user-facing surfaces (see detail()).
+         */
+        string detailMsg;
+
     public:
         /**
          * @brief Construct exception with message and location information
@@ -70,7 +76,7 @@ namespace ADS::Exceptions {
                                string file = __FILE__,
                                const int line = __LINE__)
             : runtime_error(std::format("[{}:{}] - {}", std::string_view(file), std::to_string(line), std::string_view(msg))),
-              file(std::move(file)), line(line) {}
+              file(std::move(file)), line(line), detailMsg(msg) {}
 
         /**
          * @brief Get the exception message
@@ -88,6 +94,22 @@ namespace ADS::Exceptions {
         [[nodiscard]] const char* what() const noexcept override
         {
             return runtime_error::what();
+        }
+
+        /**
+         * @brief The message without the "[file:line] - " diagnostic prefix
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Aug 2026
+         *
+         * Use this when the reason is shown to the user (a dialog, a status
+         * line); use what() for logs, where the source location helps.
+         *
+         * @return const std::string& The bare message
+         */
+        [[nodiscard]] const string& detail() const noexcept
+        {
+            return detailMsg;
         }
     };
 } // ADS::Exceptions

@@ -42,7 +42,8 @@ This is the first approach for the item's schema:
         "abbreviatures": "<uint16_t>"
       },
       "image": "<String> | Filename or string encoded",
-      "affordances": "<uint16_t>",
+      "affordance": "<affordance[]>",
+      "is_container": "<bool>",
       "state": "<uint8_t>",
       "weight": "<uint8_t>",
       "slots": "<uint8_t>",
@@ -52,7 +53,8 @@ This is the first approach for the item's schema:
         "heal": "<effect>"
       },
       "container": "<uint16_t>",
-      "combinable_with": "<uint16_t>"
+      "combinable_with": "<uint16_t>",
+      "triggers": "<Triggers> — see common-structures.md#global-triggers"
     }
   ]
 }
@@ -79,9 +81,16 @@ doc [Texts definition](common-structures.md#decriptions-definition)
 <font color="#C27AFF">image</font>: It will be a filename or image encoding. It
 is a String.
 
-<font color="#C27AFF">affordables</font>: This is a <uint32_t> with the bitmap
-defined at
-[Affordances](#Affordances-definitions) section.
+<font color="#C27AFF">affordance</font>: An array of `<affordance>` entries — see
+[Affordances definitions](#Affordances-definitions) below. Each entry names
+what the player can do with the item (e.g. "Takeable") and the trigger names
+it fires (e.g. `on_pickup`, `on_drop`). The author defines and is
+responsible for resolving these trigger names; the schema only stores the
+pairing.
+
+<font color="#C27AFF">is_container</font>: A `<bool>` marking whether the
+item is a container. Independent of `affordance` — not itself an
+affordance entry. Only meaningful together with `container` below.
 
 <font color="#C27AFF">state</font>: it is an `<uint8_t>` holding the `id` of the
 item's single currently-active state entry, `0` = `None`. The detailed
@@ -119,52 +128,50 @@ objects' IDs that are inside the current object. NULL if it is empty.
 with a list of elements which can be combinable with this. Each entry is the
 elements. Is not possible to get elements from different entry.
 
+<font color="#C27AFF">triggers</font>: Map from an item-applicable global
+trigger id to an array of `EventId`s referencing entries in
+[Event Schema](event.md#schema). See
+[Global triggers](common-structures.md#global-triggers) for the ids
+applicable to items (`on_examine`, `on_item_taken`, `on_item_dropped`,
+`on_item_used`) — an independent map from Scene's own `triggers`, even
+though both may listen for the same global id.
+
 ## Affordances definitions
 
-The affordances bitmap would be:
+An `affordance` entry pairs an author-chosen name with the trigger names it
+fires:
 
-```
-    F E D C B A 9 8 7 6 5 4 3 2 1 0
-    ---------------------------------
-    | | | | | | | | | | | | | | | |
-    | | | | | | | | | | | | | | | ---> Takeable
-    | | | | | | | | | | | | | | -----> Droppable
-    | | | | | | | | | | | | | -------> Wearable
-    | | | | | | | | | | | | ---------> Consumable
-    | | | | | | | | | | | -----------> Openable
-    | | | | | | | | | | -------------> Lockable
-    | | | | | | | | | ---------------> Breakable
-    | | | | | | | | -----------------> Movable
-    | | | | | | | -------------------> Readable
-    | | | | | | ---------------------> Lightable
-    | | | | | -----------------------> Throwable
-    | | | | -------------------------> Giveable
-    | | | ---------------------------> Combinable
-    | | -----------------------------> Fillable
-    | -------------------------------> Burnable
-    ---------------------------------> Cuttable
-
-    1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 	
-    F E D C B A 9 8 7 6 5 4 3 2 1 0
-    --------------------------------
-    | | | | | | | | | | | | | | | |
-    | | | | | | | | | | | | | | | |-> Writable
-    | | | | | | | | | | | | | | ----> Listenable
-    | | | | | | | | | | | | | ------> Smellable
-    | | | | | | | | | | | | --------> Examinable
-    | | | | | | | | | | | ----------> Showable
-    | | | | | | | | | | ------------> Hideable
-    | | | | | | | | | --------------> single use
-    | | | | | | | | ----------------> is a container - Indicate that it could be a container
-    | | | | | | | ------------------> Magic - It is a magic item.
-    | | | | | | --------------------> (Reserved)
-    | | | | | ----------------------> (Reserved)
-    | | | | ------------------------> (Reserved)
-    | | | --------------------------> (User defined 1)
-    | | ----------------------------> (User defined 2)
-    | ------------------------------> (User defined 3)
+```json
+{
+  "affordance": [
+    {
+      "name": "<string:128>",
+      "trigger": [
+        "on_<name>",
+        "on_<name>"
+      ]
+    }
+  ]
+}
 ```
 
+`name` is free text — not a fixed enum — but the following names are
+offered as a starting preset in the inspector, carried over from the
+former fixed bitmap: Takeable, Droppable, Wearable, Consumable, Openable,
+Lockable, Breakable, Movable, Readable, Lightable, Throwable, Giveable,
+Combinable, Fillable, Burnable, Cuttable, Writable, Listenable, Smellable,
+Examinable, Showable, Hideable, Single use, Magic. An author may add,
+rename, or remove entries freely, and each entry may list any number of
+trigger names (e.g. `Takeable` firing both `on_pickup` and `on_drop`). The
+author is responsible for defining the trigger names and for the logic
+that later resolves them — this schema only stores the pairing. "Is a
+container" is not an affordance entry; it is the separate `is_container`
+boolean field (see above).
+
+### Global triggers
+
+See the [Global Triggers](common-structures.md#global-triggers) There are defined
+all triggers and its corresponding to each entity.
 ### Considerations
 
 To decode the `critical_chance` and `critical_multiplier`, we will use the

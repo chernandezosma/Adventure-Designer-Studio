@@ -25,6 +25,12 @@
 namespace ADS::MyImGui {
     using namespace std;
 
+    /**
+     * @brief Static helper functions for working with ImGui types
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     */
     class Tools {
 
     public:

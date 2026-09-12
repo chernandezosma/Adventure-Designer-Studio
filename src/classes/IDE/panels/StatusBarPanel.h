@@ -34,16 +34,6 @@ namespace ADS::IDE::Panels {
     class StatusBarPanel : public BasePanel {
     public:
         /**
-         * @brief Construct a new StatusBarPanel object
-         *
-         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Jan 2026
-         *
-         * Initializes the status bar panel with name "Status Bar" and
-         * sets initial height to 0.0f. The actual height is calculated
-         * dynamically during rendering.
-         */
-        /**
          * @brief Construct a new StatusBarPanel.
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
@@ -126,7 +116,12 @@ namespace ADS::IDE::Panels {
         void setCounts(int scenes, int npcs, int warnings, int errors);
 
     private:
-        std::string m_projectName  = "Sin proyecto";
+        /// "ADS <m_version>" shown on the left. Read once from the .env key
+        /// ADS_VERSION at construction, falling back to a built-in default.
+        std::string m_version;
+        /// Empty until setProjectName() is called; render() shows the
+        /// translated PROJECT.NO_PROJECT placeholder while it is empty.
+        std::string m_projectName;
         std::string m_activeFile;
         int         m_line         = 1;
         int         m_col          = 1;

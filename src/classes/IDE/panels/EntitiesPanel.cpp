@@ -36,7 +36,7 @@ namespace ADS::IDE::Panels {
      */
     EntitiesPanel::EntitiesPanel()
         : BasePanel("hEntities") {
-        m_windowTitle = this->getTranslationsManager()->_t("ENTITIES");
+        m_titleKey = "ENTITIES";
     }
 
     /**
@@ -189,7 +189,7 @@ namespace ADS::IDE::Panels {
             return;
         }
 
-        ImGui::Begin(getImGuiLabel().c_str());
+        beginWindow();
 
         ImGui::Text("%s", this->getTranslationsManager()->_t("ENTITIES_LIST").c_str());
         ImGui::Separator();
@@ -203,6 +203,6 @@ namespace ADS::IDE::Panels {
             handleAddEntity();
         }
 
-        ImGui::End();
+        endWindow();
     }
 }

@@ -42,6 +42,10 @@ namespace ADS::Inspector {
 
         // String constraints
         std::optional<size_t> maxLength;    ///< Maximum string length
+        bool multiline = false;             ///< String value is long-form prose — StringEditor shows an expand-to-dialog "…" button
+        bool isFilePath = false;            ///< String value is a file path — StringEditor shows a "Browse…" button
+        std::vector<std::string> fileExtensions; ///< Allowed extensions for the Browse dialog, no dots (e.g. "png")
+        bool translatable = false;          ///< String value is per-language — StringEditor shows a read-only preview + language-picker dialog (see Inspector::LocalizedText)
 
         // Enum constraints
         std::vector<std::string> enumValues; ///< Available enum options
@@ -71,9 +75,11 @@ namespace ADS::Inspector {
          * @version Jan 2026
          *
          * @param maxLen Maximum string length
+         * @param multiline True to show StringEditor's expand-to-dialog
+         *                  "…" button for long-form prose (default: false)
          * @return PropertyConstraints Configured constraints
          */
-        static PropertyConstraints string(size_t maxLen);
+        static PropertyConstraints string(size_t maxLen, bool multiline = false);
 
         /**
          * @brief Create constraints for enum types
@@ -85,6 +91,38 @@ namespace ADS::Inspector {
          * @return PropertyConstraints Configured constraints
          */
         static PropertyConstraints enumeration(std::vector<std::string> values);
+
+        /**
+         * @brief Create constraints for a file-path string type
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * StringEditor renders a "Browse…" button for fields with these
+         * constraints, opening a native file-open dialog filtered to
+         * @p extensions (deferred past the current ImGui frame — see
+         * InspectorPanel::processPendingFileDialog()).
+         *
+         * @param extensions Allowed file extensions, no dots (e.g. "png")
+         * @return PropertyConstraints Configured constraints
+         */
+        static PropertyConstraints filePath(std::vector<std::string> extensions);
+
+        /**
+         * @brief Create constraints for a translatable multiline string type
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version May 2026
+         *
+         * Every translatable field so far is also long-form prose, so this
+         * sets both flags together rather than requiring callers to build
+         * a PropertyConstraints by hand for the common case. See
+         * PropertyConstraints::translatable / Inspector::LocalizedText.
+         *
+         * @param maxLen Maximum string length, per language
+         * @return PropertyConstraints Configured constraints
+         */
+        static PropertyConstraints translatableText(size_t maxLen);
 
         /**
          * @brief Check if numeric constraints are defined

@@ -20,6 +20,8 @@
 #include "Entities/BaseEntity.h"
 
 using namespace ADS;
+using ADS::Types::SceneId;
+using ADS::Types::SceneTag;
 
 namespace {
     // BaseEntity itself is abstract (IInspectable's getTypeName/
@@ -28,7 +30,7 @@ namespace {
     // concrete BaseEntity machinery (id/name/event dispatch) in isolation.
     class TestableEntity : public Entities::BaseEntity {
     public:
-        explicit TestableEntity(Data::BaseData* data) : BaseEntity(data) {}
+        explicit TestableEntity(Data::IIdentifiable* data) : BaseEntity(data) {}
 
         // LCOV_EXCL_START — unused IInspectable stubs, only needed to make the class concrete
         std::string getTypeName() const override { return "Testable"; }
@@ -41,19 +43,19 @@ namespace {
 
 TEST(BaseEntity, Construction_ReadsIdAndNameFromDataObject)
 {
-    Data::BaseData data;
-    data.setId("entity-01");
+    Data::BaseData<SceneTag> data;
+    data.setId(SceneId(1));
     data.setName("Some Entity");
 
     TestableEntity entity(&data);
 
-    EXPECT_EQ(entity.getId(), "entity-01");
+    EXPECT_EQ(entity.getId(), "1");
     EXPECT_EQ(entity.getDisplayName(), "Some Entity");
 }
 
 TEST(BaseEntity, GetEventDispatcher_ReturnsUsableDispatcher)
 {
-    Data::BaseData data;
+    Data::BaseData<SceneTag> data;
     TestableEntity entity(&data);
 
     EXPECT_EQ(entity.getEventDispatcher().getSubscriberCount(), 0u);
@@ -61,7 +63,7 @@ TEST(BaseEntity, GetEventDispatcher_ReturnsUsableDispatcher)
 
 TEST(BaseEntity, SetName_ChangedValue_UpdatesDataAndFiresEvent)
 {
-    Data::BaseData data;
+    Data::BaseData<SceneTag> data;
     data.setName("Old Name");
     TestableEntity entity(&data);
 
@@ -82,7 +84,7 @@ TEST(BaseEntity, SetName_ChangedValue_UpdatesDataAndFiresEvent)
 
 TEST(BaseEntity, SetName_SameValue_DoesNotFireEvent)
 {
-    Data::BaseData data;
+    Data::BaseData<SceneTag> data;
     data.setName("Same Name");
     TestableEntity entity(&data);
 

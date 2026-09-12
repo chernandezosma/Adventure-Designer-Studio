@@ -30,6 +30,8 @@
 #include "Editors/EnumEditor.h"
 #include "Editors/ColorEditor.h"
 #include "Editors/Vector2Editor.h"
+#include "Editors/SelectEditor.h"
+#include "Editors/AffordanceListEditor.h"
 
 namespace ADS::Inspector {
     /**
@@ -138,7 +140,7 @@ namespace ADS::Inspector {
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Jan 2026
      *
-     * Registers editors for: String, Int, Float, Bool, Enum, Color, Vector2
+     * Registers editors for: String, Int, Float, Bool, Enum, Color, Vector2, Select, AffordanceList
      */
     void PropertyEditorRegistry::registerDefaultEditors() {
         registerEditor(PropertyType::String, std::make_unique<Editors::StringEditor>());
@@ -148,6 +150,8 @@ namespace ADS::Inspector {
         registerEditor(PropertyType::Enum, std::make_unique<Editors::EnumEditor>());
         registerEditor(PropertyType::Color, std::make_unique<Editors::ColorEditor>());
         registerEditor(PropertyType::Vector2, std::make_unique<Editors::Vector2Editor>());
+        registerEditor(PropertyType::Select, std::make_unique<Editors::SelectEditor>());
+        registerEditor(PropertyType::AffordanceList, std::make_unique<Editors::AffordanceListEditor>());
     }
 
     /**
