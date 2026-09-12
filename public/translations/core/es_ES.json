@@ -379,6 +379,7 @@
     "ERR_FOLDER_EXISTS": "Ya existe una carpeta de proyecto con ese nombre.",
     "LOCATION_BROWSE_TIP": "Elegir dónde guardar el archivo del proyecto…",
     "ERR_LOCATION_INVALID": "La ubicación debe incluir un nombre de archivo terminado en .ads.",
+    "ERR_LOCATION_TOO_LONG": "La ruta del proyecto es demasiado larga para este sistema.",
     "ERR_CREATE_FAILED": "No se pudo crear el archivo del proyecto:"
   },
   "TRANSLATIONS": {

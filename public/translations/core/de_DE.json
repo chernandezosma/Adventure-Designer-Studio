@@ -379,6 +379,7 @@
     "ERR_FOLDER_EXISTS": "Ein Projektordner mit diesem Namen existiert bereits.",
     "LOCATION_BROWSE_TIP": "Speicherort der Projektdatei wählen…",
     "ERR_LOCATION_INVALID": "Der Speicherort muss einen Dateinamen mit der Endung .ads enthalten.",
+    "ERR_LOCATION_TOO_LONG": "Der Projektpfad ist für dieses System zu lang.",
     "ERR_CREATE_FAILED": "Projektdatei konnte nicht erstellt werden:"
   },
   "TRANSLATIONS": {

@@ -70,6 +70,11 @@ elseif (MSVC)
     # the OS ANSI codepage — keeps narrow-string encoding unambiguous alongside
     # PathService's UTF-8 path handling.
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+    # Path-length support: this manifest opts the app into Windows' long-path
+    # mode (see resources/windows/app.manifest and
+    # Core::PathService::maxPathLength()). It's a no-op unless the
+    # machine-wide LongPathsEnabled registry policy is also set.
+    set(ADS_WINDOWS_MANIFEST "${CMAKE_SOURCE_DIR}/resources/windows/app.manifest")
 endif ()
 
 # ----------------------------------------------------------
@@ -311,6 +316,10 @@ set(Sources
 add_executable(${ADSProject} ${Sources} ${Headers})
 add_dependencies(${ADSProject} copy_public_folder copy_env_file)
 
+if (MSVC AND EXISTS "${ADS_WINDOWS_MANIFEST}")
+    target_sources(${ADSProject} PRIVATE "${ADS_WINDOWS_MANIFEST}")
+endif ()
+
 target_link_libraries(${ADSProject} PRIVATE
         nlohmann_json::nlohmann_json
         imgui::imgui
@@ -321,6 +330,7 @@ target_link_libraries(${ADSProject} PRIVATE
         Boost::uuid
         Boost::headers
         nfd::nfd
+        $<$<PLATFORM_ID:Windows>:Advapi32>
 )
 
 # ----------------------------------------------------------
