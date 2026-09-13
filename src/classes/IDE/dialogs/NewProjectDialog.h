@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "../IDEBase.h"
+#include "Core/PathService.h"
 #include "UI/AsyncFileDialog.h"
 #include "languages.h"
 
@@ -186,7 +187,13 @@ namespace ADS::IDE {
         char m_authorNameBuf[128]{};
         char m_authorEmailBuf[256]{};
         char m_versionBuf[16]{};
-        char m_locationBuf[1024]{}; ///< editable project-file path (paste/type/browse)
+        char m_locationBuf[Core::PathService::kPathBufferCapacity]{}; ///< editable
+            ///< project-file path (paste/type/browse). Sized to this platform's
+            ///< worst-case path ceiling (Core::PathService::kPathBufferCapacity)
+            ///< so a legitimately valid path is never silently truncated before
+            ///< Core::PathService::isPathLengthValid() gets to check it in
+            ///< render() — buffer capacity and the enforced OS limit are two
+            ///< different things, but must not fall out of sync.
 
         int m_defaultLangIdx = 0;                    ///< index into languageCatalog
         std::array<bool, kCatalogSize> m_supported{}; ///< checkbox state per catalog entry

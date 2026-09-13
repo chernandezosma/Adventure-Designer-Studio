@@ -142,3 +142,57 @@ TEST(PathService, ProjectFolderExists_FalseForMissing_TrueForNonEmpty)
 
     fs::remove_all(base);
 }
+
+TEST(PathService, MaxPathLength_ReturnsPositiveValue)
+{
+    // Cross-platform sanity check: whatever this OS/config resolves to,
+    // it must be a plausible, non-zero path budget.
+    EXPECT_GT(PathService::maxPathLength(), 0u);
+}
+
+TEST(PathService, MaxPathLength_IsStableAcrossCalls)
+{
+    // Result is cached (function-local static) — repeated calls must agree.
+    EXPECT_EQ(PathService::maxPathLength(), PathService::maxPathLength());
+}
+
+TEST(PathService, IsPathLengthValid_ShortPathIsValid)
+{
+    EXPECT_TRUE(PathService::isPathLengthValid(
+        PathService::pathFromUtf8("short/relative/path.ads")));
+}
+
+TEST(PathService, IsPathLengthValid_OverLongPathIsRejected)
+{
+    // Build a path guaranteed to exceed maxPathLength() regardless of
+    // platform (a component count well beyond even the Windows
+    // long-path ceiling).
+    std::string longPath = "root";
+    while (longPath.size() <= PathService::maxPathLength()) {
+        longPath += "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    }
+    EXPECT_FALSE(PathService::isPathLengthValid(PathService::pathFromUtf8(longPath)));
+}
+
+TEST(PathService, IsPathLengthValid_EmptyPathIsValid)
+{
+    EXPECT_TRUE(PathService::isPathLengthValid(fs::path{}));
+}
+
+#ifdef _WIN32
+TEST(PathService, MaxPathLength_WindowsIsClassicOrLongPathValue)
+{
+    // Whatever the registry says on this machine, the resolved value must
+    // be exactly one of the two known Windows ceilings — never an
+    // arbitrary third number, guarding against a typo in the constants.
+    const std::size_t value = PathService::maxPathLength();
+    EXPECT_TRUE(value == 260 || value == 32767);
+}
+#else
+TEST(PathService, MaxPathLength_PosixIsAtLeastPathMaxFallback)
+{
+    // On Linux, pathconf() may exceed 4096 for some mounts; on macOS it is
+    // fixed at 1024. Either way it must be >= the smallest known POSIX floor.
+    EXPECT_GE(PathService::maxPathLength(), 1024u);
+}
+#endif

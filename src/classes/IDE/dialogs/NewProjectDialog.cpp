@@ -345,6 +345,8 @@ namespace ADS::IDE {
                 m_error = tm->_t("NEW_PROJECT.ERR_NAME_REQUIRED");
             } else if (!spec.projectPath.has_filename()) {
                 m_error = tm->_t("NEW_PROJECT.ERR_LOCATION_INVALID");
+            } else if (!Core::PathService::isPathLengthValid(spec.projectPath)) {
+                m_error = tm->_t("NEW_PROJECT.ERR_LOCATION_TOO_LONG");
             } else if (!m_locationOverridden &&
                        std::filesystem::exists(spec.projectPath)) {
                 // Guard the auto path against clobbering an existing project.

@@ -379,6 +379,7 @@
     "ERR_FOLDER_EXISTS": "A project folder with that name already exists.",
     "LOCATION_BROWSE_TIP": "Choose where to save the project file…",
     "ERR_LOCATION_INVALID": "The location must include a file name ending in .ads.",
+    "ERR_LOCATION_TOO_LONG": "The project path is too long for this system.",
     "ERR_CREATE_FAILED": "Could not create the project file:"
   },
   "TRANSLATIONS": {

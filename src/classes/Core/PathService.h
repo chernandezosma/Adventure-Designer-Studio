@@ -170,6 +170,75 @@ namespace ADS::Core {
          * @return bool True if @p projectDir exists and contains at least one entry
          */
         static bool projectFolderExists(const std::filesystem::path& projectDir);
+
+        /**
+         * @brief Longest project path this platform will reliably accept.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Computed once per process and cached:
+         *  - Windows: reads the machine-wide `LongPathsEnabled` registry DWORD
+         *    (`HKLM\SYSTEM\CurrentControlSet\Control\FileSystem`). If it is `1`,
+         *    returns 32767 (the approximate long-path UTF-16 limit); otherwise,
+         *    or if the value is missing/unreadable, returns 260 (classic
+         *    `MAX_PATH`, which also always applies to relative paths regardless
+         *    of the long-path opt-in).
+         *  - Linux: `pathconf(<probe dir>, _PC_PATH_MAX)` on a real, existing
+         *    directory (the resolved home directory, falling back to the
+         *    current working directory); falls back to `PATH_MAX` (4096, from
+         *    `<climits>`) if pathconf fails (returns -1) or the probe
+         *    directory cannot be determined.
+         *  - macOS: `PATH_MAX` (1024, from `<sys/syslimits.h>`) directly — a
+         *    fixed kernel constant, so no filesystem probe is needed.
+         *
+         * @return std::size_t Maximum path length, in characters, for this OS/config
+         */
+        static std::size_t maxPathLength();
+
+        /**
+         * @brief Test whether a candidate path fits within maxPathLength().
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * Measures the path's native string length: `path.wstring().size()` on
+         * Windows (UTF-16 code units, matching how MAX_PATH/long-path limits
+         * are actually counted), `path.native().size()` elsewhere (bytes,
+         * matching PATH_MAX). Does not touch the filesystem. An empty path is
+         * always valid.
+         *
+         * @param path The candidate path to check
+         * @return bool True if @p path's length is <= maxPathLength()
+         */
+        static bool isPathLengthValid(const std::filesystem::path& path);
+
+        /**
+         * @brief Compile-time buffer capacity for a fixed C path-input buffer.
+         *
+         * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+         * @version Sep 2026
+         *
+         * `maxPathLength()` is a runtime value (Windows depends on the live
+         * `LongPathsEnabled` registry state; Linux depends on `pathconf()`
+         * for the actual mount), so it cannot size a `char[N]` array, which
+         * needs a compile-time bound. This constant is that bound: each
+         * platform's worst-case ceiling (32768 on Windows to cover the
+         * long-path opt-in, 4096 on Linux, 1024 on macOS), so a fixed input
+         * buffer sized with this never truncates a path shorter than what
+         * `isPathLengthValid()` would still accept. A Linux mount whose real
+         * `pathconf()` result exceeds 4096 is the one case this can still
+         * truncate before validation — accepted as out of scope: it would
+         * require a dynamically-resizable buffer instead of a fixed array.
+         */
+        static constexpr std::size_t kPathBufferCapacity =
+#ifdef _WIN32
+            32768;
+#elif defined(__APPLE__)
+            1024;
+#else
+            4096;
+#endif
     };
 
 } // namespace ADS::Core
