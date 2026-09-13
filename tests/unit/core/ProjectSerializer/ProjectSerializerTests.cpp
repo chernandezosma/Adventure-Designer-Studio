@@ -339,8 +339,10 @@ TEST_F(ProjectSerializerTest, Load_OneEntityMissingRequiredField_SkipsItAndLoads
     ProjectSerializer::save(*makeRichProject(), path);
 
     std::string text = stripChecksumLine(readFile(path));
-    // Scene 2 loses its "name" field — Data::applyJson requires it — while
-    // scenes 1/3/4/5 and every other collection stay untouched.
+    // Scene 2 loses its "name" field — an entity's id/name is its identity,
+    // read by ProjectSerializer itself before any content field is touched,
+    // and still required — while scenes 1/3/4/5 and every other collection
+    // stay untouched.
     const auto pos = text.find(R"("name": "Scene 2")");
     ASSERT_NE(pos, std::string::npos);
     text.replace(pos, std::string(R"("name": "Scene 2")").size(), R"("name_typo": "Scene 2")");
@@ -355,6 +357,55 @@ TEST_F(ProjectSerializerTest, Load_OneEntityMissingRequiredField_SkipsItAndLoads
     EXPECT_EQ(result.project->getCharacters().size(), 2u);
     ASSERT_EQ(result.warnings.size(), 1u);
     EXPECT_EQ(result.warnings[0].entityKind, "Scene");
+}
+
+TEST_F(ProjectSerializerTest, Load_EntityMissingContentFields_LoadsWithDefaults)
+{
+    const fs::path path = dir / "oldschema.ads";
+    ProjectSerializer::save(*makeRichProject(), path);
+
+    std::string text = stripChecksumLine(readFile(path));
+    // Simulate a scene saved by an older schema: strip its "descriptions"
+    // and "image" fields entirely (id/name stay intact). This must load the
+    // scene with defaulted content, not skip it.
+    // nlohmann::json's default object type sorts keys alphabetically on
+    // dump, so top-level "characters" sorts before "scenes" — search must
+    // be scoped to the "scenes" array, not just the first match in the file.
+    const auto scenesPos = text.find(R"("scenes":)");
+    ASSERT_NE(scenesPos, std::string::npos);
+    auto eraseField = [&text, scenesPos](const std::string& fieldPrefix) {
+        const auto keyPos = text.find(fieldPrefix, scenesPos);
+        ASSERT_NE(keyPos, std::string::npos);
+        const auto valueStart = text.find(':', keyPos) + 1;
+        // Find the end of this field's value: next top-level comma at the
+        // same nesting depth, tracked with a simple brace/bracket counter.
+        std::size_t i = valueStart;
+        int depth = 0;
+        while (i < text.size()) {
+            const char ch = text[i];
+            if (ch == '{' || ch == '[') ++depth;
+            else if (ch == '}' || ch == ']') --depth;
+            else if (ch == ',' && depth == 0) break;
+            ++i;
+        }
+        text.erase(keyPos, i - keyPos + 1); // include the trailing comma
+    };
+    eraseField(R"("descriptions":)");
+    eraseField(R"("image":)");
+    { std::ofstream out(path, std::ios::trunc | std::ios::binary); out << text; }
+
+    LoadResult result;
+    EXPECT_NO_THROW(result = ProjectSerializer::load(path));
+    ASSERT_NE(result.project, nullptr);
+
+    // Every entity loads — nothing skipped just because a content field
+    // predates the current schema or was individually corrupted.
+    EXPECT_TRUE(result.warnings.empty());
+    EXPECT_EQ(result.project->getScenes().size(), 5u);
+
+    const ADS::Data::SceneData* s1 = result.project->getSceneData()[0].get();
+    EXPECT_TRUE(s1->getImage().empty());
+    EXPECT_EQ(s1->getDescriptions().normal, 0u);
 }
 
 TEST_F(ProjectSerializerTest, Load_DuplicateEntityId_SkipsSecondAndLoadsRest)
