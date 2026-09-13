@@ -27,10 +27,60 @@
 
 #include <filesystem>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include "Project.h"
 
 namespace ADS::Core {
+
+    /**
+     * @brief One entity that had a problem while loading.
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     *
+     * Produced by ProjectSerializer::load() in two distinct cases, told apart
+     * by @c skipped:
+     *  - @c skipped == true:  the entity's id/name was missing or a duplicate,
+     *    so it could not be constructed at all and is entirely absent from
+     *    the rebuilt Project.
+     *  - @c skipped == false: the entity loaded and IS in the rebuilt Project,
+     *    but one or more content fields were missing/malformed and fell back
+     *    to a default — @c reason lists which.
+     */
+    struct LoadWarning {
+        /// Human-readable entity kind, e.g. "Scene", "Character", "Item", "State", "Chain".
+        std::string entityKind;
+
+        /// Best-effort id/name pulled from the entity's JSON, for display.
+        std::string identifier;
+
+        /// What happened: the exception message (skipped) or a list of defaulted fields (loaded).
+        std::string reason;
+
+        /// True if the entity could not be constructed at all and is absent from the project.
+        bool skipped = false;
+    };
+
+    /**
+     * @brief Result of a (possibly partial) ProjectSerializer::load().
+     *
+     * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
+     * @version Sep 2026
+     *
+     * `project` contains every entity that could be constructed — including
+     * ones with defaulted content fields. `warnings` lists every entity that
+     * had a problem, whether skipped entirely or loaded with defaults; it is
+     * empty on a fully clean load.
+     */
+    struct LoadResult {
+        /// The rebuilt project, containing every entity that could be constructed.
+        std::unique_ptr<Project> project;
+
+        /// One entry per entity that was skipped, or loaded with defaulted fields.
+        std::vector<LoadWarning> warnings;
+    };
 
     /**
      * @brief Whole-project `.ads` save / load via nlohmann_json.
@@ -67,20 +117,27 @@ namespace ADS::Core {
          * @brief Rebuild a Project from the `.ads` file at @p path.
          *
          * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-         * @version Aug 2026
+         * @version Sep 2026
          *
          * The new Project is fully built locally and only returned on success —
          * a throw leaves any project the caller currently holds untouched.
          *
+         * A per-entity failure (missing/invalid field, duplicate id) does not
+         * abort the whole load: that single entity is skipped, recorded in
+         * LoadResult::warnings, and every other entity still loads normally.
+         * Whole-file failures still throw, since there is nothing left to
+         * salvage: unreadable/missing file, malformed top-level JSON, an
+         * unsupported schema version, or a checksum mismatch (the file was
+         * edited outside the editor, so no entity's data can be trusted).
+         *
          * @param path Source `.ads` file
-         * @return std::unique_ptr<Project> The rebuilt project
+         * @return LoadResult The rebuilt project plus any skipped-entity warnings
          *
          * @throws Exceptions::file_not_found_exception       if @p path does not exist
          * @throws Exceptions::project_serialization_exception on malformed JSON,
-         *         an unsupported schema version, a missing required key, or a
-         *         duplicate / dangling id
+         *         an unsupported schema version, or a checksum mismatch
          */
-        static std::unique_ptr<Project> load(const std::filesystem::path& path);
+        static LoadResult load(const std::filesystem::path& path);
     };
 
 } // namespace ADS::Core

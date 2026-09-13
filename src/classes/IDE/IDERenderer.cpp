@@ -40,6 +40,7 @@ namespace ADS::IDE {
         m_workingAreaPanel(nullptr),
         m_translationPanel(nullptr),
         m_newProjectDialog(nullptr),
+        m_loadWarningsDialog(nullptr),
         m_project(nullptr)
     {
         initializePanels();
@@ -53,6 +54,7 @@ namespace ADS::IDE {
         delete m_workingAreaPanel;
         delete m_translationPanel;
         delete m_newProjectDialog;
+        delete m_loadWarningsDialog;
         delete m_toolBarRenderer;
         delete m_menuBarRenderer;
         delete m_layoutManager;
@@ -88,6 +90,7 @@ namespace ADS::IDE {
         m_workingAreaPanel = new Panels::WorkingAreaPanel();
         m_translationPanel = new Panels::TranslationPanel();
         m_newProjectDialog = new NewProjectDialog();
+        m_loadWarningsDialog = new LoadWarningsDialog();
 
         // Start with no project — the IDE opens on a clear interface and the
         // user creates or opens one via File ▸ New / File ▸ Open.
@@ -190,11 +193,12 @@ namespace ADS::IDE {
         // Wire file I/O: receive paths selected by the native OS dialogs
         m_menuBarRenderer->setFileCallbacks(
             [this](const std::string& path) {
+                m_lastOpenError.clear();
                 try {
                     auto loaded = Core::ProjectSerializer::load(path);
                     m_inspectorPanel->clearSelection();
                     delete m_project;
-                    m_project = loaded.release();
+                    m_project = loaded.project.release();
                     m_project->setFilePath(path);
                     m_projectTreePanel->setProject(m_project);
                     m_projectTreePanel->rebuildFromProject();
@@ -207,7 +211,15 @@ namespace ADS::IDE {
                         static_cast<int>(m_project->getStates().size()));
                     m_hasUnsavedChanges = false;
                     spdlog::info("IDERenderer: opened project '{}' from {}", m_project->getName(), path);
+                    if (!loaded.warnings.empty()) {
+                        spdlog::warn("IDERenderer: opened '{}' with {} entity(ies) skipped",
+                                     path, loaded.warnings.size());
+                        m_loadWarningsDialog->open(loaded.warnings);
+                    }
                 } catch (const std::exception& e) {
+                    // Keep the current project untouched and tell the user —
+                    // an open must never fail silently.
+                    m_lastOpenError = e.what();
                     spdlog::error("IDERenderer: open failed ({}) — keeping current project", e.what());
                 }
             },
@@ -349,6 +361,7 @@ namespace ADS::IDE {
         // Must be called inside an ImGui window, outside any menu scope
         m_menuBarRenderer->renderDialogs();
         m_newProjectDialog->render();
+        m_loadWarningsDialog->render();
 
         // Render toolbar content inline (before DockSpace so it reserves space)
         m_toolBarRenderer->renderContent();
@@ -407,6 +420,17 @@ namespace ADS::IDE {
                     if (ImGui::IsItemHovered()) {
                         ImGui::SetTooltip("%s", m_lastSaveError.c_str());
                     }
+                }
+            }
+
+            // A failed open is loud too, independent of whether a project is
+            // currently loaded (the failed one never replaced it).
+            if (!m_lastOpenError.empty()) {
+                ImGui::SameLine(0, 8);
+                ImGui::SetCursorPosY(posY);
+                ImGui::TextColored(C_ERROR, "%s", ("· " + t->_t("PROJECT.OPEN_FAILED")).c_str());
+                if (ImGui::IsItemHovered()) {
+                    ImGui::SetTooltip("%s", m_lastOpenError.c_str());
                 }
             }
 
@@ -531,6 +555,7 @@ namespace ADS::IDE {
         delete m_project;
         m_project = project.release();
         m_lastSaveError.clear();
+        m_lastOpenError.clear();
         m_hasUnsavedChanges = false;
         spdlog::info("IDERenderer: new project '{}' created at {}",
                      m_project->getName(), spec.projectPath.string());
