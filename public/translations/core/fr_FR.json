@@ -345,7 +345,8 @@
     "UNSAVED": "non enregistré",
     "SAVED": "enregistré",
     "DEFAULT_NAME": "Nouveau projet",
-    "SAVE_FAILED": "échec de l'enregistrement"
+    "SAVE_FAILED": "échec de l'enregistrement",
+    "OPEN_FAILED": "échec de l'ouverture"
   },
   "STATUSBAR": {
     "LINE": "Ligne",
@@ -403,6 +404,12 @@
   "LANGUAGES_DIALOG": {
     "TITLE": "Langues du projet",
     "HINT": "Choisissez les langues dans lesquelles ce projet est traduit. La langue par défaut ne peut pas être retirée."
+  },
+  "LOAD_WARNINGS_DIALOG": {
+    "TITLE": "Certaines entités ont eu des problèmes au chargement",
+    "HINT": "Le projet s'est ouvert. Les entités ci-dessous n'ont pas pu être chargées, ou ont été chargées avec certains champs réinitialisés à leur valeur par défaut.",
+    "SKIPPED": "ignorée",
+    "DEFAULTED": "chargée, champs par défaut"
   },
   "INSPECTOR.NO_OPTIONS": "Aucune option disponible",
   "INSPECTOR.NO_STATES": "Aucun état défini",

@@ -45,14 +45,15 @@ namespace ADS::IDE {
     };
 
     /**
-     * @brief Open a modal popup with a real, accent-blue ImGui title bar.
+     * @brief Open a modal popup with a real ImGui title bar matching app chrome.
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
      * @version Aug 2026
      *
-     * Uses a genuine ImGui window title bar tinted with @c Colors::C_DIALOG_TITLE,
-     * so ImGui owns its full-width extent, the scrollbar position (below the bar)
-     * and content clipping while scrolling. Centres on first appear; unless
+     * Uses a genuine ImGui window title bar tinted with @c Colors::C_PANEL_TITLE
+     * (the same fill as the docked-panel caption bar), so ImGui owns its
+     * full-width extent, the scrollbar position (below the bar) and content
+     * clipping while scrolling. Centres on first appear; unless
      * @p style.autoResize the window gets a fixed initial size the user can
      * drag-resize but that never auto-grows with content.
      *

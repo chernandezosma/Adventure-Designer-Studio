@@ -84,8 +84,8 @@ namespace ADS::IDE {
         ImGui::SetNextWindowSize(ImVec2(620.0f, 460.0f), ImGuiCond_Appearing);
         ImGui::SetNextWindowSizeConstraints(ImVec2(420.0f, 300.0f), ImVec2(FLT_MAX, FLT_MAX));
 
-        ImGui::PushStyleColor(ImGuiCol_TitleBg,       Colors::C_DIALOG_TITLE);
-        ImGui::PushStyleColor(ImGuiCol_TitleBgActive, Colors::C_DIALOG_TITLE);
+        ImGui::PushStyleColor(ImGuiCol_TitleBg,       Colors::C_PANEL_TITLE);
+        ImGui::PushStyleColor(ImGuiCol_TitleBgActive, Colors::C_PANEL_TITLE);
         ImGui::PushStyleColor(ImGuiCol_Text,          Colors::C_CAPTION_TEXT);
         const bool popupOpen = ImGui::BeginPopupModal(popupLabel.c_str(), nullptr, 0);
         ImGui::PopStyleColor(3);

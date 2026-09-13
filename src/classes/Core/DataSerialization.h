@@ -288,6 +288,39 @@ namespace ADS::Data {
     // ----- per-entity DataObjects (getters/setters only) -------------------
     // id + name are emitted for readability but read back by ProjectSerializer;
     // applyJson() sets every OTHER field on an already-constructed object.
+    //
+    // Every field below is read permissively: missing or malformed content
+    // silently falls back to @p defaultValue instead of throwing. A `.ads`
+    // may predate a field, or have that one field corrupted, without making
+    // every other field — or the rest of the project — unrecoverable; only
+    // an entity's id/name (handled by ProjectSerializer, not here) still has
+    // to be well-formed for the entity to exist at all.
+
+    /// Read @p key from @p j via @p parse, recording a note in @p fieldWarnings
+    /// and returning @p defaultValue if the key is absent or @p parse throws.
+    template<class T, class ParseFn>
+    inline T parseOr(const nlohmann::json& j, const char* key, T defaultValue, ParseFn parse,
+                      std::vector<std::string>& fieldWarnings) {
+        if (!j.contains(key)) {
+            fieldWarnings.push_back(std::string(key) + " missing (defaulted)");
+            return defaultValue;
+        }
+        try {
+            return parse(j.at(key));
+        } catch (const std::exception& e) {
+            fieldWarnings.push_back(std::string(key) + " invalid (defaulted): " + e.what());
+            return defaultValue;
+        }
+    }
+
+    /// Read @p key from @p j as a plain `T`, recording a note in @p fieldWarnings
+    /// and returning @p defaultValue if the key is absent or malformed.
+    template<class T>
+    inline T parseOr(const nlohmann::json& j, const char* key, T defaultValue,
+                      std::vector<std::string>& fieldWarnings) {
+        return parseOr(j, key, std::move(defaultValue),
+                       [](const nlohmann::json& v) { return v.get<T>(); }, fieldWarnings);
+    }
 
     /// Serialize @p s, including id/name for readability (ProjectSerializer reads those back).
     inline nlohmann::json toJson(const SceneData& s) {
@@ -304,16 +337,20 @@ namespace ADS::Data {
             {"isStartScene", s.isStartScene()}};
     }
 
-    /// Apply every field but id/name onto an already-constructed @p s.
-    inline void applyJson(const nlohmann::json& j, SceneData& s) {
-        s.setDescriptions(j.at("descriptions").get<Descriptions>());
-        s.setImage(j.at("image").get<std::string>());
-        s.setState(optIdFromJson<ADS::Types::StateTag>(j.at("state")));
-        s.setExits(exitsFromJson(j.at("exits")));
-        s.setPresentItemIds(j.at("presentItemIds").get<std::vector<ADS::Types::ObjectId>>());
-        s.setTriggers(triggersFromJson(j.at("triggers")));
-        s.setAffordances(j.at("affordance").get<std::vector<Affordance>>());
-        s.setStartScene(j.at("isStartScene").get<bool>());
+    /// Apply every field but id/name onto an already-constructed @p s, noting
+    /// any missing/malformed field (now defaulted) in @p fieldWarnings.
+    inline void applyJson(const nlohmann::json& j, SceneData& s, std::vector<std::string>& fieldWarnings) {
+        s.setDescriptions(parseOr(j, "descriptions", Descriptions{}, fieldWarnings));
+        s.setImage(parseOr(j, "image", std::string{}, fieldWarnings));
+        s.setState(parseOr(j, "state", std::optional<ADS::Types::StateId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::StateTag>(v); }, fieldWarnings));
+        s.setExits(parseOr(j, "exits", SceneData::Exits{},
+            [](const nlohmann::json& v) { return exitsFromJson(v); }, fieldWarnings));
+        s.setPresentItemIds(parseOr(j, "presentItemIds", std::vector<ADS::Types::ObjectId>{}, fieldWarnings));
+        s.setTriggers(parseOr(j, "triggers", std::map<std::uint8_t, std::vector<ADS::Types::EventId>>{},
+            [](const nlohmann::json& v) { return triggersFromJson(v); }, fieldWarnings));
+        s.setAffordances(parseOr(j, "affordance", std::vector<Affordance>{}, fieldWarnings));
+        s.setStartScene(parseOr(j, "isStartScene", false, fieldWarnings));
     }
 
     /// Serialize @p c, including id/name for readability (ProjectSerializer reads those back).
@@ -333,18 +370,22 @@ namespace ADS::Data {
             {"triggers", triggersToJson(c.getTriggers())}};
     }
 
-    /// Apply every field but id/name onto an already-constructed @p c.
-    inline void applyJson(const nlohmann::json& j, CharacterData& c) {
-        c.setDescriptions(j.at("descriptions").get<Descriptions>());
-        c.setPlayer(j.at("isPlayer").get<bool>());
-        c.setCapacities(j.at("capacities").get<Capacities>());
-        c.setState(optIdFromJson<ADS::Types::StateTag>(j.at("state")));
-        c.setDialogColor(j.at("dialogColor").get<ADS::Types::Color>());
-        c.setImagePath(j.at("imagePath").get<std::string>());
-        c.setAvatarPath(j.at("avatarPath").get<std::string>());
-        c.setInitialSceneId(optIdFromJson<ADS::Types::SceneTag>(j.at("initialSceneId")));
-        c.setAffordances(j.at("affordance").get<std::vector<Affordance>>());
-        c.setTriggers(triggersFromJson(j.at("triggers")));
+    /// Apply every field but id/name onto an already-constructed @p c, noting
+    /// any missing/malformed field (now defaulted) in @p fieldWarnings.
+    inline void applyJson(const nlohmann::json& j, CharacterData& c, std::vector<std::string>& fieldWarnings) {
+        c.setDescriptions(parseOr(j, "descriptions", Descriptions{}, fieldWarnings));
+        c.setPlayer(parseOr(j, "isPlayer", false, fieldWarnings));
+        c.setCapacities(parseOr(j, "capacities", Capacities{}, fieldWarnings));
+        c.setState(parseOr(j, "state", std::optional<ADS::Types::StateId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::StateTag>(v); }, fieldWarnings));
+        c.setDialogColor(parseOr(j, "dialogColor", ADS::Types::Color{}, fieldWarnings));
+        c.setImagePath(parseOr(j, "imagePath", std::string{}, fieldWarnings));
+        c.setAvatarPath(parseOr(j, "avatarPath", std::string{}, fieldWarnings));
+        c.setInitialSceneId(parseOr(j, "initialSceneId", std::optional<ADS::Types::SceneId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::SceneTag>(v); }, fieldWarnings));
+        c.setAffordances(parseOr(j, "affordance", std::vector<Affordance>{}, fieldWarnings));
+        c.setTriggers(parseOr(j, "triggers", std::map<std::uint8_t, std::vector<ADS::Types::EventId>>{},
+            [](const nlohmann::json& v) { return triggersFromJson(v); }, fieldWarnings));
     }
 
     /// Serialize @p i, including id/name for readability (ProjectSerializer reads those back).
@@ -371,25 +412,29 @@ namespace ADS::Data {
             {"triggers", triggersToJson(i.getTriggers())}};
     }
 
-    /// Apply every field but id/name onto an already-constructed @p i.
-    inline void applyJson(const nlohmann::json& j, ItemData& i) {
-        i.setDescriptions(j.at("descriptions").get<Descriptions>());
-        i.setItemType(j.at("itemType").get<int>());
-        i.setAffordances(j.at("affordance").get<std::vector<Affordance>>());
-        i.setContainer(j.at("isContainer").get<bool>());
-        i.setState(optIdFromJson<ADS::Types::StateTag>(j.at("state")));
-        i.setWeight(j.at("weight").get<std::uint8_t>());
-        i.setSlots(j.at("slots").get<std::uint8_t>());
-        i.setServiceLife(j.at("serviceLife").get<std::uint8_t>());
-        i.setImagePath(j.at("imagePath").get<std::string>());
-        i.setContainerItemIds(j.at("containerItemIds").get<std::vector<ADS::Types::ObjectId>>());
-        i.setCombinableWithIds(j.at("combinableWithIds").get<std::vector<ADS::Types::ObjectId>>());
-        i.setSynonyms(j.at("synonyms").get<std::vector<std::string>>());
-        i.setAbbreviatures(j.at("abbreviatures").get<std::vector<std::string>>());
-        i.setDamageEffect(j.at("damage").get<Effect>());
-        i.setHealEffect(j.at("heal").get<Effect>());
-        i.setInitialSceneId(optIdFromJson<ADS::Types::SceneTag>(j.at("initialSceneId")));
-        i.setTriggers(triggersFromJson(j.at("triggers")));
+    /// Apply every field but id/name onto an already-constructed @p i, noting
+    /// any missing/malformed field (now defaulted) in @p fieldWarnings.
+    inline void applyJson(const nlohmann::json& j, ItemData& i, std::vector<std::string>& fieldWarnings) {
+        i.setDescriptions(parseOr(j, "descriptions", Descriptions{}, fieldWarnings));
+        i.setItemType(parseOr(j, "itemType", 0, fieldWarnings));
+        i.setAffordances(parseOr(j, "affordance", std::vector<Affordance>{}, fieldWarnings));
+        i.setContainer(parseOr(j, "isContainer", false, fieldWarnings));
+        i.setState(parseOr(j, "state", std::optional<ADS::Types::StateId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::StateTag>(v); }, fieldWarnings));
+        i.setWeight(parseOr(j, "weight", static_cast<std::uint8_t>(0), fieldWarnings));
+        i.setSlots(parseOr(j, "slots", static_cast<std::uint8_t>(0), fieldWarnings));
+        i.setServiceLife(parseOr(j, "serviceLife", static_cast<std::uint8_t>(0), fieldWarnings));
+        i.setImagePath(parseOr(j, "imagePath", std::string{}, fieldWarnings));
+        i.setContainerItemIds(parseOr(j, "containerItemIds", std::vector<ADS::Types::ObjectId>{}, fieldWarnings));
+        i.setCombinableWithIds(parseOr(j, "combinableWithIds", std::vector<ADS::Types::ObjectId>{}, fieldWarnings));
+        i.setSynonyms(parseOr(j, "synonyms", std::vector<std::string>{}, fieldWarnings));
+        i.setAbbreviatures(parseOr(j, "abbreviatures", std::vector<std::string>{}, fieldWarnings));
+        i.setDamageEffect(parseOr(j, "damage", Effect{}, fieldWarnings));
+        i.setHealEffect(parseOr(j, "heal", Effect{}, fieldWarnings));
+        i.setInitialSceneId(parseOr(j, "initialSceneId", std::optional<ADS::Types::SceneId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::SceneTag>(v); }, fieldWarnings));
+        i.setTriggers(parseOr(j, "triggers", std::map<std::uint8_t, std::vector<ADS::Types::EventId>>{},
+            [](const nlohmann::json& v) { return triggersFromJson(v); }, fieldWarnings));
     }
 
     /// Serialize @p s, including id/name for readability (ProjectSerializer reads those back).
@@ -401,10 +446,12 @@ namespace ADS::Data {
             {"next", optIdToJson(s.getNext())}};
     }
 
-    /// Apply every field but id/name onto an already-constructed @p s.
-    inline void applyJson(const nlohmann::json& j, StateData& s) {
-        s.setDescriptions(j.at("descriptions").get<Descriptions>());
-        s.setNext(optIdFromJson<ADS::Types::StateTag>(j.at("next")));
+    /// Apply every field but id/name onto an already-constructed @p s, noting
+    /// any missing/malformed field (now defaulted) in @p fieldWarnings.
+    inline void applyJson(const nlohmann::json& j, StateData& s, std::vector<std::string>& fieldWarnings) {
+        s.setDescriptions(parseOr(j, "descriptions", Descriptions{}, fieldWarnings));
+        s.setNext(parseOr(j, "next", std::optional<ADS::Types::StateId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::StateTag>(v); }, fieldWarnings));
     }
 
     /// Serialize @p c, including id/name for readability (ProjectSerializer reads those back).
@@ -415,9 +462,11 @@ namespace ADS::Data {
             {"head", optIdToJson(c.getHead())}};
     }
 
-    /// Apply every field but id/name onto an already-constructed @p c.
-    inline void applyJson(const nlohmann::json& j, StateChainData& c) {
-        c.setHead(optIdFromJson<ADS::Types::StateTag>(j.at("head")));
+    /// Apply every field but id/name onto an already-constructed @p c, noting
+    /// any missing/malformed field (now defaulted) in @p fieldWarnings.
+    inline void applyJson(const nlohmann::json& j, StateChainData& c, std::vector<std::string>& fieldWarnings) {
+        c.setHead(parseOr(j, "head", std::optional<ADS::Types::StateId>{},
+            [](const nlohmann::json& v) { return optIdFromJson<ADS::Types::StateTag>(v); }, fieldWarnings));
     }
 
 } // namespace ADS::Data
