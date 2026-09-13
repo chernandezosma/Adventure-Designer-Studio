@@ -345,7 +345,8 @@
     "UNSAVED": "nicht gespeichert",
     "SAVED": "gespeichert",
     "DEFAULT_NAME": "Neues Projekt",
-    "SAVE_FAILED": "Speichern fehlgeschlagen"
+    "SAVE_FAILED": "Speichern fehlgeschlagen",
+    "OPEN_FAILED": "Öffnen fehlgeschlagen"
   },
   "STATUSBAR": {
     "LINE": "Zeile",
@@ -403,6 +404,10 @@
   "LANGUAGES_DIALOG": {
     "TITLE": "Projektsprachen",
     "HINT": "Wähle die Sprachen, in die dieses Projekt übersetzt wird. Die Standardsprache kann nicht entfernt werden."
+  },
+  "LOAD_WARNINGS_DIALOG": {
+    "TITLE": "Einige Entitäten konnten nicht geladen werden",
+    "HINT": "Das Projekt wurde geöffnet, aber die folgenden Entitäten enthielten Fehler und wurden übersprungen."
   },
   "INSPECTOR.NO_OPTIONS": "Keine Optionen verfügbar",
   "INSPECTOR.NO_STATES": "Keine Zustände definiert",

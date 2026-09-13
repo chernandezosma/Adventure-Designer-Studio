@@ -158,20 +158,27 @@ namespace ADS::Core {
      * @brief Rebuild a Project from the `.ads` file at @p path.
      *
      * @author Cayetano H. Osma <cayetano.hernandez.osma@gmail.com>
-     * @version Aug 2026
+     * @version Sep 2026
      *
      * The new Project is fully built locally and only returned on success —
      * a throw leaves any project the caller currently holds untouched.
      *
+     * A per-entity failure (missing/invalid field, duplicate id) does not
+     * abort the whole load: that single entity is skipped, recorded in
+     * LoadResult::warnings, and every other entity still loads normally.
+     * Whole-file failures still throw, since there is nothing left to
+     * salvage: unreadable/missing file, malformed top-level JSON, an
+     * unsupported schema version, or a checksum mismatch (the file was
+     * edited outside the editor, so no entity's data can be trusted).
+     *
      * @param path Source `.ads` file
-     * @return std::unique_ptr<Project> The rebuilt project
+     * @return LoadResult The rebuilt project plus any skipped-entity warnings
      *
      * @throws Exceptions::file_not_found_exception       if @p path does not exist
      * @throws Exceptions::project_serialization_exception on malformed JSON,
-     *         an unsupported schema version, a missing required key, or a
-     *         duplicate / dangling id
+     *         an unsupported schema version, or a checksum mismatch
      */
-    std::unique_ptr<Project> ProjectSerializer::load(const std::filesystem::path& path)
+    LoadResult ProjectSerializer::load(const std::filesystem::path& path)
     {
         if (!std::filesystem::exists(path)) {
             throw Exceptions::file_not_found_exception("File not found: " + PathService::toUtf8(path));
@@ -212,54 +219,119 @@ namespace ADS::Core {
             }
 
             auto project = std::make_unique<Project>(std::string{});
+            std::vector<LoadWarning> warnings;
 
             if (doc.contains("game")) {
                 doc.at("game").get_to(project->getGameData());
             }
 
+            // Each entity is parsed inside its own try/catch: a single malformed
+            // entity (missing/invalid field, duplicate id) is skipped and recorded
+            // as a LoadWarning instead of aborting the whole file, since every
+            // other entity in the collection may still be perfectly valid.
             for (const auto& js : doc.at("scenes")) {
-                const auto id = ADS::Types::SceneId(js.at("id").get<std::uint8_t>());
-                if (!project->addScene(id, js.at("name").get<std::string>())) {
-                    throw project_serialization_exception(
-                        "duplicate scene id " + std::to_string(id.value));
+                std::string identifier;
+                try {
+                    const auto id = ADS::Types::SceneId(js.at("id").get<std::uint8_t>());
+                    const auto name = js.at("name").get<std::string>();
+                    identifier = std::to_string(id.value) + " '" + name + "'";
+                    if (!project->addScene(id, name)) {
+                        throw project_serialization_exception(
+                            "duplicate scene id " + std::to_string(id.value));
+                    }
+                    try {
+                        Data::applyJson(js, *project->getSceneData().back());
+                    } catch (...) {
+                        project->removeScene(id);
+                        throw;
+                    }
+                } catch (const std::exception& e) {
+                    warnings.push_back({"Scene", identifier, e.what()});
                 }
-                Data::applyJson(js, *project->getSceneData().back());
             }
 
             for (const auto& jc : doc.at("characters")) {
-                const auto id = ADS::Types::CharacterId(jc.at("id").get<std::uint8_t>());
-                if (!project->addCharacter(id, jc.at("name").get<std::string>())) {
-                    throw project_serialization_exception(
-                        "duplicate character id " + std::to_string(id.value));
+                std::string identifier;
+                try {
+                    const auto id = ADS::Types::CharacterId(jc.at("id").get<std::uint8_t>());
+                    const auto name = jc.at("name").get<std::string>();
+                    identifier = std::to_string(id.value) + " '" + name + "'";
+                    if (!project->addCharacter(id, name)) {
+                        throw project_serialization_exception(
+                            "duplicate character id " + std::to_string(id.value));
+                    }
+                    try {
+                        Data::applyJson(jc, *project->getCharacterData().back());
+                    } catch (...) {
+                        project->removeCharacter(id);
+                        throw;
+                    }
+                } catch (const std::exception& e) {
+                    warnings.push_back({"Character", identifier, e.what()});
                 }
-                Data::applyJson(jc, *project->getCharacterData().back());
             }
 
             for (const auto& ji : doc.at("items")) {
-                const auto id = ADS::Types::ObjectId(ji.at("id").get<std::uint8_t>());
-                if (!project->addItem(id, ji.at("name").get<std::string>())) {
-                    throw project_serialization_exception(
-                        "duplicate item id " + std::to_string(id.value));
+                std::string identifier;
+                try {
+                    const auto id = ADS::Types::ObjectId(ji.at("id").get<std::uint8_t>());
+                    const auto name = ji.at("name").get<std::string>();
+                    identifier = std::to_string(id.value) + " '" + name + "'";
+                    if (!project->addItem(id, name)) {
+                        throw project_serialization_exception(
+                            "duplicate item id " + std::to_string(id.value));
+                    }
+                    try {
+                        Data::applyJson(ji, *project->getItemData().back());
+                    } catch (...) {
+                        project->removeItem(id);
+                        throw;
+                    }
+                } catch (const std::exception& e) {
+                    warnings.push_back({"Item", identifier, e.what()});
                 }
-                Data::applyJson(ji, *project->getItemData().back());
             }
 
             for (const auto& js : doc.at("states")) {
-                const auto id = ADS::Types::StateId(js.at("id").get<std::uint8_t>());
-                if (!project->addState(id, js.at("name").get<std::string>())) {
-                    throw project_serialization_exception(
-                        "duplicate state id " + std::to_string(id.value));
+                std::string identifier;
+                try {
+                    const auto id = ADS::Types::StateId(js.at("id").get<std::uint8_t>());
+                    const auto name = js.at("name").get<std::string>();
+                    identifier = std::to_string(id.value) + " '" + name + "'";
+                    if (!project->addState(id, name)) {
+                        throw project_serialization_exception(
+                            "duplicate state id " + std::to_string(id.value));
+                    }
+                    try {
+                        Data::applyJson(js, *project->getStateData().back());
+                    } catch (...) {
+                        project->removeState(id);
+                        throw;
+                    }
+                } catch (const std::exception& e) {
+                    warnings.push_back({"State", identifier, e.what()});
                 }
-                Data::applyJson(js, *project->getStateData().back());
             }
 
             for (const auto& jc : doc.at("chains")) {
-                const auto id = ADS::Types::ChainId(jc.at("id").get<std::uint8_t>());
-                if (!project->addChain(id, jc.at("name").get<std::string>())) {
-                    throw project_serialization_exception(
-                        "duplicate chain id " + std::to_string(id.value));
+                std::string identifier;
+                try {
+                    const auto id = ADS::Types::ChainId(jc.at("id").get<std::uint8_t>());
+                    const auto name = jc.at("name").get<std::string>();
+                    identifier = std::to_string(id.value) + " '" + name + "'";
+                    if (!project->addChain(id, name)) {
+                        throw project_serialization_exception(
+                            "duplicate chain id " + std::to_string(id.value));
+                    }
+                    try {
+                        Data::applyJson(jc, *project->getChainData().back());
+                    } catch (...) {
+                        project->removeChain(id);
+                        throw;
+                    }
+                } catch (const std::exception& e) {
+                    warnings.push_back({"Chain", identifier, e.what()});
                 }
-                Data::applyJson(jc, *project->getChainData().back());
             }
 
             if (doc.contains("lexEngine")) {
@@ -271,7 +343,7 @@ namespace ADS::Core {
             TranslationSerializer::loadFromFile(
                 *project, std::filesystem::path(path).replace_extension(".trn"));
 
-            return project;
+            return LoadResult{std::move(project), std::move(warnings)};
         } catch (const project_serialization_exception&) {
             throw;
         } catch (const json::exception& e) {

@@ -345,7 +345,8 @@
     "UNSAVED": "non salvato",
     "SAVED": "salvato",
     "DEFAULT_NAME": "Nuovo progetto",
-    "SAVE_FAILED": "salvataggio non riuscito"
+    "SAVE_FAILED": "salvataggio non riuscito",
+    "OPEN_FAILED": "apertura non riuscita"
   },
   "STATUSBAR": {
     "LINE": "Riga",
@@ -403,6 +404,10 @@
   "LANGUAGES_DIALOG": {
     "TITLE": "Lingue del progetto",
     "HINT": "Scegli le lingue in cui viene tradotto questo progetto. La lingua predefinita non può essere rimossa."
+  },
+  "LOAD_WARNINGS_DIALOG": {
+    "TITLE": "Alcune entità non sono state caricate",
+    "HINT": "Il progetto è stato aperto, ma le entità seguenti presentavano errori e sono state ignorate."
   },
   "INSPECTOR.NO_OPTIONS": "Nessuna opzione disponibile",
   "INSPECTOR.NO_STATES": "Nessuno stato definito",

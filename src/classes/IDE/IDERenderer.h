@@ -29,6 +29,7 @@
 #include "panels/WorkingAreaPanel.h"
 #include "panels/TranslationPanel.h"
 #include "dialogs/NewProjectDialog.h"
+#include "dialogs/LoadWarningsDialog.h"
 #include "Core/Project.h"
 #include <string>
 #include <utility>
@@ -97,6 +98,14 @@ namespace ADS::IDE {
         NewProjectDialog *m_newProjectDialog;
 
         /**
+         * Modal listing entities skipped during the most recent partial project
+         * load. Rendered every frame from renderMainWindow(); armed by the
+         * File > Open callback whenever ProjectSerializer::load() returns any
+         * LoadWarning entries.
+         */
+        LoadWarningsDialog *m_loadWarningsDialog;
+
+        /**
          * Owning pointer to the active project (created in initializePanels)
          */
         Core::Project *m_project;
@@ -114,6 +123,15 @@ namespace ADS::IDE {
          * none has been attempted — a save must never fail silently.
          */
         std::string m_lastSaveError;
+
+        /**
+         * Message from the last failed project open (whole-file failure —
+         * missing file, malformed JSON, unsupported schema version, or a
+         * checksum mismatch), shown in the project info bar until the next
+         * open attempt. Empty when the last open succeeded, or partially
+         * succeeded with only per-entity warnings (see m_loadWarningsDialog).
+         */
+        std::string m_lastOpenError;
 
         /**
          * @brief Create a new bare State, mirroring the tree's "Add > State"

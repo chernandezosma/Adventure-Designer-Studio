@@ -345,7 +345,8 @@
     "UNSAVED": "sin guardar",
     "SAVED": "guardado",
     "DEFAULT_NAME": "Nuevo proyecto",
-    "SAVE_FAILED": "error al guardar"
+    "SAVE_FAILED": "error al guardar",
+    "OPEN_FAILED": "error al abrir"
   },
   "STATUSBAR": {
     "LINE": "Línea",
@@ -403,6 +404,10 @@
   "LANGUAGES_DIALOG": {
     "TITLE": "Idiomas del proyecto",
     "HINT": "Elige los idiomas a los que se traduce este proyecto. El idioma predeterminado no se puede quitar."
+  },
+  "LOAD_WARNINGS_DIALOG": {
+    "TITLE": "Algunas entidades no se pudieron cargar",
+    "HINT": "El proyecto se abrió, pero las siguientes entidades tenían errores y se omitieron."
   },
   "INSPECTOR.NO_OPTIONS": "No hay opciones disponibles",
   "INSPECTOR.NO_STATES": "No hay estados definidos",

@@ -200,6 +200,8 @@ set(Sources
         src/classes/IDE/dialogs/ModalScaffold.h
         src/classes/IDE/dialogs/LanguagesDialog.cpp
         src/classes/IDE/dialogs/LanguagesDialog.h
+        src/classes/IDE/dialogs/LoadWarningsDialog.cpp
+        src/classes/IDE/dialogs/LoadWarningsDialog.h
         src/classes/IDE/dialogs/ExpandableTextInput.cpp
         src/classes/IDE/dialogs/ExpandableTextInput.h
         src/classes/IDE/IDEBase.cpp

@@ -345,7 +345,8 @@
     "UNSAVED": "unsaved",
     "SAVED": "saved",
     "DEFAULT_NAME": "New project",
-    "SAVE_FAILED": "save failed"
+    "SAVE_FAILED": "save failed",
+    "OPEN_FAILED": "open failed"
   },
   "STATUSBAR": {
     "LINE": "Line",
@@ -403,6 +404,10 @@
   "LANGUAGES_DIALOG": {
     "TITLE": "Project languages",
     "HINT": "Choose the languages this project is translated into. The default language cannot be removed."
+  },
+  "LOAD_WARNINGS_DIALOG": {
+    "TITLE": "Some entities could not be loaded",
+    "HINT": "The project opened, but the entities below had errors and were skipped."
   },
   "INSPECTOR.NO_OPTIONS": "No options available",
   "INSPECTOR.NO_STATES": "No states defined",

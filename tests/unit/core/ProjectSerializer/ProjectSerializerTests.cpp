@@ -36,6 +36,7 @@
 
 namespace fs = std::filesystem;
 
+using ADS::Core::LoadResult;
 using ADS::Core::Project;
 using ADS::Core::ProjectSerializer;
 using ADS::Types::CharacterId;
@@ -143,7 +144,7 @@ TEST_F(ProjectSerializerTest, RichProject_SaveLoadSave_IsByteIdentical)
 
     ProjectSerializer::save(*original, first);
     const auto loaded = ProjectSerializer::load(first);
-    ProjectSerializer::save(*loaded, second);
+    ProjectSerializer::save(*loaded.project, second);
 
     EXPECT_EQ(readFile(first), readFile(second));
 }
@@ -154,7 +155,9 @@ TEST_F(ProjectSerializerTest, RichProject_LoadRestoresFieldsAndEntityLinks)
     const fs::path path = dir / "crypt.ads";
     ProjectSerializer::save(*original, path);
 
-    const auto loaded = ProjectSerializer::load(path);
+    const auto result = ProjectSerializer::load(path);
+    const auto& loaded = result.project;
+    EXPECT_TRUE(result.warnings.empty());
 
     EXPECT_EQ(loaded->getName(), "The Forgotten Crypt");
     EXPECT_EQ(loaded->getScenes().size(), 5u);
@@ -214,9 +217,10 @@ TEST_F(ProjectSerializerTest, EmptyProject_RoundTrips)
     ProjectSerializer::save(empty, path);
     const auto loaded = ProjectSerializer::load(path);
 
-    EXPECT_EQ(loaded->getName(), "Blank");
-    EXPECT_TRUE(loaded->getScenes().empty());
-    EXPECT_TRUE(loaded->getItems().empty());
+    EXPECT_TRUE(loaded.warnings.empty());
+    EXPECT_EQ(loaded.project->getName(), "Blank");
+    EXPECT_TRUE(loaded.project->getScenes().empty());
+    EXPECT_TRUE(loaded.project->getItems().empty());
 }
 
 TEST_F(ProjectSerializerTest, Load_MissingFile_ThrowsFileNotFound)
@@ -306,10 +310,77 @@ TEST_F(ProjectSerializerTest, Load_NoChecksumKey_LoadsWithWarning)
     text.erase(lineStart, lineEnd - lineStart + 1);
     { std::ofstream out(path, std::ios::trunc | std::ios::binary); out << text; }
 
-    std::unique_ptr<Project> loaded;
+    LoadResult loaded;
     EXPECT_NO_THROW(loaded = ProjectSerializer::load(path));
-    ASSERT_NE(loaded, nullptr);
-    EXPECT_EQ(loaded->getName(), "The Forgotten Crypt");
+    ASSERT_NE(loaded.project, nullptr);
+    EXPECT_TRUE(loaded.warnings.empty());
+    EXPECT_EQ(loaded.project->getName(), "The Forgotten Crypt");
+}
+
+/// Remove the whole "checksum" line from a saved `.ads`'s text, so subsequent
+/// hand-edits don't trip the (intentionally hard-abort) checksum-mismatch path
+/// and per-entity parsing gets a chance to run instead — mirrors how a file
+/// with its checksum stripped is already treated as "unverified, not fatal".
+std::string stripChecksumLine(std::string text)
+{
+    const auto keyPos = text.find("\"checksum\":");
+    if (keyPos == std::string::npos) {
+        return text;
+    }
+    const auto lineStart = text.rfind('\n', keyPos) + 1;
+    const auto lineEnd = text.find('\n', keyPos);
+    text.erase(lineStart, lineEnd - lineStart + 1);
+    return text;
+}
+
+TEST_F(ProjectSerializerTest, Load_OneEntityMissingRequiredField_SkipsItAndLoadsRest)
+{
+    const fs::path path = dir / "onebad.ads";
+    ProjectSerializer::save(*makeRichProject(), path);
+
+    std::string text = stripChecksumLine(readFile(path));
+    // Scene 2 loses its "name" field — Data::applyJson requires it — while
+    // scenes 1/3/4/5 and every other collection stay untouched.
+    const auto pos = text.find(R"("name": "Scene 2")");
+    ASSERT_NE(pos, std::string::npos);
+    text.replace(pos, std::string(R"("name": "Scene 2")").size(), R"("name_typo": "Scene 2")");
+    { std::ofstream out(path, std::ios::trunc | std::ios::binary); out << text; }
+
+    LoadResult result;
+    EXPECT_NO_THROW(result = ProjectSerializer::load(path));
+    ASSERT_NE(result.project, nullptr);
+
+    // 4 of 5 scenes survive; the bad one is reported, not silently dropped.
+    EXPECT_EQ(result.project->getScenes().size(), 4u);
+    EXPECT_EQ(result.project->getCharacters().size(), 2u);
+    ASSERT_EQ(result.warnings.size(), 1u);
+    EXPECT_EQ(result.warnings[0].entityKind, "Scene");
+}
+
+TEST_F(ProjectSerializerTest, Load_DuplicateEntityId_SkipsSecondAndLoadsRest)
+{
+    const fs::path path = dir / "dup.ads";
+    ProjectSerializer::save(*makeRichProject(), path);
+
+    std::string text = stripChecksumLine(readFile(path));
+    // Character 2 ("Guardian") reuses id 1, already taken by "Hero". Locate
+    // the nearest preceding "id" field to "Guardian"'s own name field, since
+    // scenes also contain "id": 2 substrings earlier in the file.
+    const auto guardianPos = text.find(R"("name": "Guardian")");
+    ASSERT_NE(guardianPos, std::string::npos);
+    const auto idPos = text.rfind(R"("id": 2)", guardianPos);
+    ASSERT_NE(idPos, std::string::npos);
+    text.replace(idPos, std::string(R"("id": 2)").size(), R"("id": 1)");
+    { std::ofstream out(path, std::ios::trunc | std::ios::binary); out << text; }
+
+    LoadResult result;
+    EXPECT_NO_THROW(result = ProjectSerializer::load(path));
+    ASSERT_NE(result.project, nullptr);
+
+    EXPECT_EQ(result.project->getCharacters().size(), 1u);
+    EXPECT_EQ(result.project->getScenes().size(), 5u);
+    ASSERT_EQ(result.warnings.size(), 1u);
+    EXPECT_EQ(result.warnings[0].entityKind, "Character");
 }
 
 TEST_F(ProjectSerializerTest, Save_WritesSiblingTrn_WithoutDescriptionTextsInAds)
@@ -344,7 +415,7 @@ TEST_F(ProjectSerializerTest, SaveThenLoad_RestoresTranslationsFromTrn)
     ProjectSerializer::save(*project, adsPath);
 
     const auto loaded = ProjectSerializer::load(adsPath);
-    ASSERT_NE(loaded, nullptr);
-    EXPECT_EQ(ADS::Core::TranslationCatalog::get(*loaded, "scene.1.name", "es_ES"), "La entrada");
-    EXPECT_EQ(ADS::Core::TranslationCatalog::get(*loaded, "item.1.desc.odor", "en_US"), "Rust.");
+    ASSERT_NE(loaded.project, nullptr);
+    EXPECT_EQ(ADS::Core::TranslationCatalog::get(*loaded.project, "scene.1.name", "es_ES"), "La entrada");
+    EXPECT_EQ(ADS::Core::TranslationCatalog::get(*loaded.project, "item.1.desc.odor", "en_US"), "Rust.");
 }
